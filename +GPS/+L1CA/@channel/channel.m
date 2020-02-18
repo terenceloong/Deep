@@ -61,9 +61,9 @@ classdef channel < handle
         frameBuffPoint  %帧缓存指针
     end
     % 星历
-    properties (GetAccess = public, SetAccess = private)
-        ephemeris       %星历
-        ion             %电离层校正参数
+    properties (GetAccess = public, SetAccess = public)
+        ephe            %星历
+        iono            %电离层校正参数
     end
     % 数据存储
     properties (GetAccess = public, SetAccess = private)
@@ -94,8 +94,8 @@ classdef channel < handle
             index = mod(floor((0:obj.acqN-1)*1.023e6/sampleFreq),1023) + 1; %C/A码采样的索引
             obj.CODE = fft(obj.CAcode(index));
             %---申请星历空间
-            obj.ephemeris = NaN(25,1);
-            obj.ion = NaN(8,1);
+            obj.ephe = NaN(25,1);
+            obj.iono = NaN(8,1);
             %----申请数据存储空间
             obj.log = "log";
             obj.ns = 0;

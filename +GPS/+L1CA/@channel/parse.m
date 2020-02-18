@@ -1,4 +1,4 @@
-function parse(obj)
+function iono = parse(obj)
 % 解析导航电文
 % 从捕获到进入比特同步要500ms
 % 比特同步过程要2s,开始寻找帧头要多一点时间,因为等待比特边界到达
@@ -6,6 +6,8 @@ function parse(obj)
 % 验证帧头后就可以确定码发射时间
 % 6s一个子帧,30s解析星历一次
 % 比特同步后可以增加积分时间
+
+iono = []; %电离层校正参数,如果没有,值为[]
 
 obj.msgCnt = obj.msgCnt + 1; %计数加1
 
@@ -108,19 +110,19 @@ switch obj.msgStage %I,B,W,H,C,E
                     end
                 case 'E' %<<====解析星历
                     if obj.frameBuffPoint==1502 %跟踪完5帧
-                        [ephe0, ion0] = GPS.L1CA.epheParse(obj.frameBuff); %解析星历
-                        if ~isempty(ephe0) %星历解析成功
-                            if ephe0(3)==ephe0(4) %IODC==IODE
+                        [ephe, iono] = GPS.L1CA.epheParse(obj.frameBuff); %解析星历
+                        if ~isempty(ephe) %星历解析成功
+                            if ephe(3)==ephe(4) %IODC==IODE
                                 log_str = sprintf('Ephemeris is parsed at %.8fs', obj.dataIndex/obj.sampleFreq);
                                 obj.log = [obj.log; string(log_str)];
                                 obj.state = 2; %改变通道状态
-                                obj.ephemeris = ephe0; %更新星历
-                                if ~isempty(ion0)
-                                    obj.ion = ion0; %更新电离层参数
+                                obj.ephe = ephe; %更新星历
+                                if ~isempty(iono)
+                                    obj.iono = iono; %更新电离层参数
                                 end
                             else %IODC~=IODE
                                 log_str = sprintf('***Ephemeris changes at %.8fs, IODC=%d, IODE=%d', ...
-                                                  obj.dataIndex/obj.sampleFreq, ephe0(3), ephe0(4));
+                                                  obj.dataIndex/obj.sampleFreq, ephe(3), ephe(4));
                                 obj.log = [obj.log; string(log_str)];
                             end
                         else %解析星历错误

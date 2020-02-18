@@ -1,4 +1,4 @@
-function t = time_carry(t)
+function t = timeCarry(t)
 % 微秒,毫秒,秒进位
 % t:[s,ms,us]
 % 微秒和毫秒始终在0到1000之间,正数,秒可以为负

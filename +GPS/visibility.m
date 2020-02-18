@@ -65,7 +65,7 @@ for k=1:length(PRN)
         polarscatter(azi(k,end),ele(k,end), 220, 'MarkerFaceColor',[65,180,250]/255, ...
                      'MarkerEdgeColor',[127,127,127]/255, 'MarkerFaceAlpha',0.3)
         text(azi(k,end),ele(k,end),num2str(PRN(k)), 'HorizontalAlignment','center', ...
-                                                'VerticalAlignment','middle')
+                                                    'VerticalAlignment','middle')
     end
 end
 

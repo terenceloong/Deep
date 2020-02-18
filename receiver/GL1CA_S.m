@@ -35,6 +35,7 @@ classdef GL1CA_S < handle
     end
     % 定位参数
     properties (GetAccess = public, SetAccess = private)
+        iono           %电离层校正参数
         pos            %接收机位置,纬经高
         vel            %接收机速度,北东地
     end
@@ -85,7 +86,7 @@ classdef GL1CA_S < handle
             obj.tms = obj.tms + 1;
             %----更新接收机时间
             fs = obj.sampleFreq * (1+obj.deltaFreq); %修正后的采样频率
-            obj.ta = time_carry(obj.ta + sample2dt(obj.blockSize, fs));
+            obj.ta = timeCarry(obj.ta + sample2dt(obj.blockSize, fs));
             %----捕获
             if mod(obj.tms,1000)==0 %1s搜索一次
                 for k=1:obj.chN
@@ -117,7 +118,10 @@ classdef GL1CA_S < handle
                         obj.channels(k).track([obj.buffI(n1:end),obj.buffI(1:n2)], ...
                                               [obj.buffQ(n1:end),obj.buffQ(1:n2)], obj.deltaFreq);
                     end
-                    obj.channels(k).parse; %解析导航电文
+                    iono0 = obj.channels(k).parse; %解析导航电文
+                    if ~isempty(iono0)
+                        obj.iono = iono0; %提取电离层参数
+                    end
                 end
             end
             %----定位
@@ -161,6 +165,32 @@ classdef GL1CA_S < handle
             for k=1:obj.chN
                 obj.channels(k).clean_storage;
             end
+        end
+        
+        %% 预设星历
+        function set_ephemeris(obj, filename)
+            load(filename, 'ephemeris') %加载预存的星历
+            if ~isfield(ephemeris, 'GPS_ephe') %如果星历中不存在GPS星历,创建空星历
+                ephemeris.GPS_ephe = NaN(25,32);
+                ephemeris.GPS_iono = NaN(8,1);
+                save(filename, 'ephemeris') %保存到文件中
+            end
+            obj.iono = ephemeris.GPS_iono; %提取电离层校正参数
+            for k=1:obj.chN %为每个通道赋星历
+                obj.channels(k).ephe = ephemeris.GPS_ephe(:,obj.channels(k).PRN);
+            end
+        end
+        
+        %% 保存星历
+        function save_ephemeris(obj, filename)
+            load(filename, 'ephemeris') %加载预存的星历
+            ephemeris.GPS_iono = obj.iono; %保存电离层校正参数
+            for k=1:obj.chN %提取有星历通道的星历
+                if ~isnan(obj.channels(k).ephe(1))
+                    ephemeris.GPS_ephe(:,obj.channels(k).PRN) = obj.channels(k).ephe;
+                end
+            end
+            save(filename, 'ephemeris') %保存到文件中
         end
         
         %% 打印通道日志

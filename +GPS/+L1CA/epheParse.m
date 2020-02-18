@@ -1,9 +1,9 @@
-function [ephe, ion] = epheParse(bits)
+function [ephe, iono] = epheParse(bits)
 % 输入完整1500比特导航电文和上一字最后两位(±1),解析GPS星历
 % 如果星历为空说明星历错误
 
 ephe = [];
-ion = [];
+iono = [];
 
 % 所有字的校验
 for k=0:49
@@ -87,7 +87,7 @@ for k=0:4
                 beta1 = twosComp2dec(subframe(121:128)) * 2^(14);
                 beta2 = twosComp2dec(subframe(129:136)) * 2^(16);
                 beta3 = twosComp2dec(subframe(137:144)) * 2^(16);
-                ion = [alpha0;alpha1;alpha2;alpha3;beta0;beta1;beta2;beta3];
+                iono = [alpha0;alpha1;alpha2;alpha3;beta0;beta1;beta2;beta3];
             end
             subframeTable(4) = 1;
         case 5
