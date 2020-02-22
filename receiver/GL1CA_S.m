@@ -1,8 +1,6 @@
 classdef GL1CA_S < handle
 % GPS L1 C/A单天线接收机
-% 可以配置的数:可见星高度角阈值
     
-    % 主机参数
     properties (GetAccess = public, SetAccess = private)
         Tms            %接收机总运行时间,ms
         sampleFreq     %标称采样频率,Hz
@@ -13,61 +11,76 @@ classdef GL1CA_S < handle
         buffSize       %数据缓存总采样点数
         blockPoint     %数据该往第几块存,从1开始
         buffHead       %最新数据的位置,blockSize的倍数
-    end
-    % 时钟参数
-    properties (GetAccess = public, SetAccess = private)
-        tms            %接收机当前运行时间,ms
         week           %GPS周数
         ta             %接收机时间,GPS周内秒数,[s,ms,us]
         deltaFreq      %接收机时钟频率误差,无量纲,钟快为正
-    end
-    % 历书
-    properties (GetAccess = public, SetAccess = private)
+        tms            %接收机当前运行时间,ms,用采样点数计
         almanac        %所有卫星的历书
         aziele         %使用历书计算的卫星方位角高度角
-        eleMask = 10   %高度角阈值
-    end
-    % 通道参数
-    properties (GetAccess = public, SetAccess = private)
+        eleMask        %高度角阈值
         svList         %跟踪卫星列表
         chN            %跟踪通道数量
         channels       %跟踪通道
-    end
-    % 定位参数
-    properties (GetAccess = public, SetAccess = private)
         iono           %电离层校正参数
         pos            %接收机位置,纬经高
         vel            %接收机速度,北东地
     end
-    % 数据存储
-%     properties (GetAccess = public, SetAccess = private)
-%         
-%     end
     
     methods
         %% 构造函数
-        function obj = GL1CA_S(sampleFreq, t0, Tms, p0)
-            % sampleFreq:采样频率,Hz
-            % t0:接收机初始时间,[week,s,ms,us]
-            % Tms:接收机总运行时间,ms
-            % p0:初始位置,纬经高
+        function obj = GL1CA_S(conf)
+            % conf:接收机配置结构体
             %----设置主机参数
-            obj.Tms = Tms;
-            obj.sampleFreq = sampleFreq;
-            obj.blockSize = sampleFreq*0.001; %一个缓存块固定为1ms
-            obj.blockNum = 40; %缓存块数量固定一个值
-            obj.buffI = zeros(obj.blockSize,obj.blockNum); %矩阵形式,每一列为一个块
-            obj.buffQ = zeros(obj.blockSize,obj.blockNum);
+            obj.Tms = conf.Tms;
+            obj.sampleFreq = conf.sampleFreq;
+            obj.blockSize = conf.blockSize;
+            obj.blockNum = conf.blockNum;
+            obj.buffI = zeros(obj.blockSize, obj.blockNum); %矩阵形式,每一列为一个块
+            obj.buffQ = zeros(obj.blockSize, obj.blockNum);
             obj.buffSize = obj.blockSize * obj.blockNum;
             obj.blockPoint = 1;
             obj.buffHead = 0;
-            %----设置时钟参数
-            obj.tms = 0;
-            obj.week = t0(1);
-            obj.ta = t0(2:4);
+            %----设置接收机时钟
+            obj.week = conf.week;
+            obj.ta = conf.ta;
             obj.deltaFreq = 0;
-            %----设置初始位置
-            obj.pos = p0;
+            obj.tms = 0;
+            %----设置历书
+            obj.almanac = conf.almanac;
+            %----使用历书计算所有卫星方位角高度角
+            if ~isempty(obj.almanac) %如果没有历书,aziele为空
+                index = find(obj.almanac(:,2)==0); %获取健康卫星的行号
+                obj.aziele = zeros(length(index),3); %[ID,azi,ele]
+                obj.aziele(:,1) = obj.almanac(index,1);
+                obj.aziele(:,2:3) = aziele_almanac(obj.almanac(index,3:end), [obj.week,obj.ta(1)], conf.p0);
+            end
+            %----获取跟踪卫星列表
+            obj.eleMask = conf.eleMask;
+            obj.svList = conf.svList;
+            if isempty(obj.svList) %如果列表为空,使用历书计算的可见卫星
+                if isempty(obj.almanac) %如果历书不存在,报错
+                    error('Almanac doesn''t exist!')
+                end
+                obj.svList = obj.aziele(obj.aziele(:,3)>obj.eleMask,1)'; %选取高度角大于阈值的卫星
+            end
+            %----通道配置
+            channel_config.sampleFreq = obj.sampleFreq;
+            channel_config.buffSize = obj.buffSize;
+            channel_config.Tms = obj.Tms;
+            channel_config.acqTime = conf.acqTime;
+            channel_config.acqThreshold = conf.acqThreshold;
+            channel_config.acqFreqMax = conf.acqFreqMax;
+            %----创建通道
+            obj.chN = length(obj.svList);
+            obj.channels = GPS.L1CA.channel(obj.svList(1), channel_config);
+            % 先创建一个对象用来确定channel的数据类型,后面才能用索引往下续
+            for k=2:obj.chN
+                obj.channels(k) = GPS.L1CA.channel(obj.svList(k), channel_config);
+            end
+            obj.channels = obj.channels'; %转成列向量
+            %----设置接收机初始位置
+            obj.iono = NaN(8,1);
+            obj.pos = conf.p0;
             obj.vel = [0,0,0];
             %----申请数据存储空间
         end
@@ -110,6 +123,7 @@ classdef GL1CA_S < handle
                     if mod(obj.buffHead-obj.channels(k).trackDataHead,obj.buffSize)>(obj.buffSize/2)
                         break
                     end
+                    % 信号处理
                     n1 = obj.channels(k).trackDataTail;
                     n2 = obj.channels(k).trackDataHead;
                     if n2>n1
@@ -118,53 +132,15 @@ classdef GL1CA_S < handle
                         obj.channels(k).track([obj.buffI(n1:end),obj.buffI(1:n2)], ...
                                               [obj.buffQ(n1:end),obj.buffQ(1:n2)], obj.deltaFreq);
                     end
-                    iono0 = obj.channels(k).parse; %解析导航电文
+                    % 解析导航电文
+                    iono0 = obj.channels(k).parse;
+                    % 提取电离层校正参数
                     if ~isempty(iono0)
-                        obj.iono = iono0; %提取电离层参数
+                        obj.iono = iono0;
                     end
                 end
             end
             %----定位
-        end
-        
-        %% 获取历书
-        function get_almanac(obj, filepath)
-            % filepath:历书存储路径,结尾不带\
-            t = [obj.week, obj.ta(1)]; %当前时间
-            filename = GPS.almanac.download(filepath, t); %下载历书,得到完整文件名
-            obj.almanac = GPS.almanac.read(filename); %读历书文件
-            %----使用历书计算所有卫星方位角高度角
-            index = find(obj.almanac(:,2)==0); %获取健康卫星的行号
-            n = length(index); %健康卫星个数
-            obj.aziele = zeros(n,3); %[ID,azi,ele]
-            obj.aziele(:,1) = obj.almanac(index,1); %ID
-            obj.aziele(:,2:3) = aziele_almanac(obj.almanac(index,3:end), t, obj.pos); %[azi,ele]
-        end
-        
-        %% 设置跟踪卫星列表
-        function set_svList(obj, svList)
-            obj.svList = svList;
-            if isempty(obj.svList) %如果列表为空,使用历书计算的可见卫星
-                if isempty(obj.almanac) %如果历书不存在,报错
-                    error('Almanac doesn''t exist!')
-                end
-                obj.svList = obj.aziele(obj.aziele(:,3)>obj.eleMask,1)'; %选取高度角大于阈值的卫星
-            end
-            %----创建通道对象
-            obj.chN = length(obj.svList);
-            obj.channels = GPS.L1CA.channel(obj.sampleFreq, obj.buffSize, obj.svList(1), obj.Tms);
-            % 先创建一个对象用来确定channel的数据类型,后面才能用索引往下续
-            for k=2:obj.chN
-                obj.channels(k) = GPS.L1CA.channel(obj.sampleFreq, obj.buffSize, obj.svList(k), obj.Tms);
-            end
-            obj.channels = obj.channels'; %转成列向量
-        end
-        
-        %% 清理数据储存
-        function clean_storage(obj)
-            for k=1:obj.chN
-                obj.channels(k).clean_storage;
-            end
         end
         
         %% 预设星历
@@ -193,13 +169,20 @@ classdef GL1CA_S < handle
             save(filename, 'ephemeris') %保存到文件中
         end
         
+        %% 清理数据储存
+        function clean_storage(obj)
+            for k=1:obj.chN
+                obj.channels(k).clean_storage;
+            end
+        end
+        
         %% 打印通道日志
         function print_log(obj)
             for k=1:obj.chN
                 fprintf('PRN %d\n', obj.channels(k).PRN); %使用\r\n会多一个空行
                 n = length(obj.channels(k).log); %通道日志的行数
-                if n>1 %行数大于1,日志有内容
-                    for m=2:n %逐行打印
+                if n>0 %如果日志有内容,逐行打印
+                    for m=1:n
                         disp(obj.channels(k).log(m));
                     end
                 end
@@ -244,9 +227,12 @@ classdef GL1CA_S < handle
         
         %% 显示星座图
         function plot_constellation(obj)
+            if isempty(obj.almanac) %如果没有历书不画图
+                disp('Almanac doesn''t exist!')
+                return
+            end
             %----挑选高度角大于0的卫星
             index = find(obj.aziele(:,3)>0); %高度角大于0的卫星索引
-            n = length(index); %卫星个数
             PRN = obj.aziele(index,1);
             azi = mod(obj.aziele(index,2),360)/180*pi; %方位角转成弧度,0~360度
             ele = obj.aziele(index,3); %高度角,deg
@@ -261,7 +247,7 @@ classdef GL1CA_S < handle
             ax.RTick = [0,15,30,45,60,75,90]; %高度角刻度
             ax.ThetaDir = 'clockwise'; %顺时针方位角增加
             ax.ThetaZeroLocation = 'top'; %方位角0在上
-            for k=1:n %处理所有高度角大于0的卫星
+            for k=1:length(PRN) %处理所有高度角大于0的卫星
                 % 低高度角卫星,透明
                 if ele(k)<obj.eleMask
                     polarscatter(azi(k),ele(k), 220, 'MarkerFaceColor',[65,180,250]/255, ...
