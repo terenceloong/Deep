@@ -24,6 +24,8 @@ classdef GL1CA_S < handle
         iono           %电离层校正参数
         pos            %接收机位置,纬经高
         vel            %接收机速度,北东地
+        dtpos          %定位时间间隔,ms
+        tp             %下次定位的时间,[s,ms,us]
     end
     
     methods
@@ -52,7 +54,7 @@ classdef GL1CA_S < handle
                 index = find(obj.almanac(:,2)==0); %获取健康卫星的行号
                 obj.aziele = zeros(length(index),3); %[ID,azi,ele]
                 obj.aziele(:,1) = obj.almanac(index,1);
-                obj.aziele(:,2:3) = aziele_almanac(obj.almanac(index,3:end), [obj.week,obj.ta(1)], conf.p0);
+                obj.aziele(:,2:3) = aziele_almanac(obj.almanac(index,6:end), obj.ta(1), conf.p0);
             end
             %----获取跟踪卫星列表
             obj.eleMask = conf.eleMask;
@@ -82,6 +84,9 @@ classdef GL1CA_S < handle
             obj.iono = NaN(8,1);
             obj.pos = conf.p0;
             obj.vel = [0,0,0];
+            %----设置定位控制参数
+            obj.dtpos = conf.dtpos;
+            obj.tp = obj.ta + [2,0,0]; %当前接收机时间的2s后
             %----申请数据存储空间
         end
         
@@ -141,12 +146,22 @@ classdef GL1CA_S < handle
                 end
             end
             %----定位
+            dtp = (obj.ta-obj.tp) * [1;1e-3;1e-6]; %当前接收机时间与定位时间之差,s
+            if dtp>=0 %定位时间到了
+                
+                % 更新下次定位时间
+                obj.tp = timeCarry(obj.tp + [0,obj.dtpos,0]);
+            end
         end
         
         %% 预设星历
         function set_ephemeris(obj, filename)
+            if ~exist(filename, 'file') %如果文件不存在就创建一个
+                ephemeris = []; %变量名为ephemeris,是个结构体
+                save(filename, 'ephemeris')
+            end
             load(filename, 'ephemeris') %加载预存的星历
-            if ~isfield(ephemeris, 'GPS_ephe') %如果星历中不存在GPS星历,创建空星历
+            if ~isfield(ephemeris, 'GPS_ephe') %如果星历中不存在GPS星历,创建空GPS星历
                 ephemeris.GPS_ephe = NaN(25,32);
                 ephemeris.GPS_iono = NaN(8,1);
                 save(filename, 'ephemeris') %保存到文件中
@@ -241,7 +256,7 @@ classdef GL1CA_S < handle
             %----画图
             figure
             ax = polaraxes; %创建极坐标轴
-            hold(ax, 'on')
+            ax.NextPlot = 'add';
             ax.RLim = [0,90]; %高度角范围
             ax.RDir = 'reverse'; %高度角里面是90度
             ax.RTick = [0,15,30,45,60,75,90]; %高度角刻度

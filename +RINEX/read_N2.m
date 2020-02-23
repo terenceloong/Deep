@@ -53,8 +53,7 @@ dataPos = ftell(fileID); %数据开始位置
 SVtable = zeros(1,32); %卫星统计表
 SVn = length(SVtable); %卫星总数
 
-% 扫描数据部分
-while 1
+while 1 %扫描数据部分
     tline = fgetl(fileID);
     if tline==-1 %读到文件尾tline返回-1
         break
@@ -92,7 +91,7 @@ day0 = datenum(1980,1,6); %GPS时间起点
 
 % 因为取的字符一定有数据,使用eval替代str2num
 while 1
-    tline = fgetl(fileID);
+    tline = fgetl(fileID); %第1行
     if tline==-1 %读到文件尾tline返回-1
         break
     end
@@ -106,37 +105,37 @@ while 1
     ephe.sv{PRN}(k).af0 = eval(tline(23:41)); %s
     ephe.sv{PRN}(k).af1 = eval(tline(42:60)); %s/s
     ephe.sv{PRN}(k).af2 = eval(tline(61:79)); %s/s^2
-    tline = fgetl(fileID);
+    tline = fgetl(fileID); %第2行
     ephe.sv{PRN}(k).IODE = eval(tline(4:22));
     ephe.sv{PRN}(k).Crs = eval(tline(23:41)); %m
     ephe.sv{PRN}(k).dn = eval(tline(42:60)); %rad/s
     ephe.sv{PRN}(k).M0 = eval(tline(61:79)); %rad
-    tline = fgetl(fileID);
+    tline = fgetl(fileID); %第3行
     ephe.sv{PRN}(k).Cuc = eval(tline(4:22)); %rad
     ephe.sv{PRN}(k).e = eval(tline(23:41));
     ephe.sv{PRN}(k).Cus = eval(tline(42:60)); %rad
     ephe.sv{PRN}(k).sqa = eval(tline(61:79)); %m^0.5
-    tline = fgetl(fileID);
+    tline = fgetl(fileID); %第4行
     ephe.sv{PRN}(k).toe = eval(tline(4:22));
     ephe.sv{PRN}(k).Cic = eval(tline(23:41)); %rad
     ephe.sv{PRN}(k).Omega0 = eval(tline(42:60)); %rad
     ephe.sv{PRN}(k).Cis = eval(tline(61:79)); %rad
-    tline = fgetl(fileID);
+    tline = fgetl(fileID); %第5行
     ephe.sv{PRN}(k).i0 = eval(tline(4:22)); %rad
     ephe.sv{PRN}(k).Crc = eval(tline(23:41)); %m
     ephe.sv{PRN}(k).omega = eval(tline(42:60)); %rad
     ephe.sv{PRN}(k).Omega_dot = eval(tline(61:79)); %rad/s
-    tline = fgetl(fileID);
+    tline = fgetl(fileID); %第6行
     ephe.sv{PRN}(k).i_dot = eval(tline(4:22)); %rad/s
     ephe.sv{PRN}(k).codes_on_L2 = eval(tline(23:41));
     ephe.sv{PRN}(k).week = eval(tline(42:60));
     ephe.sv{PRN}(k).L2_P_data_flag = eval(tline(61:79));
-    tline = fgetl(fileID);
+    tline = fgetl(fileID); %第7行
     ephe.sv{PRN}(k).accuracy = eval(tline(4:22)); %m
     ephe.sv{PRN}(k).health = eval(tline(23:41));
     ephe.sv{PRN}(k).TGD = eval(tline(42:60)); %s
     ephe.sv{PRN}(k).IODC = eval(tline(61:79));
-    tline = fgetl(fileID);
+    tline = fgetl(fileID); %第8行
     ephe.sv{PRN}(k).TOW = eval(tline(4:22)); %s
     ephe.sv{PRN}(k).fit_interval = eval(tline(23:41));
 end

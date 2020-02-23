@@ -1,8 +1,8 @@
-function t = utc2gps(c, zone)
+function t = UTC2GPS(c, zone)
 % UTC时间转化为GPS周和GPS秒
-% c:[year, mon, date, hour, min, sec]
+% c:[year, mon, day, hour, min, sec]
 % zone:时区,东半球为正,西半球为负
-% t:[week,second],GPS周数,从0开始一直加
+% t:[week,second],GPS周数,不取1024的模
 
 % datenum(1980,1,6)  = 723186
 % datenum(1999,8,22) = 730354

@@ -1,13 +1,13 @@
 function visibility(filepath, c, zone, p, h)
 % 在星座图上画一段时间的卫星轨迹,2分钟一个点
 % filepath:历书存储的路径,结尾不带\
-% c:[year, mon, date, hour, min, sec]
+% c:[year, mon, day, hour, min, sec]
 % zone:时区,东半球为正,西半球为负
 % p:纬经高,deg
 % h:持续时间,小时
 
 % 获取历书
-t = utc2gps(c, zone); %[week,second]
+t = UTC2GPS(c, zone); %[week,second]
 filename = GPS.almanac.download(filepath, t); %获取历书
 almanac = GPS.almanac.read(filename); %读历书文件
 
@@ -15,13 +15,10 @@ almanac = GPS.almanac.read(filename); %读历书文件
 n = size(almanac,1); %卫星数
 m = h*30; %点数
 aziele = zeros(n,2,m); %[azi,ele],第三维为时间
+ts = t(2); %周内秒数
 for k=1:m
-    aziele(:,:,k) = aziele_almanac(almanac(:,3:end), t, p); %[azi,ele]
-    t(2) = t(2)+120; %更新时间
-    if t(2)>=604800
-        t(1) = t(1)+1;
-        t(2) = t(2)-604800;
-    end
+    aziele(:,:,k) = aziele_almanac(almanac(:,6:end), ts, p); %[azi,ele]
+    ts = ts+120; %更新时间
 end
 
 % 获取高度角大于0的卫星
@@ -40,7 +37,7 @@ ele = reshape(ele,length(PRN),m);
 % 创建坐标轴
 figure
 ax = polaraxes; %创建极坐标轴
-hold(ax, 'on')
+ax.NextPlot = 'add'; %hold on
 ax.RLim = [0,90]; %高度角范围
 ax.RDir = 'reverse'; %高度角里面是90度
 ax.RTick = [0,15,30,45,60,75,90]; %高度角刻度

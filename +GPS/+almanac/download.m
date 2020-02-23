@@ -4,7 +4,7 @@ function filename = download(filepath, t)
 % t:[week,second],GPS周数(从起始周开始的),GPS周内秒数
 
 % 检查目标文件夹是否存在
-if exist(filepath,'dir')~=7
+if ~exist(filepath,'dir')
     error('File path doesn''t exist!')
 end
 

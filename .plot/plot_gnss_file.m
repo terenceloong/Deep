@@ -2,7 +2,7 @@ function plot_gnss_file
 % 观察GNSS文件中的数据
 
 % 选择文件
-default_path = fileread('.\~temp\path_data.txt'); %数据文件所在默认路径
+default_path = fileread('~temp\path_data.txt'); %数据文件所在默认路径
 [file, path] = uigetfile([default_path,'\*.dat'], '选择GNSS数据文件'); %文件选择对话框
 if file==0 %取消选择,file返回0,path返回0
     disp('Invalid file!');

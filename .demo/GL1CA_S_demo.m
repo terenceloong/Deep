@@ -5,7 +5,7 @@ clc
 fclose('all'); %关闭之前打开的所有文件
 
 %% 选择GNSS数据文件
-% default_path = fileread('.\~temp\path_data.txt'); %数据文件所在默认路径
+% default_path = fileread('~temp\path_data.txt'); %数据文件所在默认路径
 % [file, path] = uigetfile([default_path,'\*.dat'], '选择GNSS数据文件'); %文件选择对话框
 % if file==0 %取消选择,file返回0,path返回0
 %     disp('Invalid file!');
@@ -27,12 +27,12 @@ p0 = [45.730952, 126.624970, 212]; %初始位置,不用特别精确
 
 %% 获取接收机初始时间
 tf = sscanf(data_file((end-22):(end-8)), '%4d%02d%02d_%02d%02d%02d')'; %数据文件开始采样时间(日期时间向量)
-tg = utc2gps(tf, 8); %UTC时间转化为GPS时间
+tg = UTC2GPS(tf, 8); %UTC时间转化为GPS时间
 ta = [tg(2),0,0] + sample2dt(sampleOffset, sampleFreq); %接收机初始时间,[s,ms,us]
 ta = timeCarry(round(ta,2)); %进位,微秒保留2位小数
 
 %% 获取历书
-almanac_file = GPS.almanac.download('~temp\almanac', utc2gps(tf,8)); %下载历书
+almanac_file = GPS.almanac.download('~temp\almanac', tg); %下载历书
 almanac = GPS.almanac.read(almanac_file); %读历书
 
 %% 接收机配置(*)
@@ -49,17 +49,16 @@ receiver_conf.svList = [10,15,20,24]; %跟踪卫星列表
 receiver_conf.acqTime = 2; %捕获所用的数据长度,ms
 receiver_conf.acqThreshold = 1.4; %捕获阈值,最高峰与第二大峰的比值
 receiver_conf.acqFreqMax = 5e3; %最大搜索频率,Hz
+receiver_conf.dtpos = 10; %定位时间间隔,ms
 
 %% 创建接收机对象
 nCoV = GL1CA_S(receiver_conf);
 
 %% (预置星历)
 % 不是必要的操作,只是可以提前进行定位
-ephemeris_file = ['~temp\ephemeris\',data_file((end-22):(end-8)),'.mat']; %预存的星历文件
-if ~exist(ephemeris_file, 'file') %如果不存在就创建一个
-    ephemeris = []; %变量名为ephemeris,是个结构体
-    save(ephemeris_file, 'ephemeris')
-end
+% 星历文件可以不存在,调用时会自动创建
+% 注释掉这段时同时要注释掉后面的保存星历
+ephemeris_file = ['~temp\ephemeris\',data_file((end-22):(end-8)),'.mat']; %文件名
 nCoV.set_ephemeris(ephemeris_file);
 
 %% 打开文件,创建进度条

@@ -1,0 +1,26 @@
+%----下载GPS历书,并读取
+filename = GPS.almanac.download('~temp\almanac', UTC2GPS([2020,2,23,15,0,0],8));
+almanac = GPS.almanac.read(filename);
+
+%----下载GPS星历,并读取
+filename = GPS.ephemeris.download('~temp\ephemeris', '2020-02-22');
+ephe = RINEX.read_N2(filename);
+
+%----下载BDS星历,并读取
+filename = BDS.ephemeris.download('~temp\ephemeris', '2020-02-22');
+ephe = RINEX.read_B303(filename);
+
+%----显示GPS星座图
+ax = GPS.constellation('~temp\almanac', [2020,2,23,11,50,0], 8, [42.27452,123.85232,105]);
+
+%----显示BDS星座图
+ax = BDS.constellation('~temp\ephemeris', [2020,2,23,11,50,0], 8, [42.27452,123.85232,105]);
+
+%----同时显示GPS,BDS星座图
+c = [2020,2,23,11,50,0];
+p = [42.27452,123.85232,105];
+ax = GPS.constellation('~temp\almanac', c, 8, p);
+ax = BDS.constellation('~temp\ephemeris', c, 8, p, ax);
+
+%----显示未来一段时间GPS卫星轨迹
+GPS.visibility('~temp\almanac', [2020,2,23,11,50,0], 8, [42.27452,123.85232,105], 1)
