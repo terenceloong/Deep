@@ -5,6 +5,10 @@ function result = aziele_almanac(almanac, t, p)
 % p:[lat,lon,h],deg,接收机位置
 % result:[azi,ele],deg
 
+if size(almanac,2)~=8
+    error('Almanac error!')
+end
+
 % 地球参数(计算方位角高度角不用太精确,用啥都行)
 %----GPS文档中给出的
 % miu = 3.986005e14;
@@ -19,12 +23,7 @@ rp = lla2ecef(p)'; %接收机ecef坐标
 
 % 观测历元与参考历元的时间差
 toe = almanac(1,1);
-dt = t - toe;
-if dt>302400
-    dt = dt-604800;
-elseif dt<-302400
-    dt = dt+604800;
-end
+dt = roundWeek(t-toe);
 
 % 计算
 N = size(almanac,1); %卫星个数
@@ -45,8 +44,8 @@ for k=1:N
     yp = r*sin(phi);
     i = almanac(k,8);
     Omega = almanac(k,6) + (almanac(k,7)-w)*dt - w*toe;
-    rs = [xp*cos(Omega)-yp*cos(i)*sin(Omega);
-          xp*sin(Omega)+yp*cos(i)*cos(Omega);
+    rs = [xp*cos(Omega) - yp*cos(i)*sin(Omega);
+          xp*sin(Omega) + yp*cos(i)*cos(Omega);
           yp*sin(i)]; %卫星ecef坐标
     %----计算相对位置
     rps = rs-rp; %接收机指向卫星的位置矢量,ecef

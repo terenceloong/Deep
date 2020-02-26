@@ -5,6 +5,10 @@ function result = aziele_ephemeris(ephemeris, t, p)
 % p:[lat,lon,h],deg,接收机位置
 % result:[azi,ele],deg
 
+if size(ephemeris,2)~=16
+    error('Ephemeris error!')
+end
+
 % 地球参数(计算方位角高度角不用太精确,用啥都行)
 %----GPS文档中给出的
 % miu = 3.986005e14;
@@ -19,12 +23,7 @@ rp = lla2ecef(p)'; %接收机ecef坐标
 
 % 观测历元与参考历元的时间差
 toe = ephemeris(1,1);
-dt = t - toe;
-if dt>302400
-    dt = dt-604800;
-elseif dt<-302400
-    dt = dt+604800;
-end
+dt = roundWeek(t-toe);
 
 % 计算
 N = size(ephemeris,1); %卫星个数
@@ -52,13 +51,13 @@ for k=1:N
     i = ephemeris(k,9) + ephemeris(k,10)*dt + di;
     if i>0.3 %MEO/IGSO
         Omega = ephemeris(k,7) + (ephemeris(k,8)-w)*dt - w*toe;
-        rs = [xp*cos(Omega)-yp*cos(i)*sin(Omega);
-              xp*sin(Omega)+yp*cos(i)*cos(Omega);
+        rs = [xp*cos(Omega) - yp*cos(i)*sin(Omega);
+              xp*sin(Omega) + yp*cos(i)*cos(Omega);
               yp*sin(i)]; %卫星ecef坐标
     else %GEO
         Omega = ephemeris(k,7) + ephemeris(k,8)*dt - w*toe;
-        rs = [xp*cos(Omega)-yp*cos(i)*sin(Omega);
-              xp*sin(Omega)+yp*cos(i)*cos(Omega);
+        rs = [xp*cos(Omega) - yp*cos(i)*sin(Omega);
+              xp*sin(Omega) + yp*cos(i)*cos(Omega);
               yp*sin(i)]; %卫星在自定义坐标系中的坐标
         psi = -5/180*pi;
         Rx = [1,0,0; 0,cos(psi),sin(psi); 0,-sin(psi),cos(psi)];

@@ -87,7 +87,7 @@ for k=0:4
                 beta1 = twosComp2dec(subframe(121:128)) * 2^(14);
                 beta2 = twosComp2dec(subframe(129:136)) * 2^(16);
                 beta3 = twosComp2dec(subframe(137:144)) * 2^(16);
-                iono = [alpha0;alpha1;alpha2;alpha3;beta0;beta1;beta2;beta3];
+                iono = [alpha0,alpha1,alpha2,alpha3,beta0,beta1,beta2,beta3];
             end
             subframeTable(4) = 1;
         case 5
@@ -102,7 +102,7 @@ if sum(subframeTable)~=5
 	return
 end
 
-ephe = zeros(25,1);
+ephe = zeros(1,25);
 ephe(1)  = week;
 ephe(2)  = TOW;
 ephe(3)  = IODC;

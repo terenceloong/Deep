@@ -62,7 +62,7 @@ obj.carrMode = 1;
 obj.codeMode = 1;
 
 % 初始化伪码时间
-obj.ts0 = NaN;
+obj.tc0 = NaN;
 
 % 初始化电文解析参数
 obj.msgStage = 'I';

@@ -21,11 +21,15 @@ classdef GL1CA_S < handle
         svList         %跟踪卫星列表
         chN            %跟踪通道数量
         channels       %跟踪通道
-        iono           %电离层校正参数
-        pos            %接收机位置,纬经高
+        state          %接收机状态
+        pos            %接收机位置,纬经高,deg
+        rp             %接收机位置,ecef
         vel            %接收机速度,北东地
+        iono           %电离层校正参数
         dtpos          %定位时间间隔,ms
         tp             %下次定位的时间,[s,ms,us]
+        ns             %指向当前存储行,初值是0,存储之前加1
+        storage        %存储接收机输出
     end
     
     methods
@@ -80,19 +84,29 @@ classdef GL1CA_S < handle
                 obj.channels(k) = GPS.L1CA.channel(obj.svList(k), channel_config);
             end
             obj.channels = obj.channels'; %转成列向量
-            %----设置接收机初始位置
-            obj.iono = NaN(8,1);
+            %----设置接收机状态
+            obj.state = 0;
             obj.pos = conf.p0;
+            obj.rp = lla2ecef(obj.pos);
             obj.vel = [0,0,0];
+            obj.iono = NaN(1,8);
             %----设置定位控制参数
             obj.dtpos = conf.dtpos;
             obj.tp = obj.ta + [2,0,0]; %当前接收机时间的2s后
             %----申请数据存储空间
+            obj.ns = 0;
+            row = floor(obj.Tms/obj.dtpos); %存储空间行数
+            obj.storage.ta     = zeros(row,1,'double');
+            obj.storage.state  = zeros(row,1,'uint8');
+            obj.storage.satnav = zeros(row,11,'double');
+            obj.storage.sat    = zeros(obj.chN,8,row,'double');
+            obj.storage.df     = zeros(row,1,'double');
         end
         
         %% 运行函数
         function run(obj, data)
             % data:采样数据,两行,分别为I/Q数据,原始数据类型
+            % 使用嵌套函数写,提高程序可读性,要保证只有obj是全局变量
             %----往数据缓存存数
             obj.buffI(:,obj.blockPoint) = data(1,:); %往数据缓存的指定块存数,不用加转置,自动变成列向量
             obj.buffQ(:,obj.blockPoint) = data(2,:);
@@ -101,12 +115,49 @@ classdef GL1CA_S < handle
             if obj.blockPoint>obj.blockNum
                 obj.blockPoint = 1;
             end
-            obj.tms = obj.tms + 1;
+            obj.tms = obj.tms + 1; %当前运行时间加1ms
             %----更新接收机时间
             fs = obj.sampleFreq * (1+obj.deltaFreq); %修正后的采样频率
             obj.ta = timeCarry(obj.ta + sample2dt(obj.blockSize, fs));
             %----捕获
             if mod(obj.tms,1000)==0 %1s搜索一次
+                acqProcess;
+            end
+            %----跟踪
+            trackProcess;
+            %----定位
+            dtp = (obj.ta-obj.tp) * [1;1e-3;1e-6]; %当前接收机时间与定位时间之差,s
+            if dtp>=0 %定位时间到了
+                % 获取卫星测量信息
+                sat = getSat(dtp, fs);
+                % 位置速度解算
+                sv = sat(~isnan(sat(:,1)),:); %选有数据的行
+                satnav = satnavSolve(sv, obj.rp);
+                if ~isnan(satnav(1))
+                    obj.pos = satnav(1:3);
+                    obj.rp = satnav(4:6);
+                    obj.vel = satnav(7:9);
+                end
+                % 接收机时钟修正
+                
+                % 数据存储
+                obj.ns = obj.ns+1; %指向当前存储行
+                m = obj.ns;
+                obj.storage.ta(m) = obj.tp * [1;1e-3;1e-6]; %定位时间,s
+                obj.storage.state(m) = obj.state;
+                obj.storage.satnav(m,:) = satnav;
+                obj.storage.sat(:,:,m) = sat;
+                obj.storage.df(m) = obj.deltaFreq;
+                % 接收机时钟初始化
+                if obj.state==0
+                    clockInit(satnav(10));
+                end
+                % 更新下次定位时间
+                obj.tp = timeCarry(obj.tp + [0,obj.dtpos,0]);
+            end
+            
+            %% 捕获过程
+            function acqProcess
                 for k=1:obj.chN
                     if obj.channels(k).state~=0 %如果通道已激活,跳过捕获
                         continue
@@ -118,40 +169,79 @@ classdef GL1CA_S < handle
                     end
                 end
             end
-            %----跟踪
-            for k=1:obj.chN
-                if obj.channels(k).state==0 %如果通道未激活,跳过跟踪
-                    continue
-                end
-                while 1
-                    % 判断是否有完整的跟踪数据
-                    if mod(obj.buffHead-obj.channels(k).trackDataHead,obj.buffSize)>(obj.buffSize/2)
-                        break
+            
+            %% 跟踪过程
+            function trackProcess
+                for k=1:obj.chN
+                    if obj.channels(k).state==0 %如果通道未激活,跳过跟踪
+                        continue
                     end
-                    % 信号处理
-                    n1 = obj.channels(k).trackDataTail;
-                    n2 = obj.channels(k).trackDataHead;
-                    if n2>n1
-                        obj.channels(k).track(obj.buffI(n1:n2), obj.buffQ(n1:n2), obj.deltaFreq);
-                    else
-                        obj.channels(k).track([obj.buffI(n1:end),obj.buffI(1:n2)], ...
-                                              [obj.buffQ(n1:end),obj.buffQ(1:n2)], obj.deltaFreq);
-                    end
-                    % 解析导航电文
-                    iono0 = obj.channels(k).parse;
-                    % 提取电离层校正参数
-                    if ~isempty(iono0)
-                        obj.iono = iono0;
+                    while 1
+                        %----判断是否有完整的跟踪数据
+                        if mod(obj.buffHead-obj.channels(k).trackDataHead,obj.buffSize)>(obj.buffSize/2)
+                            break
+                        end
+                        %----信号处理
+                        n1 = obj.channels(k).trackDataTail;
+                        n2 = obj.channels(k).trackDataHead;
+                        if n2>n1
+                            obj.channels(k).track(obj.buffI(n1:n2), obj.buffQ(n1:n2), obj.deltaFreq);
+                        else
+                            obj.channels(k).track([obj.buffI(n1:end),obj.buffI(1:n2)], ...
+                                                  [obj.buffQ(n1:end),obj.buffQ(1:n2)], obj.deltaFreq);
+                        end
+                        %----解析导航电文
+                        ionoflag = obj.channels(k).parse;
+                        %----提取电离层校正参数
+                        if ionoflag==1
+                            obj.iono = obj.channels(k).iono;
+                        end
                     end
                 end
             end
-            %----定位
-            dtp = (obj.ta-obj.tp) * [1;1e-3;1e-6]; %当前接收机时间与定位时间之差,s
-            if dtp>=0 %定位时间到了
-                
-                % 更新下次定位时间
-                obj.tp = timeCarry(obj.tp + [0,obj.dtpos,0]);
+            
+            %% 获取卫星测量
+            function sat = getSat(dtp, fs)
+                % dtp:当前采样点到定位点的时间差,s,dtp=ta-tp
+                % fs:接收机钟频差校正后的采样频率,Hz
+                % sat:[x,y,z,vx,vy,vz,rho,rhodot]
+                sat = NaN(obj.chN,8);
+                for k=1:obj.chN
+                    if obj.channels(k).state==2 %只要跟踪上的通道都能测,这里不用管信号质量,选星额外来做
+                        %----计算定位点所接到码的发射时间
+                        dn = mod(obj.buffHead-obj.channels(k).trackDataTail+1, obj.buffSize) - 1; %恰好超前一个采样点时dn=-1
+                        dtc = dn / fs; %当前采样点到跟踪点的时间差,dtc=ta-tc
+                        dt = dtc - dtp; %定位点到跟踪点的时间差,dtc-dtp=(ta-tc)-(ta-tp)=tp-tc=dt
+                        codePhase = obj.channels(k).remCodePhase + obj.channels(k).codeNco*dt; %定位点码相位
+                        te = [floor(obj.channels(k).tc0/1e3), mod(obj.channels(k).tc0,1e3), 0] + ...
+                              [0, floor(codePhase/1023), mod(codePhase/1023,1)*1e3]; %定位点码发射时间
+                        %----计算信号发射时刻卫星位置速度
+                        [sat(k,1:6), corr] =LNAV.rsvs_emit(obj.channels(k).ephe(5:end), te, obj.rp, obj.iono, obj.pos);
+                        %----计算伪距伪距率
+                        tt = (obj.tp-te) * [1;1e-3;1e-6]; %信号传播时间,s
+                        doppler = obj.channels(k).carrFreq/1575.42e6 + obj.deltaFreq; %归一化,接收机钟快使多普勒变小(发生在下变频)
+                        sat(k,7:8) = satmeasCorr(tt, doppler, corr);
+                    end
+                end
             end
+            
+            %% 接收机时钟初始化
+            function clockInit(dtr)
+                % dtr:卫星导航解算得到的钟差,s
+                if isnan(dtr) %没有钟差直接退出
+                    return
+                end
+                if abs(dtr)>0.1e-3 %钟差大于0.1ms,修正接收机时间
+                    obj.ta = obj.ta - sec2smu(dtr);
+                    obj.ta = timeCarry(obj.ta);
+                    obj.tp(1) = obj.ta(1); %更新下次定位时间
+                    obj.tp(2) = ceil(obj.ta(2)/obj.dtpos) * obj.dtpos;
+                    obj.tp = timeCarry(obj.tp);
+                else %钟差小于0.1ms，初始化结束
+                    obj.state = 1;
+                end
+            end
+            
         end
         
         %% 预设星历
@@ -162,13 +252,13 @@ classdef GL1CA_S < handle
             end
             load(filename, 'ephemeris') %加载预存的星历
             if ~isfield(ephemeris, 'GPS_ephe') %如果星历中不存在GPS星历,创建空GPS星历
-                ephemeris.GPS_ephe = NaN(25,32);
-                ephemeris.GPS_iono = NaN(8,1);
+                ephemeris.GPS_ephe = NaN(32,25);
+                ephemeris.GPS_iono = NaN(1,8);
                 save(filename, 'ephemeris') %保存到文件中
             end
             obj.iono = ephemeris.GPS_iono; %提取电离层校正参数
             for k=1:obj.chN %为每个通道赋星历
-                obj.channels(k).ephe = ephemeris.GPS_ephe(:,obj.channels(k).PRN);
+                obj.channels(k).ephe = ephemeris.GPS_ephe(obj.channels(k).PRN,:);
             end
         end
         
@@ -178,7 +268,7 @@ classdef GL1CA_S < handle
             ephemeris.GPS_iono = obj.iono; %保存电离层校正参数
             for k=1:obj.chN %提取有星历通道的星历
                 if ~isnan(obj.channels(k).ephe(1))
-                    ephemeris.GPS_ephe(:,obj.channels(k).PRN) = obj.channels(k).ephe;
+                    ephemeris.GPS_ephe(obj.channels(k).PRN,:) = obj.channels(k).ephe;
                 end
             end
             save(filename, 'ephemeris') %保存到文件中
@@ -186,8 +276,32 @@ classdef GL1CA_S < handle
         
         %% 清理数据储存
         function clean_storage(obj)
+            % 清理通道内多余的存储空间
             for k=1:obj.chN
                 obj.channels(k).clean_storage;
+            end
+            % 清理多余的接收机输出存储空间
+            n = obj.ns + 1;
+            obj.storage.ta(n:end)       = [];
+            obj.storage.state(n:end)    = [];
+            obj.storage.satnav(n:end,:) = [];
+            obj.storage.sat(:,:,n:end)  = [];
+            obj.storage.df(n:end)       = [];
+            % 删除接收机未初始化时的数据
+            index = find(obj.storage.state==0);
+            obj.storage.ta(index)       = [];
+            obj.storage.state(index)    = [];
+            obj.storage.satnav(index,:) = [];
+            obj.storage.sat(:,:,index)  = [];
+            obj.storage.df(index)       = [];
+            % 整理卫星测量信息,元胞数组,每个通道一个矩阵
+            n = size(obj.storage.sat,3); %存储元素个数
+            if n>0
+                sat = cell(obj.chN,1);
+                for k=1:obj.chN
+                    sat{k} = reshape(obj.storage.sat(k,:,:),8,n)';
+                end
+                obj.storage.sat = sat;
             end
         end
         

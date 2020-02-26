@@ -69,35 +69,21 @@ obj.Q = Q_P;
 % 载波跟踪
 switch obj.carrMode
     case 0
-    case 1 %只运行一段时间的锁频环,结束后自动进入锁相环
-        obj.FLL.Int = obj.FLL.Int + obj.FLL.K*freqError;
-        obj.carrNco = obj.FLL.Int;
-        obj.carrFreq = obj.FLL.Int;
-        obj.FLL.cnt = obj.FLL.cnt + 1; %计数
-        if obj.FLL.cnt==200
-            obj.FLL.cnt = 0;
-            obj.PLL.Int = obj.FLL.Int; %锁相环积分器初值
-            obj.carrMode = 2; %转到锁相环
-            log_str = sprintf('Start PLL tracking at %.8fs', obj.dataIndex/obj.sampleFreq);
-            obj.log = [obj.log; string(log_str)];
-        end
+    case 1 %频率牵引
+        freqPull(freqError);
     case 2 %锁相环
-        obj.PLL.Int = obj.PLL.Int + obj.PLL.K2*carrError;
-        obj.carrNco = obj.PLL.Int + obj.PLL.K1*carrError;
-        obj.carrFreq = obj.PLL.Int;
+        order2PLL(carrError);
 end
 
 % 码跟踪
 switch obj.codeMode
     case 0
     case 1 %延迟锁定环
-        obj.DLL.Int = obj.DLL.Int + obj.DLL.K2*codeError;
-        obj.codeNco = obj.DLL.Int + obj.DLL.K1*codeError;
-        obj.codeFreq = obj.DLL.Int;
+        order2DLL(codeError);
 end
 
 % 更新伪码时间
-obj.ts0 = obj.ts0 + obj.timeIntMs;
+obj.tc0 = obj.tc0 + obj.timeIntMs;
 
 % 更新下一数据块位置
 obj.trackDataTail = obj.trackDataHead + 1;
@@ -113,5 +99,35 @@ end
 % 存储跟踪结果(本次跟踪产生的数据)
 obj.storage.I_Q(n,:) = [I_P, I_E, I_L, Q_P, Q_E, Q_L];
 obj.storage.disc(n,:) = [codeError, carrError, freqError];
+
+    %% 频率牵引
+    function freqPull(freqError)
+        % 运行一段时间锁频环,到时间后自动进入锁相环
+        obj.FLL.Int = obj.FLL.Int + obj.FLL.K*freqError;
+        obj.carrNco = obj.FLL.Int;
+        obj.carrFreq = obj.FLL.Int;
+        obj.FLL.cnt = obj.FLL.cnt + 1; %计数
+        if obj.FLL.cnt==200
+            obj.FLL.cnt = 0;
+            obj.PLL.Int = obj.FLL.Int; %锁相环积分器初值
+            obj.carrMode = 2; %转到锁相环
+            log_str = sprintf('Start PLL tracking at %.8fs', obj.dataIndex/obj.sampleFreq);
+            obj.log = [obj.log; string(log_str)];
+        end
+    end
+
+    %% 二阶锁相环
+    function order2PLL(carrError)
+        obj.PLL.Int = obj.PLL.Int + obj.PLL.K2*carrError;
+        obj.carrNco = obj.PLL.Int + obj.PLL.K1*carrError;
+        obj.carrFreq = obj.PLL.Int;
+    end
+
+    %% 二阶延迟锁定换
+    function order2DLL(codeError)
+        obj.DLL.Int = obj.DLL.Int + obj.DLL.K2*codeError;
+        obj.codeNco = obj.DLL.Int + obj.DLL.K1*codeError;
+        obj.codeFreq = obj.DLL.Int;
+    end
 
 end

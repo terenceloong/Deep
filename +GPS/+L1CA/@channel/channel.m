@@ -6,7 +6,7 @@ classdef channel < handle
         buffSize        %数据缓存总采样点数
         PRN             %卫星编号
         CAcode          %一个周期的C/A码
-        state           %通道状态
+        state           %通道状态,0:未激活,1;已激活但没有星历,2:可以进行伪距伪距率测量
         acqN            %捕获采样点数
         acqThreshold    %捕获阈值,最高峰与第二大峰的比值
         acqFreq         %搜索频率范围
@@ -34,7 +34,7 @@ classdef channel < handle
         DLL             %延迟锁定环
         carrMode        %载波跟踪模式
         codeMode        %码跟踪模式
-        ts0             %下一伪码周期的开始时间,ms
+        tc0             %下一伪码周期的开始时间,ms
         msgStage        %电文解析阶段(字符)
         msgCnt          %电文解析计数器
         I0              %上次I路积分值(用于比特同步)
@@ -73,18 +73,19 @@ classdef channel < handle
             index = mod(floor((0:obj.acqN-1)*1.023e6/obj.sampleFreq),1023) + 1; %C/A码采样的索引
             obj.CODE = fft(obj.CAcode(index));
             %---申请星历空间
-            obj.ephe = NaN(25,1);
-            obj.iono = NaN(8,1);
+            obj.ephe = NaN(1,25);
+            obj.iono = NaN(1,8);
             %----申请数据存储空间
             obj.ns = 0;
-            obj.storage.dataIndex    = NaN(conf.Tms,1,'double'); %使用预设NaN存数据,方便通道断开时数据显示有中断
-            obj.storage.remCodePhase = NaN(conf.Tms,1,'single');
-            obj.storage.codeFreq     = NaN(conf.Tms,1,'double');
-            obj.storage.remCarrPhase = NaN(conf.Tms,1,'single');
-            obj.storage.carrFreq     = NaN(conf.Tms,1,'double');
-            obj.storage.I_Q          = zeros(conf.Tms,6,'int32');
-            obj.storage.disc         = NaN(conf.Tms,3,'single');
-            obj.storage.bitFlag      = zeros(conf.Tms,1,'uint8'); %导航电文比特开始标志
+            row = conf.Tms; %存储空间行数
+            obj.storage.dataIndex    =   NaN(row,1,'double'); %使用预设NaN存数据,方便通道断开时数据显示有中断
+            obj.storage.remCodePhase =   NaN(row,1,'single');
+            obj.storage.codeFreq     =   NaN(row,1,'double');
+            obj.storage.remCarrPhase =   NaN(row,1,'single');
+            obj.storage.carrFreq     =   NaN(row,1,'double');
+            obj.storage.I_Q          = zeros(row,6,'int32');
+            obj.storage.disc         =   NaN(row,3,'single');
+            obj.storage.bitFlag      = zeros(row,1,'uint8'); %导航电文比特开始标志
         end
         
         %% 清理数据储存
