@@ -1,11 +1,11 @@
-function [rsvs, corr] = rsvs_emit(ephe, te0, rp, iono, lla)
-% 计算卫星在信号发射时刻的位置速度,计算伪距伪距率校正量
+function [rsvsas, corr] = rsvsas_emit(ephe, te0, rp, iono, lla)
+% 计算卫星在信号发射时刻的位置速度加速度,计算伪距伪距率校正量
 % ephe:星历,21参数(5+16)
 % te0:信号名义发射时间,[s,ms,us]
 % rp:接收机ecef位置(大致),用于计算Sagnac校正
 % iono:电离层校正参数,NaN表示无效
 % lla:接收机纬经高,与rp对应,deg
-% rsvs:卫星ecef位置速度,[x,y,z,vx,vy,vz]
+% rsvsas:卫星ecef位置速度加速度,[x,y,z,vx,vy,vz,ax,ay,az]
 % corr:伪距伪距率校正量,结构体
 
 if length(ephe)~=21
@@ -32,11 +32,11 @@ dfsv = af1 + 2*af2*dt; %卫星钟频差,s/s
 % 信号实际发射时间(钟快了往下减)
 te = te0(3)/1e6 - dtsv + te0(2)/1e3 + te0(1); %s
 
-% 计算卫星位置速度
-[rsvs, dtrel] = LNAV.rsvs_ephe(ephe(6:end), te);
+% 计算卫星位置速度加速度
+[rsvsas, dtrel] = LNAV.rsvsas_ephe(ephe(6:end), te);
 
 % 计算Saganc效应校正项
-rs = rsvs(1:3);
+rs = rsvsas(1:3);
 dtsagnac = (rs(1)*rp(2)-rs(2)*rp(1))*w/c^2;
 
 % 计算相对论效应引起的卫星钟频差

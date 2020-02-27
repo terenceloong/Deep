@@ -5,21 +5,21 @@ clc
 fclose('all'); %关闭之前打开的所有文件
 
 %% 选择GNSS数据文件
-% default_path = fileread('~temp\path_data.txt'); %数据文件所在默认路径
-% [file, path] = uigetfile([default_path,'\*.dat'], '选择GNSS数据文件'); %文件选择对话框
-% if file==0 %取消选择,file返回0,path返回0
-%     disp('Invalid file!');
-%     return
-% end
-% if strcmp(file(1:4),'B210')==0
-%     error('File error!');
-% end
-% data_file = [path, file]; %数据文件完整路径,path最后带\
+default_path = fileread('~temp\path_data.txt'); %数据文件所在默认路径
+[file, path] = uigetfile([default_path,'\*.dat'], '选择GNSS数据文件'); %文件选择对话框
+if file==0 %取消选择,file返回0,path返回0
+    disp('Invalid file!');
+    return
+end
+if strcmp(file(1:4),'B210')==0
+    error('File error!');
+end
+data_file = [path, file]; %数据文件完整路径,path最后带\
 
-data_file = 'C:\Users\longt\Desktop\B210_20190823_194010_ch1.dat'; %指定文件,用于测试
+% data_file = 'C:\Users\longt\Desktop\B210_20190823_194010_ch1.dat'; %指定文件,用于测试
 
 %% 主机参数(*)
-msToProcess = 10*1000; %处理总时间
+msToProcess = 60*1000; %处理总时间
 sampleOffset = 0*4e6; %抛弃前多少个采样点
 sampleFreq = 4e6; %接收机采样频率
 blockSize = sampleFreq*0.001; %一个缓存块(1ms)的采样点数
@@ -45,7 +45,7 @@ receiver_conf.ta = ta; %接收机初始时间,[s,ms,us]
 receiver_conf.p0 = p0; %初始位置,纬经高
 receiver_conf.almanac = almanac; %历书
 receiver_conf.eleMask = 10; %高度角阈值
-receiver_conf.svList = [10,15,20,24]; %跟踪卫星列表[10,15,20,24]
+receiver_conf.svList = []; %跟踪卫星列表[10,15,20,24]
 receiver_conf.acqTime = 2; %捕获所用的数据长度,ms
 receiver_conf.acqThreshold = 1.4; %捕获阈值,最高峰与第二大峰的比值
 receiver_conf.acqFreqMax = 5e3; %最大搜索频率,Hz
@@ -100,6 +100,6 @@ nCoV.print_log;
 nCoV.plot_constellation;
 
 %% (其他)
-% GPS.visibility(almanac_path, tf, 8, p0, 1); %显示当前可见卫星
+% GPS.visibility('~temp\almanac', tf, 8, p0, 1); %显示当前可见卫星
 
 %% 保存结果

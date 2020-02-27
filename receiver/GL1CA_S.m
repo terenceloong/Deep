@@ -205,6 +205,7 @@ classdef GL1CA_S < handle
                 % dtp:当前采样点到定位点的时间差,s,dtp=ta-tp
                 % fs:接收机钟频差校正后的采样频率,Hz
                 % sat:[x,y,z,vx,vy,vz,rho,rhodot]
+                lamda = 0.190293672798365; %载波波长,m,299792458/1575.42e6
                 sat = NaN(obj.chN,8);
                 for k=1:obj.chN
                     if obj.channels(k).state==2 %只要跟踪上的通道都能测,这里不用管信号质量,选星额外来做
@@ -216,7 +217,18 @@ classdef GL1CA_S < handle
                         te = [floor(obj.channels(k).tc0/1e3), mod(obj.channels(k).tc0,1e3), 0] + ...
                               [0, floor(codePhase/1023), mod(codePhase/1023,1)*1e3]; %定位点码发射时间
                         %----计算信号发射时刻卫星位置速度
-                        [sat(k,1:6), corr] =LNAV.rsvs_emit(obj.channels(k).ephe(5:end), te, obj.rp, obj.iono, obj.pos);
+                        % [sat(k,1:6), corr] =LNAV.rsvs_emit(obj.channels(k).ephe(5:end), te, obj.rp, obj.iono, obj.pos);
+                        %----计算信号发射时刻卫星位置速度加速度
+                        [rsvsas, corr] =LNAV.rsvsas_emit(obj.channels(k).ephe(5:end), te, obj.rp, obj.iono, obj.pos);
+                        sat(k,1:6) = rsvsas(1:6);
+                        %----计算卫星运动引起的载波频率变化率(短时间近似不变,使用上一时刻的位置计算就行,视线矢量差别不大)
+                        rs = rsvsas(1:3); %卫星位置矢量
+                        vs = rsvsas(4:6); %卫星速度矢量
+                        as = rsvsas(7:9); %卫星加速度矢量
+                        rps = rs - obj.rp; %接收机指向卫星位置矢量
+                        R = norm(rps); %接收机到卫星的距离
+                        carrAcc = -(as*rps'+vs*vs'-(vs*rps'/R)^2)/R / lamda; %载波频率变化率,Hz/s
+                        obj.channels(k).set_carrAcc(carrAcc); %设置跟踪通道载波频率变化率
                         %----计算伪距伪距率
                         tt = (obj.tp-te) * [1;1e-3;1e-6]; %信号传播时间,s
                         doppler = obj.channels(k).carrFreq/1575.42e6 + obj.deltaFreq; %归一化,接收机钟快使多普勒变小(发生在下变频)
@@ -351,6 +363,9 @@ classdef GL1CA_S < handle
                 % 载波频率
                 plot(ax4, t, obj.channels(k).storage.carrFreq, 'LineWidth',1.5)
                 set(ax4, 'XLim',[1,obj.Tms/1000])
+                % 载波频率变化率
+                plot(ax5, t, obj.channels(k).storage.carrAcc, 'LineWidth',1.5)
+                set(ax5, 'XLim',[1,obj.Tms/1000])
             end
         end
         

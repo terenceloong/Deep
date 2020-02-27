@@ -23,7 +23,7 @@ rp = lla2ecef(p)'; %接收机ecef坐标
 
 % 观测历元与参考历元的时间差
 toe = ephemeris(1,1);
-dt = roundWeek(t-toe);
+dt = mod(t-toe+302400,604800)-302400; %限制在±302400
 
 % 计算
 N = size(ephemeris,1); %卫星个数

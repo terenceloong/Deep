@@ -21,6 +21,7 @@ classdef channel < handle
         trackBlockSize  %跟踪数据段采样点个数
         trackDataHead   %跟踪结束点在数据缓存中的位置
         dataIndex       %跟踪开始点在文件中的位置
+        carrAcc         %载波频率变化率
         carrNco         %载波发生器驱动频率
         codeNco         %码发生器驱动频率
         remCarrPhase    %跟踪开始点的载波相位
@@ -29,9 +30,9 @@ classdef channel < handle
         codeFreq        %测量的码频率
         I               %I路积分值
         Q               %Q路积分值
-        FLL             %锁频环
-        PLL             %锁相环
-        DLL             %延迟锁定环
+        FLLp            %频率牵引锁频环
+        PLL2             %二阶锁相环
+        DLL2            %二阶延迟锁定环
         carrMode        %载波跟踪模式
         codeMode        %码跟踪模式
         tc0             %下一伪码周期的开始时间,ms
@@ -83,6 +84,7 @@ classdef channel < handle
             obj.storage.codeFreq     =   NaN(row,1,'double');
             obj.storage.remCarrPhase =   NaN(row,1,'single');
             obj.storage.carrFreq     =   NaN(row,1,'double');
+            obj.storage.carrAcc      =   NaN(row,1,'single');
             obj.storage.I_Q          = zeros(row,6,'int32');
             obj.storage.disc         =   NaN(row,3,'single');
             obj.storage.bitFlag      = zeros(row,1,'uint8'); %导航电文比特开始标志
@@ -96,9 +98,15 @@ classdef channel < handle
             obj.storage.codeFreq(n:end)     = [];
             obj.storage.remCarrPhase(n:end) = [];
             obj.storage.carrFreq(n:end)     = [];
+            obj.storage.carrAcc(n:end)      = [];
             obj.storage.I_Q(n:end,:)        = [];
             obj.storage.disc(n:end,:)       = [];
             obj.storage.bitFlag(n:end)      = [];
+        end
+        
+        %% 设置载波频率变化率
+        function set_carrAcc(obj, x)
+            obj.carrAcc = x;
         end
         
     end %end methods

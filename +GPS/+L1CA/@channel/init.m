@@ -29,6 +29,7 @@ obj.trackDataHead = obj.trackDataTail + obj.trackBlockSize - 1;
 obj.dataIndex = obj.trackDataTail + n;
 
 % 初始化本地信号发生器
+obj.carrAcc = 0;
 obj.carrNco = acqResult(2);
 obj.codeNco = 1.023e6 + obj.carrNco/1540;
 obj.remCarrPhase = 0;
@@ -40,22 +41,21 @@ obj.codeFreq = obj.codeNco;
 obj.I = 1;
 obj.Q = 1;
 
-% 初始化FLL
-obj.FLL.K = 40*obj.timeIntS;
-obj.FLL.Int = obj.carrNco; %积分器初值
-obj.FLL.cnt = 0;
+% 初始化FLLp
+K = 40 * obj.timeIntS;
+Int = obj.carrNco; %积分器
+cnt = 0; %计数器
+obj.FLLp = [K, Int, cnt];
 
-% 初始化PLL
+% 初始化PLL2
 [K1, K2] = order2LoopCoefD(25, 0.707, obj.timeIntS);
-obj.PLL.K1 = K1;
-obj.PLL.K2 = K2;
-obj.PLL.Int = 0; %FLL完成后赋值
+Int = 0; %积分器
+obj.PLL2 = [K1, K2, Int];
 
-% 初始化DLL
+% 初始化DLL2
 [K1, K2] = order2LoopCoefD(2, 0.707, obj.timeIntS);
-obj.DLL.K1 = K1;
-obj.DLL.K2 = K2;
-obj.DLL.Int = obj.codeNco; %积分器初值
+Int = obj.codeNco; %积分器
+obj.DLL2 = [K1, K2, Int];
 
 % 初始化跟踪模式
 obj.carrMode = 1;
