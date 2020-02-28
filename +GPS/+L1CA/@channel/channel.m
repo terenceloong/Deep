@@ -2,6 +2,7 @@ classdef channel < handle
 % GPS L1 C/A信号跟踪通道
     
     properties (GetAccess = public, SetAccess = private)
+        Tms             %总运行时间,ms
         sampleFreq      %标称采样频率,Hz
         buffSize        %数据缓存总采样点数
         PRN             %卫星编号
@@ -43,15 +44,11 @@ classdef channel < handle
         bitBuff         %比特缓存
         frameBuff       %帧缓存
         frameBuffPoint  %帧缓存指针
+        ephe            %星历
         iono            %电离层校正参数
         log             %日志
         ns              %指向当前存储行,初值是0,刚开始运行track时加1
         storage         %存储跟踪结果
-    end
-    
-    % 星历可以在外部赋值
-    properties (GetAccess = public, SetAccess = public)
-        ephe            %星历
     end
     
     methods
@@ -60,6 +57,7 @@ classdef channel < handle
             % PRN:卫星编号
             % conf:通道配置结构体
             %----设置不会变的参数
+            obj.Tms = conf.Tms;
             obj.sampleFreq = conf.sampleFreq;
             obj.buffSize = conf.buffSize;
             obj.PRN = PRN;
@@ -78,7 +76,7 @@ classdef channel < handle
             obj.iono = NaN(1,8);
             %----申请数据存储空间
             obj.ns = 0;
-            row = conf.Tms; %存储空间行数
+            row = obj.Tms; %存储空间行数
             obj.storage.dataIndex    =   NaN(row,1,'double'); %使用预设NaN存数据,方便通道断开时数据显示有中断
             obj.storage.remCodePhase =   NaN(row,1,'single');
             obj.storage.codeFreq     =   NaN(row,1,'double');
@@ -90,23 +88,36 @@ classdef channel < handle
             obj.storage.bitFlag      = zeros(row,1,'uint8'); %导航电文比特开始标志
         end
         
-        %% 清理数据储存
+        %% 清理数据存储
         function clean_storage(obj)
+            % 自动识别所有场,参见help-Generate Field Names from Variables
+            fields = fieldnames(obj.storage); %获取所有场名,元胞数组
             n = obj.ns + 1;
-            obj.storage.dataIndex(n:end)    = [];
-            obj.storage.remCodePhase(n:end) = [];
-            obj.storage.codeFreq(n:end)     = [];
-            obj.storage.remCarrPhase(n:end) = [];
-            obj.storage.carrFreq(n:end)     = [];
-            obj.storage.carrAcc(n:end)      = [];
-            obj.storage.I_Q(n:end,:)        = [];
-            obj.storage.disc(n:end,:)       = [];
-            obj.storage.bitFlag(n:end)      = [];
+            for k=1:length(fields)
+                obj.storage.(fields{k})(n:end,:) = [];
+            end
+        end
+        
+        %% 打印日志
+        function print_log(obj)
+            fprintf('PRN %d\n', obj.PRN); %卫星编号,使用\r\n会多一个空行
+            n = length(obj.log); %通道日志行数
+            if n>0 %如果日志有内容,逐行打印
+                for m=1:n
+                    disp(obj.log(m));
+                end
+            end
+            disp(' '); %结尾加一个空行
+        end
+        
+        %% 设置星历
+        function set_ephe(obj, ephe)
+            obj.ephe = ephe;
         end
         
         %% 设置载波频率变化率
-        function set_carrAcc(obj, x)
-            obj.carrAcc = x;
+        function set_carrAcc(obj, carrAcc)
+            obj.carrAcc = carrAcc;
         end
         
     end %end methods

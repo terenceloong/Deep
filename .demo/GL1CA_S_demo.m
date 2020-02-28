@@ -5,18 +5,18 @@ clc
 fclose('all'); %关闭之前打开的所有文件
 
 %% 选择GNSS数据文件
-default_path = fileread('~temp\path_data.txt'); %数据文件所在默认路径
-[file, path] = uigetfile([default_path,'\*.dat'], '选择GNSS数据文件'); %文件选择对话框
-if file==0 %取消选择,file返回0,path返回0
-    disp('Invalid file!');
-    return
-end
-if strcmp(file(1:4),'B210')==0
-    error('File error!');
-end
-data_file = [path, file]; %数据文件完整路径,path最后带\
+% default_path = fileread('~temp\path_data.txt'); %数据文件所在默认路径
+% [file, path] = uigetfile([default_path,'\*.dat'], '选择GNSS数据文件'); %文件选择对话框
+% if file==0 %取消选择,file返回0,path返回0
+%     disp('Invalid file!');
+%     return
+% end
+% if strcmp(file(1:4),'B210')==0
+%     error('File error!');
+% end
+% data_file = [path, file]; %数据文件完整路径,path最后带\
 
-% data_file = 'C:\Users\longt\Desktop\B210_20190823_194010_ch1.dat'; %指定文件,用于测试
+data_file = 'C:\Users\longt\Desktop\B210_20190823_194010_ch1.dat'; %指定文件,用于测试
 
 %% 主机参数(*)
 msToProcess = 60*1000; %处理总时间
@@ -92,14 +92,12 @@ nCoV.save_ephemeris(ephemeris_file);
 %% 清除变量
 clearvars -except data_file receiver_conf nCoV almanac_path tf p0
 
-%% 打印通道日志
-nCoV.print_log;
-
-%% 显示跟踪结果
-% nCoV.show_trackResult;
-nCoV.plot_constellation;
+%% 画交互星座图
+nCoV.interact_constellation;
 
 %% (其他)
+% nCoV.print_all_log; %打印通道日志
+% nCoV.plot_all_trackResult; %显示跟踪结果
 % GPS.visibility('~temp\almanac', tf, 8, p0, 1); %显示当前可见卫星
 
 %% 保存结果
