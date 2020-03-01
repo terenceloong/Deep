@@ -1,6 +1,6 @@
 function [res_rho, res_rhodot] = residual_cal(satmeas, satnav)
-% 计算残差
-% satmeas:卫星测量,[x,y,z,vx,vy,vz,rho,rhodot]
+% 计算残差(多颗卫星)
+% satmeas:卫星测量,[x,y,z,vx,vy,vz,rho,rhodot],每行一颗卫星
 % satnav:卫星导航结果,[x,y,z,vx,vy,vz,dtr,dtv]
 % res_rho:伪距残差,测量减计算,列向量
 % res_rhodot:伪距率残差,测量减计算,列向量

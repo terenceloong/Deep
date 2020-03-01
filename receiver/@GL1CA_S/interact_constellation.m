@@ -10,7 +10,7 @@ end
 % 挑选高度角大于0的卫星
 index = find(obj.aziele(:,3)>0); %高度角大于0的卫星索引
 PRN = obj.aziele(index,1);
-azi = mod(obj.aziele(index,2),360)/180*pi; %方位角转成弧度,0~360度
+azi = obj.aziele(index,2)/180*pi; %方位角转成弧度
 ele = obj.aziele(index,3); %高度角,deg
 
 % 统计跟踪到的卫星
@@ -24,6 +24,8 @@ f.UIContextMenu = c; %目录加到figure上,在figure空白处右键弹出
 % 创建figure目录项(*)
 uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Print log');
 uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Plot trackResult');
+uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Cal aziele');
+uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Cal iono');
 
 % 创建极坐标轴
 ax = polaraxes; %创建极坐标轴
@@ -77,6 +79,10 @@ end
                 obj.print_all_log;
             case 'Plot trackResult'
                 obj.plot_all_trackResult;
+            case 'Cal aziele'
+                cal_aziele(obj);
+            case 'Cal iono'
+                cal_iono(obj);
         end
     end
             

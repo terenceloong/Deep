@@ -1,11 +1,11 @@
-function dtiono = Klobuchar(iono, azi, ele, lat, lon, t)
+function dtiono = Klobuchar1(iono, azi, ele, lat, lon, t)
 % 根据Klobuchar模型计算电离层延迟
+% 参考GPS接口文档
 % azi,ele:卫星方位角高度角,deg
 % lat,lon:接收机纬度经度,deg
 % t:周内秒数
 % dtiono:电离层延迟,s
 % 如果算其他频率信号的电离层延迟,乘以(f1^2/f2^2),电离层延迟与频率的平方成反比
-% 参考GPS,BDS接口文档
 
 alpha = iono(1:4);
 beta = iono(5:8);

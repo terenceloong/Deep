@@ -31,6 +31,7 @@ classdef GL1CA_S < handle
         tp             %下次定位的时间,[s,ms,us]
         ns             %指向当前存储行,初值是0,存储之前加1
         storage        %存储接收机输出
+        result         %接收机运行结果
     end
     
     methods
@@ -57,9 +58,12 @@ classdef GL1CA_S < handle
             %----使用历书计算所有卫星方位角高度角
             if ~isempty(obj.almanac) %如果没有历书,aziele为空
                 index = find(obj.almanac(:,2)==0); %获取健康卫星的行号
-                obj.aziele = zeros(length(index),3); %[ID,azi,ele]
+                rs = rs_almanac(obj.almanac(index,6:end), obj.ta(1)); %卫星ecef位置
+                [azi, ele] = aziele_xyz(rs, conf.p0);
+                obj.aziele = zeros(length(index),3); %[PRN,azi,ele]
                 obj.aziele(:,1) = obj.almanac(index,1);
-                obj.aziele(:,2:3) = aziele_almanac(obj.almanac(index,6:end), obj.ta(1), conf.p0);
+                obj.aziele(:,2) = azi;
+                obj.aziele(:,3) = ele;
             end
             %----获取跟踪卫星列表
             obj.eleMask = conf.eleMask;
@@ -100,11 +104,11 @@ classdef GL1CA_S < handle
             row = floor(obj.Tms/obj.dtpos); %存储空间行数
             obj.storage.ta      = zeros(row,1,'double');
             obj.storage.state   = zeros(row,1,'uint8');
-            obj.storage.df      = zeros(row,1,'double');
+            obj.storage.df      = zeros(row,1,'single');
             obj.storage.satmeas = zeros(obj.chN,8,row,'double');
             obj.storage.satnav  = zeros(row,8,'double');
             obj.storage.pos     = zeros(row,3,'double');
-            obj.storage.vel     = zeros(row,3,'double');
+            obj.storage.vel     = zeros(row,3,'single');
         end
         
         %% 清理数据存储

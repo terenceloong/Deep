@@ -1,0 +1,167 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>&#24120;&#29992;&#31243;&#24207;&#29255;&#27573;</title><meta name="generator" content="MATLAB 9.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2020-03-01"><meta name="DC.source" content="fragment.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>&#24120;&#29992;&#31243;&#24207;&#29255;&#27573;</h1><!--introduction--><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">&#28155;&#21152;&#36335;&#24452;</a></li><li><a href="#2">&#31227;&#38500;&#36335;&#24452;</a></li><li><a href="#3">&#21382;&#20070;&#30456;&#20851;</a></li><li><a href="#4">&#26143;&#21382;&#30456;&#20851;</a></li><li><a href="#6">&#26143;&#24231;&#22270;</a></li><li><a href="#10">kml&#36755;&#20986;</a></li><li><a href="#11">&#30005;&#31163;&#23618;</a></li></ul></div><h2 id="1">&#28155;&#21152;&#36335;&#24452;</h2><pre class="codeinput"><span class="comment">% addpath(genpath('xxx')) %&#21253;&#21547;&#23376;&#25991;&#20214;&#22841;</span>
+addpath(<span class="string">'common'</span>)
+addpath(<span class="string">'override'</span>)
+addpath(<span class="string">'receiver'</span>)
+</pre><h2 id="2">&#31227;&#38500;&#36335;&#24452;</h2><pre class="codeinput"><span class="comment">% rmpath(genpath('xxx')) %&#21253;&#21547;&#23376;&#25991;&#20214;&#22841;</span>
+rmpath(<span class="string">'common'</span>)
+rmpath(<span class="string">'override'</span>)
+rmpath(<span class="string">'receiver'</span>)
+</pre><h2 id="3">&#21382;&#20070;&#30456;&#20851;</h2><pre>&#19979;&#36733;GPS&#21382;&#20070;&#24182;&#35835;&#21462;</pre><pre class="codeinput">filename = GPS.almanac.download(<span class="string">'~temp\almanac'</span>, UTC2GPS([2020,2,23,15,0,0],8));
+almanac = GPS.almanac.read(filename);
+</pre><h2 id="4">&#26143;&#21382;&#30456;&#20851;</h2><pre>&#19979;&#36733;GPS&#26143;&#21382;&#24182;&#35835;&#21462;</pre><pre class="codeinput">filename = GPS.ephemeris.download(<span class="string">'~temp\ephemeris'</span>, <span class="string">'2020-02-22'</span>);
+ephe = RINEX.read_N2(filename);
+</pre><pre>&#19979;&#36733;BDS&#26143;&#21382;&#24182;&#35835;&#21462;</pre><pre class="codeinput">filename = BDS.ephemeris.download(<span class="string">'~temp\ephemeris'</span>, <span class="string">'2020-02-22'</span>);
+ephe = RINEX.read_B303(filename);
+</pre><h2 id="6">&#26143;&#24231;&#22270;</h2><pre>&#26174;&#31034;GPS&#26143;&#24231;&#22270;</pre><pre class="codeinput">c = [2020,2,23,11,50,0];
+p = [42.27452, 123.85232, 105];
+ax = GPS.constellation(<span class="string">'~temp\almanac'</span>, c, 8, p);
+</pre><pre class="language-matlab">&#26174;&#31034;BDS&#26143;&#24231;&#22270;
+</pre><pre class="codeinput">c = [2020,2,23,11,50,0];
+p = [42.27452, 123.85232, 105];
+ax = BDS.constellation(<span class="string">'~temp\ephemeris'</span>, c, 8, p);
+</pre><pre>&#21516;&#26102;&#26174;&#31034;GPS,BDS&#26143;&#24231;&#22270;</pre><pre class="codeinput">c = [2020,2,23,11,50,0];
+p = [42.27452, 123.85232, 105];
+ax = GPS.constellation(<span class="string">'~temp\almanac'</span>, c, 8, p);
+ax = BDS.constellation(<span class="string">'~temp\ephemeris'</span>, c, 8, p, ax);
+</pre><pre class="language-matlab">&#26174;&#31034;&#26410;&#26469;&#19968;&#27573;&#26102;&#38388;GPS&#21355;&#26143;&#36712;&#36857;
+</pre><pre class="codeinput">c = [2020,2,23,11,50,0];
+p = [42.27452, 123.85232, 105];
+GPS.visibility(<span class="string">'~temp\almanac'</span>, c, 8, p, 1);
+</pre><h2 id="10">kml&#36755;&#20986;</h2><pre>  &#32428;&#24230;&#32463;&#24230;&#20889;&#20837;kml&#25991;&#20214;</pre><pre class="codeinput">kmlwriteline(<span class="string">'~temp\traj.kml'</span>, nCoV.storage.pos(:,1),nCoV.storage.pos(:,2), <span class="string">'Color'</span>,<span class="string">'r'</span>, <span class="string">'Width'</span>,2);
+</pre><h2 id="11">&#30005;&#31163;&#23618;</h2><pre class="language-matlab">&#35745;&#31639;&#19968;&#22825;&#20013;&#30340;&#30005;&#31163;&#23618;&#26657;&#27491;&#20540;
+</pre><pre class="codeinput">date = <span class="string">'2019-08-26'</span>;
+p = [45.730952, 126.624970, 212];
+GPS.iono_24h(<span class="string">'~temp\ephemeris'</span>, date, p, 8, 10);
+</pre><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2019a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% 常用程序片段
+
+%% 添加路径
+
+% addpath(genpath('xxx')) %包含子文件夹
+addpath('common')
+addpath('override')
+addpath('receiver')
+
+%% 移除路径
+
+% rmpath(genpath('xxx')) %包含子文件夹
+rmpath('common')
+rmpath('override')
+rmpath('receiver')
+
+%% 历书相关
+%  下载GPS历书并读取
+filename = GPS.almanac.download('~temp\almanac', UTC2GPS([2020,2,23,15,0,0],8));
+almanac = GPS.almanac.read(filename);
+
+%% 星历相关
+%  下载GPS星历并读取
+filename = GPS.ephemeris.download('~temp\ephemeris', '2020-02-22');
+ephe = RINEX.read_N2(filename);
+%%
+%  下载BDS星历并读取
+filename = BDS.ephemeris.download('~temp\ephemeris', '2020-02-22');
+ephe = RINEX.read_B303(filename);
+
+%% 星座图
+%  显示GPS星座图
+c = [2020,2,23,11,50,0];
+p = [42.27452, 123.85232, 105];
+ax = GPS.constellation('~temp\almanac', c, 8, p);
+%%
+%   显示BDS星座图
+c = [2020,2,23,11,50,0];
+p = [42.27452, 123.85232, 105];
+ax = BDS.constellation('~temp\ephemeris', c, 8, p);
+%%
+%  同时显示GPS,BDS星座图
+c = [2020,2,23,11,50,0];
+p = [42.27452, 123.85232, 105];
+ax = GPS.constellation('~temp\almanac', c, 8, p);
+ax = BDS.constellation('~temp\ephemeris', c, 8, p, ax);
+%%
+%   显示未来一段时间GPS卫星轨迹
+c = [2020,2,23,11,50,0];
+p = [42.27452, 123.85232, 105];
+GPS.visibility('~temp\almanac', c, 8, p, 1);
+
+%% kml输出
+%    纬度经度写入kml文件
+kmlwriteline('~temp\traj.kml', nCoV.storage.pos(:,1),nCoV.storage.pos(:,2), 'Color','r', 'Width',2);
+
+%% 电离层
+%   计算一天中的电离层校正值
+date = '2019-08-26';
+p = [45.730952, 126.624970, 212];
+GPS.iono_24h('~temp\ephemeris', date, p, 8, 10);
+##### SOURCE END #####
+--></body></html>

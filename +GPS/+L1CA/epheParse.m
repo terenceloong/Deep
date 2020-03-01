@@ -31,9 +31,9 @@ for k=0:4
     subframe = bits(k*300+(1:300)); %取一个子帧
     
     % 根据校验规则对子帧中的每个字做电平翻转
-    for m=1:10
-        subframe(30*m+(-29:0)) = GPS.L1CA.bitsFlip(subframe(30*m+(-29:0)), D30);
-        D30 = subframe(30*m);
+    for i=1:10
+        subframe(30*i+(-29:0)) = GPS.L1CA.bitsFlip(subframe(30*i+(-29:0)), D30);
+        D30 = subframe(30*i);
     end
     
     subframeID = bin2dec(subframe(50:52)); %子帧ID

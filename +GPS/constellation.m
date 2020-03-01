@@ -12,13 +12,14 @@ filename = GPS.almanac.download(filepath, t); %获取历书
 almanac = GPS.almanac.read(filename); %读历书文件
 
 % 使用历书计算所有卫星方位角高度角
-aziele = aziele_almanac(almanac(:,6:end), t(2), p); %[azi,ele]
+rs = rs_almanac(almanac(:,6:end), t(2));
+[azi, ele] = aziele_xyz(rs, p);
 
 % 获取高度角大于0的卫星
-index = find(aziele(:,2)>0); %高度角大于0的行号
+index = find(ele>0); %高度角大于0的行号
 PRN = almanac(index,1);
-azi = mod(aziele(index,1),360)/180*pi; %方位角转成弧度,0~360度
-ele = aziele(index,2);
+azi = azi(index)/180*pi; %方位角转成弧度
+ele = ele(index);
 
 % 创建坐标轴
 if ~exist('ax','var')

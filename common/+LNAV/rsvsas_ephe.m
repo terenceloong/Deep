@@ -1,10 +1,12 @@
 function [rsvsas, dtrel] = rsvsas_ephe(ephe, t)
-% 使用LNAV(legacy navigation message)星历计算卫星在指定时刻的位置速度加速度
-% ephe:星历,16参数
+% 使用星历计算卫星位置速度加速度(单颗卫星)
+% ephe:16参数星历
+% [toe,sqa,e,dn,M0,omega,Omega0,Omega_dot,i0,i_dot,Cus,Cuc,Crs,Crc,Cis,Cic]
 % t:周内秒数
 % rsvsas:[x,y,z,vx,vy,vz,ax,ay,az]
 % dtrel:相对论钟差,s
 
+% 检查星历参数个数
 if length(ephe)~=16
     error('Ephemeris error!')
 end
@@ -32,7 +34,7 @@ Crc = ephe(14);
 Cis = ephe(15);
 Cic = ephe(16);
 
-%% 计算卫星在信号发射时刻的位置
+%% 计算卫星位置
 dt = mod(t-toe+302400,604800)-302400; %限制在±302400
 a = sqa^2;
 n = sqrt(miu/a^3) + dn;
@@ -65,7 +67,8 @@ x = xp*cos_Omega - yp*cos_i*sin_Omega;
 y = xp*sin_Omega + yp*cos_i*cos_Omega;
 z = yp*sin_i;
 
-%% 计算卫星在信号发射时刻的速度,<北斗/GPS双模软件接收机原理与实现技术>283页
+%% 计算卫星速度
+% <北斗/GPS双模软件接收机原理与实现技术>283页
 d_E = n/(1-e*cos_E);
 d_phi = sqrt(1-e^2)*d_E/(1-e*cos_E);
 d_r = a*e*sin_E*d_E + 2*(Crs*cos_2phi-Crc*sin_2phi)*d_phi;
@@ -78,11 +81,11 @@ vx = d_xp*cos_Omega - d_yp*cos_i*sin_Omega + yp*sin_i*sin_Omega*d_i - y*d_Omega;
 vy = d_xp*sin_Omega + d_yp*cos_i*cos_Omega - yp*sin_i*cos_Omega*d_i + x*d_Omega;
 vz = d_yp*sin_i + yp*cos_i*d_i;
 
-% 输出
+%% 输出
 rsvsas = [x,y,z,vx,vy,vz,0,0,0];
 dtrel = F*e*sqa*sin_E;
 
-%% 计算卫星在信号发射时刻的加速度
+%% 计算卫星加速度
 T = 0.1; %差分时间间隔
 
 % 根据之前算出的导数用差分方法计算新的轨道参数
@@ -124,7 +127,7 @@ ax = (vx1-vx)/T;
 ay = (vy1-vy)/T;
 az = (vz1-vz)/T;
 
-% 输出
+%% 输出
 % rsvsas(7:9) = [ax,ay,az]; %这么写比下面的慢一些
 rsvsas(7) = ax;
 rsvsas(8) = ay;

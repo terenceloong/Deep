@@ -12,27 +12,27 @@ filename = GPS.almanac.download(filepath, t); %获取历书
 almanac = GPS.almanac.read(filename); %读历书文件
 
 % 使用历书计算所有卫星方位角高度角
-n = size(almanac,1); %卫星数
-m = h*30; %点数
-aziele = zeros(n,2,m); %[azi,ele],第三维为时间
+svN = size(almanac,1); %卫星数
+n = h*30; %点数
+azi = zeros(svN,n); %每一列为一个时间点
+ele = zeros(svN,n);
 ts = t(2); %周内秒数
-for k=1:m
-    aziele(:,:,k) = aziele_almanac(almanac(:,6:end), ts, p); %[azi,ele]
+for k=1:n
+    rs = rs_almanac(almanac(:,6:end), ts);
+    [azi(:,k), ele(:,k)] = aziele_xyz(rs, p);
     ts = ts+120; %更新时间
 end
 
 % 获取高度角大于0的卫星
-index = zeros(1,n, 'logical'); %可见卫星索引
-for k=1:n
-    if ~isempty(find(aziele(k,2,:)>0,1)) %存在高度角大于0
+index = zeros(1,svN, 'logical'); %可见卫星索引
+for k=1:svN
+    if sum(ele(k,:)>0)~=0 %存在高度角大于0的时间段
         index(k) = 1;
     end
 end
 PRN = almanac(index,1);
-azi = mod(aziele(index,1,:),360)/180*pi; %方位角转成弧度,0~360度
-azi = reshape(azi,length(PRN),m); %行为卫星,列为时间
-ele = aziele(index,2,:);
-ele = reshape(ele,length(PRN),m);
+azi = azi(index,:)/180*pi; %方位角转成弧度
+ele = ele(index,:);
 
 % 创建坐标轴
 figure

@@ -1,22 +1,20 @@
-% 给定参考位置,检验伪距伪距率残差
-% 运行完程序查看resR,resV变量
+%% 给定参考位置,检验伪距伪距率残差
+% 运行完程序查看resR,resV变量.
 
 sv = nCoV.storage.satmeas; %卫星测量数据
-% p0 = [45.73104, 126.62482, 200]; %参考位置
-% p0 = [45.74565, 126.62615, 180];
-p0 = [45.7443, 126.62595, 170];
+p0 = [45.73104, 126.62482, 200]; %参考位置
 rp = lla2ecef(p0);
 satnav = [rp,[0,0,0],0,0];
 
-chN = length(sv); %卫星数
-n = size(sv{1},1); %行数
+svN = length(sv); %卫星数
+n = size(sv{1},1); %数据点数
 
-resR = zeros(n,chN);
-resV = zeros(n,chN);
+resR = zeros(n,svN);
+resV = zeros(n,svN);
 
-satmeas = zeros(chN,8); %每次的卫星测量数据
+satmeas = zeros(svN,8); %每次的卫星测量数据
 for k=1:n
-    for i=1:chN
+    for i=1:svN
         satmeas(i,:) = sv{i}(k,:);
     end
     [res_rho, res_rhodot] = residual_cal(satmeas, satnav);
