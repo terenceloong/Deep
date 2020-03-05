@@ -24,6 +24,7 @@ f.UIContextMenu = c; %目录加到figure上,在figure空白处右键弹出
 % 创建figure目录项(*)
 uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Print log');
 uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Plot trackResult');
+uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Plot 3D');
 uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Cal aziele');
 uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Cal iono');
 
@@ -79,6 +80,8 @@ end
                 obj.print_all_log;
             case 'Plot trackResult'
                 obj.plot_all_trackResult;
+            case 'Plot 3D'
+                plot_sv_3d(obj);
             case 'Cal aziele'
                 cal_aziele(obj);
             case 'Cal iono'

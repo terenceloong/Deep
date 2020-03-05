@@ -59,7 +59,7 @@ for k=1:svN
         Rx = [1,0,0; 0,cos(psi),sin(psi); 0,-sin(psi),cos(psi)];
         psi = w*dt;
         Rz = [cos(psi),sin(psi),0; -sin(psi),cos(psi),0; 0,0,1];
-        rs(k,:) = (Rz*Rx*rs0)';
+        rs(k,:) = Rz*Rx*rs0;
     end
 end
 

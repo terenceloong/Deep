@@ -110,8 +110,16 @@ end
     end
 
     %% 获取卫星测量
+    % 因为码在什么时间发射是已知的,所以通过精确计算定位点的码相位获得定位点所接到码的发射时间
+    % --|----------------------|-------|-------------
+    %   tc(trackDataTail)      tp      ta(buffHead)
+    %  跟踪点                 定位点  当前采样点
+    % dtp=ta-tp:当前采样点到跟踪点的时间差,通过时间差获得
+    % dtc=ta-tc:定位点到跟踪点的时间差,通过采样点差获得
+    % dt=tp-tc=dtc-dtp=(ta-tc)-(ta-tp),定位点到跟踪点的时间差,乘以码频率得到码相位
+    % 码相位0~1023对应1ms
     function satmeas = get_satmeas(dtp, fs)
-        % dtp:当前采样点到定位点的时间差,s,dtp=ta-tp
+        % dtp:当前采样点到定位点的时间差,s
         % fs:接收机钟频差校正后的采样频率,Hz
         % satmeas:[x,y,z,vx,vy,vz,rho,rhodot]
         c = 299792458; %光速
@@ -122,15 +130,15 @@ end
             if obj.channels(k).state==2 %只要跟踪上的通道都能测,这里不用管信号质量,选星额外来做
                 %----计算定位点所接到码的发射时间
                 dn = mod(obj.buffHead-obj.channels(k).trackDataTail+1, obj.buffSize) - 1; %恰好超前一个采样点时dn=-1
-                dtc = dn / fs; %当前采样点到跟踪点的时间差,dtc=ta-tc
-                dt = dtc - dtp; %定位点到跟踪点的时间差,dtc-dtp=(ta-tc)-(ta-tp)=tp-tc=dt
+                dtc = dn / fs; %当前采样点到跟踪点的时间差
+                dt = dtc - dtp; %定位点到跟踪点的时间差
                 codePhase = obj.channels(k).remCodePhase + obj.channels(k).codeNco*dt; %定位点码相位
                 te = [floor(obj.channels(k).tc0/1e3), mod(obj.channels(k).tc0,1e3), 0] + ...
-                      [0, floor(codePhase/1023), mod(codePhase/1023,1)*1e3]; %定位点码发射时间
+                     [0, floor(codePhase/1023), mod(codePhase/1023,1)*1e3]; %定位点码发射时间
                 %----计算信号发射时刻卫星位置速度
-                % [satmeas(k,1:6), corr] =LNAV.rsvs_emit(obj.channels(k).ephe(5:end), te, obj.rp, obj.iono, obj.pos);
+                % [satmeas(k,1:6), corr] = LNAV.rsvs_emit(obj.channels(k).ephe(5:end), te, obj.rp, obj.iono, obj.pos);
                 %----计算信号发射时刻卫星位置速度加速度
-                [rsvsas, corr] =LNAV.rsvsas_emit(obj.channels(k).ephe(5:end), te, obj.rp, obj.iono, obj.pos);
+                [rsvsas, corr] = LNAV.rsvsas_emit(obj.channels(k).ephe(5:end), te, obj.rp, obj.iono, obj.pos);
                 satmeas(k,1:6) = rsvsas(1:6);
                 %----计算卫星运动引起的载波频率变化率(短时间近似不变,使用上一时刻的位置计算就行,视线矢量差别不大)
                 rhodotdot = rhodotdot_cal(rsvsas, obj.rp);

@@ -16,7 +16,7 @@ n = fs*0.001; %一个C/A码周期采样点数
 result1 = zeros(M,n); %搜索结果表格,行是载波频率,列是码相位
 result2 = zeros(M,n);
 
-% 搜索
+% 搜索每个频率
 t = -2i*pi * (0:N-1)/fs;
 for k=1:M
     carrier = exp(obj.acqFreq(k)*t); %本地复载波,负频率
@@ -42,6 +42,7 @@ else
     corrValue = corrValue2;
     codePhase = codePhase2;
 end
+
 % 寻找相关峰
 [peak1, index] = max(corrValue); %最大峰
 corrValue(mod(index+(-3:3)-1,M)+1) = 0; %排除掉最大相关峰周围的点
