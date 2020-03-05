@@ -98,7 +98,7 @@ for k=1:n
         qc = [cos(phi/2), X(1:3)'/phi*sin(phi/2)];
         q = quatmultiply(qc, q);
     end
-    q = quatnormalize(q);
+    q = q / norm(q);
     v = v - X(4:6)';
     dgyro = dgyro + X(7:9)'/pi*180; %deg/s
     %----´æ´¢

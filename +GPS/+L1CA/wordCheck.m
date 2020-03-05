@@ -9,7 +9,7 @@ if ndat(2)==-1
 end
     
 % 计算6个校验位
-parity = zeros(1,6);
+parity = [0,0,0,0,0,0];
 parity(1) = ndat(1)  * ndat(3)  * ndat(4)  * ndat(5)  * ndat(7)  * ...
             ndat(8)  * ndat(12) * ndat(13) * ndat(14) * ndat(15) * ...
             ndat(16) * ndat(19) * ndat(20) * ndat(22) * ndat(25);

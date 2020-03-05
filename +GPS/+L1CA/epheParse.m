@@ -23,7 +23,7 @@ D30 = bits(2);
 bits(1:2) = [];
 
 % 子帧表
-subframeTable = zeros(1,5); %如果有第几帧,对应的位置1
+subframeTable = [0,0,0,0,0]; %如果有第几帧,对应的位置1
 
 gpsPi = 3.1415926535898; 
 
