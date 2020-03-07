@@ -1,7 +1,6 @@
-function P = var_phi2angle(P, att)
-% att:姿态角,rad
+function P = var_phi2angle(P, Cnb)
+% 失准角方差阵转化为姿态角方差阵
 
-Cnb = angle2dcm(att(1), att(2), att(3));
 C = zeros(3);
 C(1,1) = -Cnb(1,3)*Cnb(1,1) / (Cnb(1,1)^2+Cnb(1,2)^2);
 C(1,2) = -Cnb(1,3)*Cnb(1,2) / (Cnb(1,1)^2+Cnb(1,2)^2);

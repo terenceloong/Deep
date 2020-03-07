@@ -6,14 +6,13 @@ clc
 fclose('all'); %关闭之前打开的所有文件
 
 %% 选择GNSS数据文件
-default_path = fileread('~temp\path_data.txt'); %数据文件所在默认路径
-[file, path] = uigetfile([default_path,'\*.dat'], '选择GNSS数据文件'); %文件选择对话框
+[file, path] = uigetfile('*.dat', '选择GNSS数据文件'); %文件选择对话框
 if file==0 %取消选择,file返回0,path返回0
-    disp('Invalid file!');
+    disp('Invalid file!')
     return
 end
 if strcmp(file(1:4),'B210')==0
-    error('File error!');
+    error('File error!')
 end
 data_file = [path, file]; %数据文件完整路径,path最后带\
 
@@ -70,7 +69,7 @@ nCoV.set_ephemeris(ephemeris_file);
 fileID = fopen(data_file, 'r');
 fseek(fileID, round(sampleOffset*4), 'bof'); %不取整可能出现文件指针移不过去
 if int64(ftell(fileID))~=int64(sampleOffset*4) %检查文件指针是否移过去了
-    error('Sample offset error!');
+    error('Sample offset error!')
 end
 waitbar_str = ['s/',num2str(msToProcess/1000),'s']; %进度条中不变的字符串
 f = waitbar(0, ['0',waitbar_str]);
@@ -109,3 +108,4 @@ nCoV.interact_constellation;
 % GPS.visibility('~temp\almanac', tf, 8, p0, 1); %显示当前可见卫星一段时间的轨迹
 
 %% 保存结果
+save('~temp\result.mat')

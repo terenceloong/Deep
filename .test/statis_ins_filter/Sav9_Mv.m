@@ -108,7 +108,7 @@ for k=1:n
     output.bias(k,1:3) = dgyro;
     output.bias(k,4:6) = dacc;
     output.P(k,:) = sqrt(diag(P));
-    P_angle = var_phi2angle(P(1:3,1:3), [r1,r2,r3]);
+    P_angle = var_phi2angle(P(1:3,1:3), Cnb);
     output.P(k,1:3) = sqrt(diag(P_angle));
 end
 

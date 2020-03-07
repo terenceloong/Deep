@@ -104,10 +104,10 @@ classdef channel < handle
             n = length(obj.log); %通道日志行数
             if n>0 %如果日志有内容,逐行打印
                 for k=1:n
-                    disp(obj.log(k));
+                    disp(obj.log(k))
                 end
             end
-            disp(' '); %结尾加一个空行
+            disp(' ') %结尾加一个空行
         end
         
         %% 设置星历

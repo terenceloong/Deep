@@ -15,7 +15,7 @@ M = length(acqFreq); %搜索频率个数
 fileID = fopen(filename, 'r');
 fseek(fileID, round(sampleOffset*4), 'bof');
 if int64(ftell(fileID))~=int64(sampleOffset*4)
-    error('Sample offset error!');
+    error('Sample offset error!')
 end
 signal = double(fread(fileID, [2,N], 'int16'));
 signal1 = signal(1,:) + signal(2,:)*1i; %复信号

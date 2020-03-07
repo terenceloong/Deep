@@ -77,7 +77,7 @@ for k=1:n
     A(4:6,10:12) = Cbn;
     Phi = eye(12) + A*dt;
     %----ÂË²¨
-    Z = [v'+randn(3,1)*0.01; wb'];
+    Z = [v'+randn(3,1)*0.00; wb'];
     P = Phi*P*Phi' + Q;
     K = P*H' / (H*P*H'+R);
     X = K*Z;
@@ -132,7 +132,7 @@ for k=1:n
     output.bias(k,1:3) = dgyro;
     output.bias(k,4:6) = dacc;
     output.P(k,:) = sqrt(diag(P));
-    P_angle = var_phi2angle(P(1:3,1:3), [r1,r2,r3]);
+    P_angle = var_phi2angle(P(1:3,1:3), Cnb);
     output.P(k,1:3) = sqrt(diag(P_angle));
 end
 

@@ -1,15 +1,16 @@
 function plot_gnss_file
 % 观察GNSS文件中的数据
 
+valid_prefix = 'B210-'; %文件名有效前缀
+
 % 选择文件
-default_path = fileread('~temp\path_data.txt'); %数据文件所在默认路径
-[file, path] = uigetfile([default_path,'\*.dat'], '选择GNSS数据文件'); %文件选择对话框
+[file, path] = uigetfile('*.dat', '选择GNSS数据文件'); %文件选择对话框
 if file==0 %取消选择,file返回0,path返回0
-    disp('Invalid file!');
+    disp('Invalid file!')
     return
 end
-if strcmp(file(1:4),'B210')==0
-    error('File error!');
+if ~contains(valid_prefix, strtok(file,'_')) %检查文件名前缀是否有效
+    error('File error!')
 end
 data_file = [path, file]; %数据文件完整路径,path最后带\
 
