@@ -5,15 +5,10 @@ function varargout = IMU_read(plotflag)
 % 函数形式,使用对话框选择文件
 % 使用可变参数输出,使该程序可以直接运行,无输出
 
-valid_prefix = 'ADIS16448-IMU5210-'; %文件名有效前缀
-
 %% 读文件
+valid_prefix = 'ADIS16448-IMU5210-'; %文件名有效前缀
 [file, path] = uigetfile('*.dat', '选择IMU数据文件'); %文件选择对话框
-if file==0
-    disp('Invalid file!')
-    return
-end
-if ~contains(valid_prefix, strtok(file,'_')) %检查文件名前缀是否有效
+if ~ischar(file) || ~contains(valid_prefix, strtok(file,'_'))
     error('File error!')
 end
 fileID = fopen([path,file], 'r');
@@ -99,7 +94,7 @@ end
 n = length(data);
 imu_data = zeros(n,7); %IMU数据,[t, wx,wy,wz, fx,fy,fz], deg/s, g
 imu_data(:,2:7) = data(:,9:14);
-t0 = UTC2GPS(data(1,2:7), 8); %第一个点的时间,[week,second]
+t0 = UTC2GPS(data(1,2:7), 0); %第一个点的时间,[week,second],时区是0
 ts = t0(2);
 imu_data(1,1) = ts + data(1,8)/10000;
 for k=2:n

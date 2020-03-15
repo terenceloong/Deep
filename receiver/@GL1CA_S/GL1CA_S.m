@@ -29,6 +29,7 @@ classdef GL1CA_S < handle
         iono           %电离层校正参数
         dtpos          %定位时间间隔,ms
         tp             %下次定位的时间,[s,ms,us]
+        imu            %IMU数据
         ns             %指向当前存储行,初值是0,存储之前加1
         storage        %存储接收机输出
         result         %接收机运行结果
@@ -128,15 +129,6 @@ classdef GL1CA_S < handle
                     obj.storage.(fields{k})(:,:,n:end) = [];
                 end
             end
-            % 删除接收机未初始化时的数据
-            index = find(obj.storage.state==0);
-            for k=1:length(fields)
-                if size(obj.storage.(fields{k}),3)==1
-                    obj.storage.(fields{k})(index,:) = [];
-                else
-                    obj.storage.(fields{k})(:,:,index) = [];
-                end
-            end
             % 整理卫星测量信息,元胞数组,每个通道一个矩阵
             n = size(obj.storage.satmeas,3); %存储元素个数
             if n>0
@@ -193,6 +185,19 @@ classdef GL1CA_S < handle
                     plot_trackResult(obj.channels(k));
                 end
             end
+        end
+        
+        %% IMU数据输入
+        function imu_input(obj, tp, imu)
+            % tp:下次的定位时间,s
+            % imu:下次的IMU数据
+            obj.tp = sec2smu(tp); %[s,ms,us]
+            obj.imu = imu;
+        end
+        
+        %% 进入深组合模式
+        function enter_deep(obj)
+            obj.state = 2;
         end
         
     end %end methods

@@ -1,9 +1,12 @@
-%% GPS L1 C/A单天线接收机例程
+%% GPS L1 C/A单天线深组合
 
 %%
 clear
 clc
 fclose('all'); %关闭之前打开的所有文件
+
+%% 选择IMU数据文件
+imu = IMU_read(0);
 
 %% 选择GNSS数据文件
 valid_prefix = 'B210-'; %文件名有效前缀
@@ -79,6 +82,22 @@ for t=1:msToProcess
     end
     data = fread(fileID, [2,blockSize], 'int16'); %从文件读数据
     nCoV.run(data); %接收机处理数据
+    % 深组合模式切换,IMU数据输入
+    if nCoV.state==2
+        % 进入深组合模式后,进行一次定位后为其设置下次定位时间和IMU数据
+        if isnan(nCoV.tp(1)) %定位后tp会变成NaN
+            ki = ki+1; %IMU索引加1
+            nCoV.imu_input(imu(ki,1), imu(ki,2:7)); %输入IMU数据
+        end
+    elseif nCoV.state==1
+        % 当接收机初始化完成后进入深组合模式
+        ki = find(imu(:,1)>nCoV.ta*[1;1e-3;1e-6], 1); %IMU索引
+        if isempty(ki) || (imu(ki,1)-nCoV.ta(1))>1
+            error('Data mismatch!')
+        end
+        nCoV.imu_input(imu(ki,1), imu(ki,2:7)); %输入IMU数据
+        nCoV.enter_deep; %进入深组合模式
+    end
 end
 nCoV.clean_storage;
 nCoV.get_result;
@@ -93,7 +112,7 @@ close(f);
 nCoV.save_ephemeris(ephemeris_file);
 
 %% 清除变量
-clearvars -except data_file receiver_conf nCoV almanac_path tf p0
+clearvars -except data_file receiver_conf nCoV almanac_path tf p0 imu
 
 %% 画交互星座图
 nCoV.interact_constellation;

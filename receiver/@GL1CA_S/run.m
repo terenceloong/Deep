@@ -14,8 +14,8 @@ end
 obj.tms = obj.tms + 1; %当前运行时间加1ms
 
 % 更新接收机时间
-fs = obj.sampleFreq * (1+obj.deltaFreq); %修正后的采样频率
-obj.ta = timeCarry(obj.ta + sample2dt(obj.blockSize, fs));
+dta = sample2dt(obj.blockSize, obj.sampleFreq*(1+obj.deltaFreq)); %时间增量
+obj.ta = timeCarry(obj.ta + dta);
 
 % 捕获
 if mod(obj.tms,1000)==0 %1s搜索一次
@@ -26,43 +26,15 @@ end
 trackProcess;
 
 % 定位
-dtp = (obj.ta-obj.tp) * [1;1e-3;1e-6]; %当前接收机时间与定位时间之差,s
-if dtp>=0 %定位时间到了
-    %----获取卫星测量信息
-    satmeas = get_satmeas(dtp, fs);
-    %----选星
-    sv = satmeas(~isnan(satmeas(:,1)),:); %选有数据的行
-    %----卫星导航解算
-    satnav = satnavSolve(sv, obj.rp);
-    dtr = satnav(13); %接收机钟差,s
-    dtv = satnav(14); %接收机钟频差,s/s
-    %----更新接收机位置速度
-    if ~isnan(satnav(1))
-        obj.pos = satnav(1:3);
-        obj.rp  = satnav(4:6);
-        obj.vel = satnav(7:9);
-        obj.vp  = satnav(10:12);
+if (obj.ta-obj.tp)*[1;1e-3;1e-6]>=0 %定位时间到了
+    switch obj.state
+        case 0 %初始化模式
+            init_pos;
+        case 1 %正常模式
+            normal_pos;
+        case 2 %深组合模式
+            deep_pos;
     end
-    %----接收机时钟修正
-    if obj.state==1 && ~isnan(dtv)
-        
-    end
-    %----数据存储
-    obj.ns = obj.ns+1; %指向当前存储行
-    m = obj.ns;
-    obj.storage.ta(m) = obj.tp * [1;1e-3;1e-6]; %定位时间,s
-    obj.storage.state(m) = obj.state;
-    obj.storage.df(m) = obj.deltaFreq;
-    obj.storage.satmeas(:,:,m) = satmeas;
-    obj.storage.satnav(m,:) = satnav([1,2,3,7,8,9,13,14]);
-    obj.storage.pos(m,:) = obj.pos;
-    obj.storage.vel(m,:) = obj.vel;
-    %----接收机时钟初始化
-    if obj.state==0 && ~isnan(dtr)
-        clock_init(dtr);
-    end
-    %----更新下次定位时间
-    obj.tp = timeCarry(obj.tp + [0,obj.dtpos,0]);
 end
 
     %% 捕获过程
@@ -114,18 +86,18 @@ end
     % --|----------------------|-------|-------------
     %   tc(trackDataTail)      tp      ta(buffHead)
     %  跟踪点                 定位点  当前采样点
-    % dtp=ta-tp:当前采样点到跟踪点的时间差,通过时间差获得
-    % dtc=ta-tc:定位点到跟踪点的时间差,通过采样点差获得
+    % dtp=ta-tp:当前采样点到定位点的时间差,通过时间差获得
+    % dtc=ta-tc:当前采样点到跟踪点的时间差,通过采样点差获得
     % dt=tp-tc=dtc-dtp=(ta-tc)-(ta-tp),定位点到跟踪点的时间差,乘以码频率得到码相位
     % 码相位0~1023对应1ms
-    function satmeas = get_satmeas(dtp, fs)
-        % dtp:当前采样点到定位点的时间差,s
-        % fs:接收机钟频差校正后的采样频率,Hz
+    function satmeas = get_satmeas
         % satmeas:[x,y,z,vx,vy,vz,rho,rhodot]
         c = 299792458; %光速
         fL1 = 1575.42e6; %L1载波频率
         lamda = c / fL1; %载波波长,m
         satmeas = NaN(obj.chN,8);
+        dtp = (obj.ta-obj.tp) * [1;1e-3;1e-6]; %当前采样点到定位点的时间差
+        fs = obj.sampleFreq * (1+obj.deltaFreq); %修正后的采样频率
         for k=1:obj.chN
             if obj.channels(k).state==2 %只要跟踪上的通道都能测,这里不用管信号质量,选星额外来做
                 %----计算定位点所接到码的发射时间
@@ -152,18 +124,110 @@ end
         end
     end
 
-    %% 接收机时钟初始化
-    function clock_init(dtr)
-        % dtr:卫星导航解算得到的接收机钟差,s
-        if abs(dtr)>0.1e-3 %钟差大于0.1ms,修正接收机时间
-            obj.ta = obj.ta - sec2smu(dtr);
-            obj.ta = timeCarry(obj.ta);
-            obj.tp(1) = obj.ta(1); %更新下次定位时间
-            obj.tp(2) = ceil(obj.ta(2)/obj.dtpos) * obj.dtpos;
-            obj.tp = timeCarry(obj.tp);
-        else %钟差小于0.1ms,初始化结束
-            obj.state = 1;
+    %% 初始化模式定位
+    function init_pos
+        %----获取卫星测量信息
+        satmeas = get_satmeas;
+        %----选星
+        sv = satmeas(~isnan(satmeas(:,1)),:); %选有数据的行
+        %----卫星导航解算
+        satnav = satnavSolve(sv, obj.rp);
+        dtr = satnav(13); %接收机钟差,s
+        %----更新接收机位置速度
+        if ~isnan(satnav(1))
+            obj.pos = satnav(1:3);
+            obj.rp  = satnav(4:6);
+            obj.vel = satnav(7:9);
+            obj.vp  = satnav(10:12);
         end
+        %----接收机时钟初始化
+        if ~isnan(dtr)
+            if abs(dtr)>0.1e-3 %钟差大于0.1ms,修正接收机时间
+                obj.ta = obj.ta - sec2smu(dtr);
+                obj.ta = timeCarry(obj.ta);
+                obj.tp(1) = obj.ta(1); %更新下次定位时间
+                obj.tp(2) = ceil(obj.ta(2)/obj.dtpos) * obj.dtpos;
+                obj.tp = timeCarry(obj.tp);
+            else %钟差小于0.1ms,初始化结束
+                obj.state = 1;
+            end
+        end
+        %----更新下次定位时间
+        obj.tp = timeCarry(obj.tp + [0,obj.dtpos,0]);
+    end
+
+    %% 正常模式定位
+    function normal_pos
+        %----获取卫星测量信息
+        satmeas = get_satmeas;
+        %----选星
+        sv = satmeas(~isnan(satmeas(:,1)),:); %选有数据的行
+        %----卫星导航解算
+        satnav = satnavSolve(sv, obj.rp);
+        dtr = satnav(13); %接收机钟差,s
+        dtv = satnav(14); %接收机钟频差,s/s
+        %----更新接收机位置速度
+        if ~isnan(satnav(1))
+            obj.pos = satnav(1:3);
+            obj.rp  = satnav(4:6);
+            obj.vel = satnav(7:9);
+            obj.vp  = satnav(10:12);
+        end
+        %----接收机时钟修正
+        if ~isnan(dtr)
+            T = obj.dtpos/1000; %定位时间间隔,s
+            obj.deltaFreq = obj.deltaFreq + 10*dtv*T;
+            obj.ta = obj.ta - sec2smu(10*dtr*T);
+        end
+        %----数据存储
+        obj.ns = obj.ns+1; %指向当前存储行
+        m = obj.ns;
+        obj.storage.ta(m) = obj.tp * [1;1e-3;1e-6]; %定位时间,s
+        obj.storage.state(m) = obj.state;
+        obj.storage.df(m) = obj.deltaFreq;
+        obj.storage.satmeas(:,:,m) = satmeas;
+        obj.storage.satnav(m,:) = satnav([1,2,3,7,8,9,13,14]);
+        obj.storage.pos(m,:) = obj.pos;
+        obj.storage.vel(m,:) = obj.vel;
+        %----更新下次定位时间
+        obj.tp = timeCarry(obj.tp + [0,obj.dtpos,0]);
+    end
+
+    %% 深组合模式定位
+    function deep_pos
+        %----获取卫星测量信息
+        satmeas = get_satmeas;
+        %----选星
+        sv = satmeas(~isnan(satmeas(:,1)),:); %选有数据的行
+        %----卫星导航解算
+        satnav = satnavSolve(sv, obj.rp);
+        dtr = satnav(13); %接收机钟差,s
+        dtv = satnav(14); %接收机钟频差,s/s
+        %----更新接收机位置速度
+        if ~isnan(satnav(1))
+            obj.pos = satnav(1:3);
+            obj.rp  = satnav(4:6);
+            obj.vel = satnav(7:9);
+            obj.vp  = satnav(10:12);
+        end
+        %----接收机时钟修正
+        if ~isnan(dtr)
+            T = obj.dtpos/1000; %定位时间间隔,s
+            obj.deltaFreq = obj.deltaFreq + 10*dtv*T;
+            obj.ta = obj.ta - sec2smu(10*dtr*T);
+        end
+        %----数据存储
+        obj.ns = obj.ns+1; %指向当前存储行
+        m = obj.ns;
+        obj.storage.ta(m) = obj.tp * [1;1e-3;1e-6]; %定位时间,s
+        obj.storage.state(m) = obj.state;
+        obj.storage.df(m) = obj.deltaFreq;
+        obj.storage.satmeas(:,:,m) = satmeas;
+        obj.storage.satnav(m,:) = satnav([1,2,3,7,8,9,13,14]);
+        obj.storage.pos(m,:) = obj.pos;
+        obj.storage.vel(m,:) = obj.vel;
+        %----更新下次定位时间
+        obj.tp(1) = NaN;
     end
 
 end

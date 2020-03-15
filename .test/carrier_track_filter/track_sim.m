@@ -47,7 +47,7 @@ for k=1:n
     f1 = f1 + a*dt1; %更新估计频率
     %----一级滤波(最关键)
     df = f2 - f1; %遗留的频率误差,因为估计频率是f1,理论上应该按f1驱动,但实际按f2驱动
-    dp = p - p0 + randn(1)*v; %相位差,估计减测量
+    dp = p - p0 + randn*v; %相位差,估计减测量
     dp = dp - df*dt1; %量测减一步预测
     p = p - df*dt1 - alpha1*dp; %修正相位
     f1 = f2 - df - beta1*dp; %修正频率,f2-df=f1
@@ -55,7 +55,7 @@ for k=1:n
     if mod(k,dt2/dt1)==0
         df = f2 - f1; %频率误差,估计减测量
         f2 = f2 - alpha2*df; %修正驱动频率
-        a = a0 + randn(1)*u; %加速度采样,更新本地加速度
+        a = a0 + randn*u; %加速度采样,更新本地加速度
     end
     %----存储
     output(k,1) = p - p0; %相位跟踪误差

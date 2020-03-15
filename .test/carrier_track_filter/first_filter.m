@@ -34,7 +34,7 @@ for k=1:n
     %----本地信号生成
     p = p + f*dt; %相位更新
     %----一级滤波
-    dp = p0 - p + randn(1)*v; %相位差,实际减本地
+    dp = p0 - p + randn*v; %相位差,实际减本地
     p = p + alpha*dp; %相位修正
     f = f + beta*dp; %频率修正
     %----存储
