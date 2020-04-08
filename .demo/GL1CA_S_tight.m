@@ -1,4 +1,4 @@
-%% GPS L1 C/A单天线深组合
+%% GPS L1 C/A单天线紧组合
 
 %%
 clear
@@ -7,6 +7,7 @@ fclose('all'); %关闭之前打开的所有文件
 
 %% 选择IMU数据文件
 imu = IMU_read(0);
+gyro0 = mean(imu(1:200,2:4)); %计算初始陀螺零偏
 
 %% 选择GNSS数据文件
 valid_prefix = 'B210-'; %文件名有效前缀
@@ -15,8 +16,6 @@ if ~ischar(file) || ~contains(valid_prefix, strtok(file,'_'))
     error('File error!')
 end
 data_file = [path, file]; %数据文件完整路径,path最后带\
-
-% data_file = 'C:\Users\longt\Desktop\B210_20190823_194010_ch1.dat'; %指定文件,用于测试
 
 %% 主机参数
 % 根据实际情况修改.
@@ -54,6 +53,26 @@ receiver_conf.acqThreshold = 1.4; %捕获阈值,最高峰与第二大峰的比值
 receiver_conf.acqFreqMax = 5e3; %最大搜索频率,Hz
 receiver_conf.dtpos = 10; %定位时间间隔,ms
 
+%% 导航滤波器参数
+para.dt = 0.01; %s,根据IMU采样周期设置
+para.gyro0 = gyro0; %deg/s
+para.p0 = [0,0,0];
+para.v0 = [0,0,0];
+para.a0 = [0,0,0]; %deg
+para.P0_att = 1; %deg
+para.P0_vel = 1; %m/s
+para.P0_pos = 5; %m
+para.P0_dtr = 2e-8; %s
+para.P0_dtv = 3e-9; %s/s
+para.P0_gyro = 0.2; %deg/s
+para.P0_acc = 2e-3; %g
+para.Q_gyro = 0.15; %deg/s
+para.Q_acc = 2e-3; %g
+para.Q_dtv = 0.01e-9; %1/s
+para.Q_dg = 0.01; %deg/s/s
+para.Q_da = 0.1e-3; %g/s
+para.sigma_gyro = 0.15; %deg/s
+
 %% 创建接收机对象
 nCoV = GL1CA_S(receiver_conf);
 
@@ -82,22 +101,23 @@ for t=1:msToProcess
     end
     data = fread(fileID, [2,blockSize], 'int16'); %从文件读数据
     nCoV.run(data); %接收机处理数据
-    % 深组合模式切换,IMU数据输入
-    if nCoV.state==2
-        % 进入深组合模式后,进行一次定位后为其设置下次定位时间和IMU数据
+    %---------------------------------------------------------------------%
+    if nCoV.state==2 %紧组合模式时,进行一次定位后为其设置下次定位时间和IMU数据
         if isnan(nCoV.tp(1)) %定位后tp会变成NaN
             ki = ki+1; %IMU索引加1
             nCoV.imu_input(imu(ki,1), imu(ki,2:7)); %输入IMU数据
         end
-    elseif nCoV.state==1
-        % 当接收机初始化完成后进入深组合模式
+    elseif nCoV.state==1 %当接收机初始化完成后进入紧组合模式
         ki = find(imu(:,1)>nCoV.ta*[1;1e-3;1e-6], 1); %IMU索引
         if isempty(ki) || (imu(ki,1)-nCoV.ta(1))>1
             error('Data mismatch!')
         end
         nCoV.imu_input(imu(ki,1), imu(ki,2:7)); %输入IMU数据
-        nCoV.enter_deep; %进入深组合模式
+        para.p0 = nCoV.pos;
+        nCoV.navFilter = filter_tight(para); %初始化导航滤波器
+        nCoV.state = 2; %接收机进入紧组合模式
     end
+    %---------------------------------------------------------------------%
 end
 nCoV.clean_storage;
 nCoV.get_result;

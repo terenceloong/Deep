@@ -1,5 +1,5 @@
 function rhodotdot = rhodotdot_cal(rsvsas, rp)
-% 计算卫星运动引起的伪距率变化率
+% 计算卫星运动引起的相对加速度(一颗卫星)
 % rsvsas:卫星ecef位置速度加速度,[x,y,z,vx,vy,vz,ax,ay,az]
 % rp:接收机ecef位置
 

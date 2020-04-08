@@ -39,6 +39,7 @@ G(GPS),R(GLONASS),E(Galileo),C(BDS),J(QZSS),I(IRNSS),参见RINEX 3.03
 9.[0,0,0,0]比zeros(1,4)快
 10.使用q/norm(q)代替quatnormalize
 11.生成一个随机数时,randn比randn(1)快
+12.矩阵索引,(1+1:5000+1)比(1+(1:5000))快
 
 /*-----------------------------更新日志----------------------------------*/
 <===Version 1.0===> 2020.2.18
@@ -97,3 +98,10 @@ G(GPS),R(GLONASS),E(Galileo),C(BDS),J(QZSS),I(IRNSS),参见RINEX 3.03
 1.添加递推计算均值方差类
 2.添加接收机时钟修正
 3.新建GPS单天线深组合程序,可以读取IMU数据,并在IMU采样时间点进行定位
+
+<===Version 1.12===>2020.4.8
+1.添加GPS紧组合
+2.所有类取消不能修改属性的限制
+3.引入channel = obj.channels(k);
+4.接收机类和通道类中的函数全部独立成文件,在定义类时声明其属性
+  参见help-Methods in Separate Files

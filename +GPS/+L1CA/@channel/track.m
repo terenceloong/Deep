@@ -37,7 +37,7 @@ tcode = obj.remCodePhase + obj.codeNco*t + 2; %加2保证求滞后码时大于1
 codeE = obj.code(floor(tcode+0.3)); %超前码
 codeP = obj.code(floor(tcode));     %即时码
 codeL = obj.code(floor(tcode-0.3)); %滞后码
-obj.remCodePhase = obj.remCodePhase + obj.codeNco*te - obj.codeInt; %剩余载波相位,周
+obj.remCodePhase = obj.remCodePhase + obj.codeNco*te - obj.codeInt; %剩余码相位,码片
 
 % 原始数据乘载波
 signalI = dataI.*carr_cos + dataQ.*carr_sin; %乘负载波
@@ -69,7 +69,6 @@ obj.Q = Q_P;
 
 % 载波跟踪
 switch obj.carrMode
-    case 0
     case 1 %频率牵引
         freqPull(freqError);
     case 2 %锁相环
@@ -78,9 +77,10 @@ end
 
 % 码跟踪
 switch obj.codeMode
-    case 0
     case 1 %延迟锁定环
         order2DLL(codeError);
+    case 2 %码开环
+        openDLL(deltaFreq);
 end
 
 % 更新伪码时间
@@ -129,12 +129,23 @@ obj.storage.disc(n,:) = [codeError, carrError, freqError];
         obj.carrFreq = obj.PLL2(3);
     end
 
-    %% 二阶延迟锁定换
+    %% 二阶延迟锁定环
     function order2DLL(codeError)
         % DLL2 = [K1, K2, Int]
         obj.DLL2(3) = obj.DLL2(3) + obj.DLL2(2)*codeError;
         obj.codeNco = obj.DLL2(3) + obj.DLL2(1)*codeError;
         obj.codeFreq = obj.DLL2(3);
+    end
+
+    %% 码开环
+    function openDLL(deltaFreq)
+        % 码频率由载波频率直接驱动
+        % 直接测的载波频率包含接收机钟频差
+        % 接收机钟快,测的载波频率偏小,需要加上,得到实际的载波频率
+        % 接收的码频率不受接收机钟频差的影响,因为钟频差主要影响下变频,对调制信号没有影响
+        carrFreq = obj.carrFreq + deltaFreq*1575.42e6;
+        obj.codeNco = 1.023e6 + carrFreq/1540;
+        obj.codeFreq = obj.codeNco;
     end
 
 end

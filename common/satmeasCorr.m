@@ -1,7 +1,7 @@
 function rho_rhodot = satmeasCorr(tt, doppler, corr)
 % 对测量的信号传播时间和多普勒进行校正,得到伪距伪距率
 % tt:信号传播时间travel time,s
-% dpppler:归一化多普勒,无量纲
+% dpppler:归一化多普勒,无量纲,df/f0
 % corr:校正项,结构体
 % rho_rhodot:[伪距,伪距率],m,m/s
 

@@ -1,13 +1,14 @@
 classdef channel < handle
 % GPS L1 C/A信号跟踪通道
+% state:通道状态, 0-未激活, 1-已激活但没有星历, 2-可以进行伪距伪距率测量, 3-深组合
     
-    properties (GetAccess = public, SetAccess = private)
+    properties
         Tms             %总运行时间,ms
         sampleFreq      %标称采样频率,Hz
         buffSize        %数据缓存总采样点数
         PRN             %卫星编号
         CAcode          %一个周期的C/A码
-        state           %通道状态,0:未激活,1;已激活但没有星历,2:可以进行伪距伪距率测量
+        state           %通道状态
         acqN            %捕获采样点数
         acqThreshold    %捕获阈值,最高峰与第二大峰的比值
         acqFreq         %搜索频率范围
@@ -36,6 +37,7 @@ classdef channel < handle
         DLL2            %二阶延迟锁定环
         carrMode        %载波跟踪模式
         codeMode        %码跟踪模式
+        quality         %信号质量
         tc0             %下一伪码周期的开始时间,ms
         msgStage        %电文解析阶段(字符)
         msgCnt          %电文解析计数器
@@ -43,17 +45,17 @@ classdef channel < handle
         bitSyncTable    %比特同步统计表
         bitBuff         %比特缓存
         frameBuff       %帧缓存
-        frameBuffPoint  %帧缓存指针
+        frameBuffPtr    %帧缓存指针
         ephe            %星历
         iono            %电离层校正参数
         log             %日志
         ns              %指向当前存储行,初值是0,刚开始运行track时加1
+        ns0             %指向上次定位的存储行,深组合时用来获取定位间隔内的鉴相器输出
         storage         %存储跟踪结果
     end
     
     methods
-        %% 构造函数
-        function obj = channel(PRN, conf)
+        function obj = channel(PRN, conf) %构造函数
             % PRN:卫星编号
             % conf:通道配置结构体
             %----设置不会变的参数
@@ -76,6 +78,7 @@ classdef channel < handle
             obj.iono = NaN(1,8);
             %----申请数据存储空间
             obj.ns = 0;
+            obj.ns0 = 0;
             row = obj.Tms; %存储空间行数
             obj.storage.dataIndex    =   NaN(row,1,'double'); %使用预设NaN存数据,方便通道断开时数据显示有中断
             obj.storage.remCodePhase =   NaN(row,1,'single');
@@ -87,39 +90,17 @@ classdef channel < handle
             obj.storage.disc         =   NaN(row,3,'single');
             obj.storage.bitFlag      = zeros(row,1,'uint8'); %导航电文比特开始标志
         end
-        
-        %% 清理数据存储
-        function clean_storage(obj)
-            % 自动识别所有场,参见help-Generate Field Names from Variables
-            fields = fieldnames(obj.storage); %获取所有场名,元胞数组
-            n = obj.ns + 1;
-            for k=1:length(fields)
-                obj.storage.(fields{k})(n:end,:) = [];
-            end
-        end
-        
-        %% 打印日志
-        function print_log(obj)
-            fprintf('PRN %d\n', obj.PRN); %卫星编号,使用\r\n会多一个空行
-            n = length(obj.log); %通道日志行数
-            if n>0 %如果日志有内容,逐行打印
-                for k=1:n
-                    disp(obj.log(k))
-                end
-            end
-            disp(' ') %结尾加一个空行
-        end
-        
-        %% 设置星历
-        function set_ephe(obj, ephe)
-            obj.ephe = ephe;
-        end
-        
-        %% 设置载波频率变化率
-        function set_carrAcc(obj, carrAcc)
-            obj.carrAcc = carrAcc;
-        end
-        
-    end %end methods
+    end
+    
+    methods (Access = public)
+        acqResult = acq(obj, dataI, dataQ)         %捕获卫星信号
+        init(obj, acqResult, n)                    %初始化跟踪参数
+        track(obj, dataI, dataQ, deltaFreq)        %跟踪卫星信号
+        ionoflag = parse(obj)                      %解析导航电文
+        clean_storage(obj)                         %清理数据存储
+        print_log(obj)                             %打印通道日志
+        markCurrStorage(obj)                       %标记当前存储行(深组合)
+        [codeDisc, carrDisc] = getDiscOutput(obj)  %获取定位间隔内鉴相器输出(深组合)
+    end
     
 end %end classdef

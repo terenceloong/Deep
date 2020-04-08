@@ -93,12 +93,7 @@ for k=1:n
 %         d = C11*Cnb(1,2) - C12*Cnb(1,1);
 %         X = X - P*Y'/(Y*P*Y')*(Y*X-d);
     %----ÐÞÕý
-    phi = norm(X(1:3));
-    if phi>1e-6
-        qc = [cos(phi/2), X(1:3)'/phi*sin(phi/2)];
-        q = quatmultiply(qc, q);
-    end
-    q = q / norm(q);
+    q = quatCorr(q, X(1:3)');
     v = v - X(4:6)';
     dgyro = dgyro + X(7:9)'/pi*180; %deg/s
     %----´æ´¢

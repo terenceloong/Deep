@@ -25,9 +25,9 @@ switch obj.msgStage %I,B,W,H,C,E
         end
         if obj.msgCnt==obj.pointInt %跟踪完一个比特
             obj.msgCnt = 0; %计数器清零
-            obj.frameBuffPoint = obj.frameBuffPoint + 1; %帧缓存指针加1
+            obj.frameBuffPtr = obj.frameBuffPtr + 1; %帧缓存指针加1
             bit = (double(sum(obj.bitBuff(1:obj.pointInt))>0) - 0.5) * 2; %一个比特,±1
-            obj.frameBuff(obj.frameBuffPoint) = bit; %往比特缓存里存
+            obj.frameBuff(obj.frameBuffPtr) = bit; %往比特缓存里存
             switch obj.msgStage
                 case 'H' %寻找帧头
                     findFrameHead;
@@ -90,21 +90,21 @@ end
 
     %% 寻找帧头
     function findFrameHead
-        if obj.frameBuffPoint>=10 %至少有10个比特,前两个用来校验
-            if abs(obj.frameBuff(obj.frameBuffPoint+(-7:0))*[1;-1;-1;-1;1;-1;1;1])==8 %检测到疑似帧头
-                obj.frameBuff(1:10) = obj.frameBuff(obj.frameBuffPoint+(-9:0)); %将帧头提前
-                obj.frameBuffPoint = 10;
+        if obj.frameBuffPtr>=10 %至少有10个比特,前两个用来校验
+            if abs(obj.frameBuff(obj.frameBuffPtr+(-7:0))*[1;-1;-1;-1;1;-1;1;1])==8 %检测到疑似帧头
+                obj.frameBuff(1:10) = obj.frameBuff(obj.frameBuffPtr+(-9:0)); %将帧头提前
+                obj.frameBuffPtr = 10;
                 obj.msgStage = 'C'; %进入校验帧头阶段
             end
-            if obj.frameBuffPoint==1502
-                obj.frameBuffPoint = 0;
+            if obj.frameBuffPtr==1502
+                obj.frameBuffPtr = 0;
             end
         end
     end
 
     %% 校验帧头
     function checkFrameHead
-        if obj.frameBuffPoint==310 %存储了一个子帧,2+300+8
+        if obj.frameBuffPtr==310 %存储了一个子帧,2+300+8
             if GPS.L1CA.wordCheck(obj.frameBuff(1:32))==1 && ...
                GPS.L1CA.wordCheck(obj.frameBuff(31:62))==1 && ...
                abs(obj.frameBuff(303:310)*[1;-1;-1;-1;1;-1;1;1])==8 %校验通过
@@ -125,13 +125,13 @@ end
                 for k=11:310 %检查其他比特中有没有帧头
                     if abs(obj.frameBuff(k+(-7:0))*[1;-1;-1;-1;1;-1;1;1])==8 %检测到疑似帧头
                         obj.frameBuff(1:320-k) = obj.frameBuff(k-9:310); %将帧头后面的比特提前,320-k=310-(k-9)+1
-                        obj.frameBuffPoint = 320-k; %表示帧缓存中有多少个数
+                        obj.frameBuffPtr = 320-k; %表示帧缓存中有多少个数
                         break
                     end
                 end
-                if obj.frameBuffPoint==310 %没检测到疑似帧头
+                if obj.frameBuffPtr==310 %没检测到疑似帧头
                     obj.frameBuff(1:9) = obj.frameBuff(302:310); %将未检测的比特提前
-                    obj.frameBuffPoint = 9;
+                    obj.frameBuffPtr = 9;
                     obj.msgStage = 'H'; %再次寻找帧头
                 end
             end
@@ -140,7 +140,7 @@ end
 
     %% 解析星历
     function parseEphemeris
-        if obj.frameBuffPoint==1502 %跟踪完5帧
+        if obj.frameBuffPtr==1502 %跟踪完5帧
             [ephe, iono] = GPS.L1CA.epheParse(obj.frameBuff); %解析星历
             if ~isempty(ephe) %星历解析成功
                 if ephe(3)==ephe(4) %IODC==IODE
@@ -162,7 +162,7 @@ end
                 obj.log = [obj.log; string(log_str)];
             end
             obj.frameBuff(1:2) = obj.frameBuff(1501:1502); %将最后两个比特提前
-            obj.frameBuffPoint = 2;
+            obj.frameBuffPtr = 2;
         end
     end
 

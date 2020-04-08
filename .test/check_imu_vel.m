@@ -120,21 +120,16 @@ for k=1:n
         Y(2) = Cnb(1,2)*Cnb(1,3);
         Y(3) = -(Cnb(1,1)^2+Cnb(1,2)^2);
         X = X - P*Y'/(Y*P*Y')*Y*X;
-        %----修正
-        phi = norm(X(1:3));
-        if phi>1e-6
-            qc = [cos(phi/2), X(1:3)'/phi*sin(phi/2)];
-            q = quatmultiply(qc, q);
-        end
-        q = q / norm(q);
-        v = v - X(4:6)';
-        dgyro = dgyro + X(7:9)'/pi*180; %deg/s
-        dacc = dacc + X(10:12)'/g; %g
     else %运动状态
         %----一步预测方差阵
         P = Phi*P*Phi' + Q2;
+        X = zeros(12,1);
     end
-    q = q / norm(q);
+    %----修正
+    q = quatCorr(q, X(1:3)');
+    v = v - X(4:6)';
+    dgyro = dgyro + X(7:9)'/pi*180; %deg/s
+	dacc = dacc + X(10:12)'/g; %g
     %----存储
     [r1,r2,r3] = quat2angle(q);
     output.nav(k,1:3) = [r1,r2,r3]/pi*180;

@@ -22,7 +22,7 @@ end
 obj.result.satmeasIndex = [];
 obj.result.satmeasPRN = [];
 if ~isempty(obj.storage.satmeas)
-    flag = zeros(1,obj.chN); %是否计算过位置标志
+    flag = zeros(1,obj.chN); %是否有卫星测量标志
     for k=1:obj.chN
         if sum(~isnan(obj.storage.satmeas{k}(:,1)))>0 %不全是NaN
             flag(k) = 1;

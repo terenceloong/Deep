@@ -61,6 +61,9 @@ obj.DLL2 = [K1, K2, Int];
 obj.carrMode = 1;
 obj.codeMode = 1;
 
+% 初始信号质量
+obj.quality = 2;
+
 % 初始化伪码时间
 obj.tc0 = NaN;
 
@@ -71,6 +74,6 @@ obj.I0 = 0;
 obj.bitSyncTable = zeros(1,20); %一个比特持续20ms
 obj.bitBuff = zeros(1,20); %最多用20个
 obj.frameBuff = zeros(1,1502); %一帧数据1500比特
-obj.frameBuffPoint = 0;
+obj.frameBuffPtr = 0;
 
 end

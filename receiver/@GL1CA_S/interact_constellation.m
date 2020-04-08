@@ -25,8 +25,13 @@ f.UIContextMenu = c; %目录加到figure上,在figure空白处右键弹出
 uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Print log');
 uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Plot trackResult');
 uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Plot 3D');
-uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Cal aziele');
+uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Cal aziele', 'Separator','on');
 uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Cal iono');
+uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Plot pos', 'Separator','on');
+uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Plot vel');
+uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Plot att');
+uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Plot bias_gyro');
+uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Plot bias_acc');
 
 % 创建极坐标轴
 ax = polaraxes; %创建极坐标轴
@@ -86,6 +91,16 @@ end
                 cal_aziele(obj);
             case 'Cal iono'
                 cal_iono(obj);
+            case 'Plot pos'
+                plot_pos(obj);
+            case 'Plot vel'
+                plot_vel(obj);
+            case 'Plot att'
+                plot_att(obj);
+            case 'Plot bias_gyro'
+                plot_bias_gyro(obj);
+            case 'Plot bias_acc'
+                plot_bias_acc(obj);
         end
     end
             
