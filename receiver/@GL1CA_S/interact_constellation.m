@@ -73,8 +73,9 @@ for k=1:length(PRN) %处理所有高度角大于0的卫星
     uimenu(c, 'MenuSelectedFcn',@scatterCallback, 'UserData',ch, 'Text','I_Q');
     uimenu(c, 'MenuSelectedFcn',@scatterCallback, 'UserData',ch, 'Text','I_P');
     uimenu(c, 'MenuSelectedFcn',@scatterCallback, 'UserData',ch, 'Text','I_P(flag)');
-    uimenu(c, 'MenuSelectedFcn',@scatterCallback, 'UserData',ch, 'Text','carrFreq');
     uimenu(c, 'MenuSelectedFcn',@scatterCallback, 'UserData',ch, 'Text','codeFreq');
+    uimenu(c, 'MenuSelectedFcn',@scatterCallback, 'UserData',ch, 'Text','carrFreq');
+    uimenu(c, 'MenuSelectedFcn',@scatterCallback, 'UserData',ch, 'Text','carrNco');
     uimenu(c, 'MenuSelectedFcn',@scatterCallback, 'UserData',ch, 'Text','carrAcc');
 end
             
@@ -109,22 +110,25 @@ end
         % 必须要有两个输入参数(source, callbackdata),名字不重要
         % 第一个返回matlab.ui.container.Menu对象
         % 第二个返回ui.eventdata.ActionData
-        kc = source.UserData; %通道号
+        % source.UserData为通道号
+        channel = obj.channels(source.UserData);
         switch source.Text
             case 'trackResult'
-                plot_trackResult(obj.channels(kc))
+                plot_trackResult(channel)
             case 'I_Q'
-                plot_I_Q(obj.channels(kc))
+                plot_I_Q(channel)
             case 'I_P'
-                plot_I_P(obj.channels(kc))
+                plot_I_P(channel)
             case 'I_P(flag)'
-                plot_I_P_flag(obj.channels(kc))
-            case 'carrFreq'
-                plot_carrFreq(obj.channels(kc))
+                plot_I_P_flag(channel)
             case 'codeFreq'
-                plot_codeFreq(obj.channels(kc))
+                plot_codeFreq(channel)
+            case 'carrFreq'
+                plot_carrFreq(channel)
+            case 'carrNco'
+                plot_carrNco(channel)
             case 'carrAcc'
-                plot_carrAcc(obj.channels(kc))
+                plot_carrAcc(channel)
         end
     end
 

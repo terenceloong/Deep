@@ -13,6 +13,7 @@ obj.storage.remCodePhase(n) = obj.remCodePhase;
 obj.storage.codeFreq(n)     = obj.codeFreq;
 obj.storage.remCarrPhase(n) = obj.remCarrPhase;
 obj.storage.carrFreq(n)     = obj.carrFreq;
+obj.storage.carrNco(n)      = obj.carrNco;
 obj.storage.carrAcc(n)      = obj.carrAcc;
 
 % 指向下次更新的开始点
@@ -73,6 +74,8 @@ switch obj.carrMode
         freqPull(freqError);
     case 2 %锁相环
         order2PLL(carrError);
+    case 3 %深组合锁相环
+        deepPLL(carrError);
 end
 
 % 码跟踪
@@ -102,16 +105,28 @@ obj.storage.I_Q(n,:) = [I_P, I_E, I_L, Q_P, Q_E, Q_L];
 obj.storage.disc(n,:) = [codeError, carrError, freqError];
 
     %% 频率牵引
-    function freqPull(freqError)
-        % 运行一段时间锁频环,到时间后自动进入锁相环
-        % FLLp = [K, Int, cnt]
-        obj.FLLp(2) = obj.FLLp(2) + obj.FLLp(1)*freqError;
-        obj.carrNco = obj.FLLp(2);
-        obj.carrFreq = obj.FLLp(2);
-        obj.FLLp(3) = obj.FLLp(3) + 1; %计数
-        if obj.FLLp(3)==200
-            obj.FLLp(3) = 0;
-            obj.PLL2(3) = obj.FLLp(2); %锁相环积分器初值
+%     function freqPull(freqError)
+%         % 运行一段时间锁频环,到时间后自动进入锁相环
+%         % FLLp = [K, Int, cnt]
+%         obj.FLLp(2) = obj.FLLp(2) + obj.FLLp(1)*freqError;
+%         obj.carrNco = obj.FLLp(2);
+%         obj.carrFreq = obj.FLLp(2);
+%         obj.FLLp(3) = obj.FLLp(3) + 1; %计数
+%         if obj.FLLp(3)==200
+%             obj.FLLp(3) = 0;
+%             obj.PLL2(3) = obj.FLLp(2); %锁相环积分器初值
+%             obj.carrMode = 2; %转到锁相环
+%             log_str = sprintf('Start PLL tracking at %.8fs', obj.dataIndex/obj.sampleFreq);
+%             obj.log = [obj.log; string(log_str)];
+%         end
+%     end
+	function freqPull(freqError)
+        % FLLp = [K, cnt]
+        obj.carrFreq = obj.carrFreq + obj.FLLp(1)*freqError;
+        obj.carrNco = obj.carrFreq;
+        obj.FLLp(2) = obj.FLLp(2) + 1; %计数
+        if obj.FLLp(2)==200
+            obj.FLLp(2) = 0;
             obj.carrMode = 2; %转到锁相环
             log_str = sprintf('Start PLL tracking at %.8fs', obj.dataIndex/obj.sampleFreq);
             obj.log = [obj.log; string(log_str)];
@@ -119,22 +134,47 @@ obj.storage.disc(n,:) = [codeError, carrError, freqError];
     end
 
     %% 二阶锁相环
+%     function order2PLL(carrError)
+%         % PLL2 = [K1, K2, Int]
+%         % 卫星运动引起的载波频率变化率总是负的,大约是-0.3~-0.6Hz/s
+%         % 如果不加前馈,测的载波频率偏大,大约0.01Hz~0.02Hz
+%         % 验证加前馈的效果看载波鉴相器均值,加完前馈均值会更接近0
+%         obj.PLL2(3) = obj.PLL2(3) + obj.PLL2(2)*carrError + obj.carrAcc*obj.timeIntS;
+%         obj.carrNco = obj.PLL2(3) + obj.PLL2(1)*carrError;
+%         obj.carrFreq = obj.PLL2(3);
+%     end
     function order2PLL(carrError)
-        % PLL2 = [K1, K2, Int]
-        % 卫星运动引起的载波频率变化率总是负的,大约是-0.3~-0.6Hz/s
-        % 如果不加前馈,测的载波频率偏大,大约0.01Hz~0.02Hz
-        % 验证加前馈的效果看载波鉴相器均值,加完前馈均值会更接近0
-        obj.PLL2(3) = obj.PLL2(3) + obj.PLL2(2)*carrError + obj.carrAcc*obj.timeIntS;
-        obj.carrNco = obj.PLL2(3) + obj.PLL2(1)*carrError;
-        obj.carrFreq = obj.PLL2(3);
+        % PLL2 = [K1, K2]
+        obj.carrFreq = obj.carrFreq + obj.PLL2(2)*carrError + obj.carrAcc*obj.timeIntS;
+        obj.carrNco = obj.carrFreq + obj.PLL2(1)*carrError;
+    end
+
+    %% 深组合锁相环
+    function deepPLL(carrError)
+        % PLL2 = [K1, K2]
+        % 估计频率靠二阶环路估计,驱动频率靠外部更新
+        % 参见程序track_sim.m
+        dt = obj.timeIntS; %时间间隔
+        fi = obj.carrAcc * dt; %载波加速度引起的频率增量
+        obj.carrFreq = obj.carrFreq + fi;
+        obj.carrNco = obj.carrNco + fi;
+        df = obj.carrNco - obj.carrFreq;
+        dp = -carrError - df*dt;
+        obj.remCarrPhase = obj.remCarrPhase - df*dt - obj.PLL2(1)*dt*dp; %alpha=K1*dt
+        obj.carrFreq = obj.carrFreq - obj.PLL2(2)*dp; %beta=K2
     end
 
     %% 二阶延迟锁定环
+%     function order2DLL(codeError)
+%         % DLL2 = [K1, K2, Int]
+%         obj.DLL2(3) = obj.DLL2(3) + obj.DLL2(2)*codeError;
+%         obj.codeNco = obj.DLL2(3) + obj.DLL2(1)*codeError;
+%         obj.codeFreq = obj.DLL2(3);
+%     end
     function order2DLL(codeError)
-        % DLL2 = [K1, K2, Int]
-        obj.DLL2(3) = obj.DLL2(3) + obj.DLL2(2)*codeError;
-        obj.codeNco = obj.DLL2(3) + obj.DLL2(1)*codeError;
-        obj.codeFreq = obj.DLL2(3);
+        % DLL2 = [K1, K2]
+        obj.codeFreq = obj.codeFreq + obj.DLL2(2)*codeError;
+        obj.codeNco = obj.codeFreq + obj.DLL2(1)*codeError;
     end
 
     %% 码开环

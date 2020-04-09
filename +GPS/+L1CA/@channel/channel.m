@@ -33,7 +33,7 @@ classdef channel < handle
         I               %I路积分值
         Q               %Q路积分值
         FLLp            %频率牵引锁频环
-        PLL2             %二阶锁相环
+        PLL2            %二阶锁相环
         DLL2            %二阶延迟锁定环
         carrMode        %载波跟踪模式
         codeMode        %码跟踪模式
@@ -85,6 +85,7 @@ classdef channel < handle
             obj.storage.codeFreq     =   NaN(row,1,'double');
             obj.storage.remCarrPhase =   NaN(row,1,'single');
             obj.storage.carrFreq     =   NaN(row,1,'double');
+            obj.storage.carrNco      =   NaN(row,1,'double');
             obj.storage.carrAcc      =   NaN(row,1,'single');
             obj.storage.I_Q          = zeros(row,6,'int32');
             obj.storage.disc         =   NaN(row,3,'single');

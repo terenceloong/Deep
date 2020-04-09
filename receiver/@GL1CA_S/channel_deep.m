@@ -12,7 +12,15 @@ switch obj.deepMode
             end
         end
     case 2
-        
+        for k=1:obj.chN
+            channel = obj.channels(k);
+            if channel.state==2
+                channel.state = 3;
+                channel.codeMode = 2; %更换码环
+                channel.carrMode = 3; %更换载波环
+                channel.markCurrStorage;
+            end
+        end
 end
 
 end

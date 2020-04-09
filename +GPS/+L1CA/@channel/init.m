@@ -42,20 +42,27 @@ obj.I = 1;
 obj.Q = 1;
 
 % 初始化FLLp
+% K = 40 * obj.timeIntS;
+% Int = obj.carrNco; %积分器
+% cnt = 0; %计数器
+% obj.FLLp = [K, Int, cnt];
 K = 40 * obj.timeIntS;
-Int = obj.carrNco; %积分器
 cnt = 0; %计数器
-obj.FLLp = [K, Int, cnt];
+obj.FLLp = [K, cnt];
 
 % 初始化PLL2
+% [K1, K2] = order2LoopCoefD(25, 0.707, obj.timeIntS);
+% Int = 0; %积分器
+% obj.PLL2 = [K1, K2, Int];
 [K1, K2] = order2LoopCoefD(25, 0.707, obj.timeIntS);
-Int = 0; %积分器
-obj.PLL2 = [K1, K2, Int];
+obj.PLL2 = [K1, K2];
 
 % 初始化DLL2
+% [K1, K2] = order2LoopCoefD(2, 0.707, obj.timeIntS);
+% Int = obj.codeNco; %积分器
+% obj.DLL2 = [K1, K2, Int];
 [K1, K2] = order2LoopCoefD(2, 0.707, obj.timeIntS);
-Int = obj.codeNco; %积分器
-obj.DLL2 = [K1, K2, Int];
+obj.DLL2 = [K1, K2];
 
 % 初始化跟踪模式
 obj.carrMode = 1;

@@ -2,8 +2,8 @@ function pos_deep(obj)
 % 深组合定位
 
 % 波长
-lamdaCarr = 299792458/1575.42e6; %载波长,m
-lamdaCode = 299792458/1.023e6; %码长,m
+Lca = 299792458/1575.42e6; %载波长,m
+Lco = 299792458/1.023e6; %码长,m
 
 % 获取卫星测量信息
 satmeas = obj.get_satmeas;
@@ -19,7 +19,7 @@ for k=1:chN
     if channel.state==3
         quality(k) = channel.quality;
         [co, ~] = channel.getDiscOutput;
-        codeDisc(k) = mean(co)*lamdaCode;
+        codeDisc(k) = mean(co)*Lco;
         R_rho(k) = 4^2;
         R_rhodot(k) = 0.04^2;
     end
@@ -34,23 +34,37 @@ sv = [satmeas, quality, R_rho, R_rhodot];
 sv(:,7) = sv(:,7) - codeDisc; %本地码超前,伪距偏短,码鉴相器为负,修正是减
 obj.navFilter.run(obj.imu, sv);
 
-% 码相位误差和载波频率误差(通道值减真实值)
+% 使用滤波结果计算的理论相对距离和相对速度
 [rho0, rhodot0] = rho_rhodot_cal_ecef(satmeas(:,1:3), satmeas(:,4:6), ...
                   obj.navFilter.rp, obj.navFilter.vp);
-dcodePhase = (rho0-satmeas(:,7))/lamdaCode; %伪距短,码相位超前
-dcarrFreq = (rhodot0-satmeas(:,8))/lamdaCarr; %伪距率小,载波频率快
 
 % 通道修正
+% 伪距短,码相位超前; 伪距率小,载波频率快
 switch obj.deepMode
     case 1
         for k=1:chN
             channel = obj.channels(k);
             if channel.state==3
-                channel.remCodePhase = channel.remCodePhase - dcodePhase(k);
                 channel.markCurrStorage;
+                %----码相位修正
+                dcodePhase = (rho0(k)-satmeas(k,7))/Lco; %码相位修正量
+                channel.remCodePhase = channel.remCodePhase - dcodePhase;
             end
         end
     case 2
+        for k=1:chN
+            channel = obj.channels(k);
+            if channel.state==3
+                channel.markCurrStorage;
+                %----码相位修正
+                dcodePhase = (rho0(k)-satmeas(k,7))/Lco; %码相位修正量
+                channel.remCodePhase = channel.remCodePhase - dcodePhase;
+                %----载波驱动频率修正
+                dcarrFreq = (rhodot0(k)-satmeas(k,8))/Lca; %相对估计频率的修正量
+                dcarrFreq = dcarrFreq + (channel.carrNco-channel.carrFreq); %相对驱动频率的修正量
+                channel.carrNco = channel.carrNco - dcarrFreq;
+            end
+        end
 end
 
 % 新跟踪的通道切换深组合跟踪环路

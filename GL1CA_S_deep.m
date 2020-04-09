@@ -115,7 +115,7 @@ for t=1:msToProcess
         nCoV.imu_input(imu(ki,1), imu(ki,2:7)); %输入IMU数据
         para.p0 = nCoV.pos;
         nCoV.navFilter = filter_single(para); %初始化导航滤波器
-        nCoV.deepMode = 1; %设置深组合模式
+        nCoV.deepMode = 2; %设置深组合模式
         nCoV.channel_deep; %通道切换深组合跟踪环路
         nCoV.state = 3; %接收机进入深组合
     end
