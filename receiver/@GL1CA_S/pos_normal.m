@@ -1,5 +1,5 @@
 function pos_normal(obj)
-% 正常模式定位
+% 正常定位
 
 % 获取卫星测量信息
 satmeas = obj.get_satmeas;

@@ -1,5 +1,5 @@
 function pos_init(obj)
-% 初始化模式定位
+% 初始化定位
 
 % 获取卫星测量信息
 satmeas = obj.get_satmeas;

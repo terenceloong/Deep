@@ -105,3 +105,6 @@ G(GPS),R(GLONASS),E(Galileo),C(BDS),J(QZSS),I(IRNSS),参见RINEX 3.03
 3.引入channel = obj.channels(k);
 4.接收机类和通道类中的函数全部独立成文件,在定义类时声明其属性
   参见help-Methods in Separate Files
+
+<===Version 1.13===>2020.4.9
+1.添加GPS深组合,单天线深组合和紧组合使用的导航滤波器相同

@@ -1,5 +1,5 @@
 function pos_tight(obj)
-% 紧组合模式定位
+% 紧组合定位
 
 % 获取卫星测量信息
 satmeas = obj.get_satmeas;
@@ -11,7 +11,7 @@ R_rho = zeros(chN,1); %伪距测量噪声方差,m^2
 R_rhodot = zeros(chN,1); %伪距率测量噪声方差,(m/s)^2
 for k=1:chN
     channel = obj.channels(k);
-    if channel.state==2 %通道可以测量伪距伪距率
+    if channel.state==2
         quality(k) = channel.quality;
         R_rho(k) = 4^2;
         R_rhodot(k) = 0.04^2;

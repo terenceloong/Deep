@@ -4,7 +4,7 @@ function plot_bias_gyro(obj)
 
 figure('Name','ÍÓÂÝÁãÆ«')
 switch obj.state
-    case 2
+    case {2, 3}
         for k=1:3
             subplot(3,1,k)
             plot(obj.storage.imu(:,k))
@@ -12,7 +12,6 @@ switch obj.state
             grid on
             plot(obj.storage.bias(:,k), 'LineWidth',1)
         end
-    case 3
 end
 
 end

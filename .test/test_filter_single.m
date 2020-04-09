@@ -1,4 +1,4 @@
-%% 测试紧组合导航滤波器(静止情况)
+%% 测试单天线导航滤波器(静止情况)
 
 %%
 clear
@@ -99,7 +99,7 @@ para.Q_dtv = 0.01e-9; %1/s
 para.Q_dg = 0.01; %deg/s/s
 para.Q_da = 0.1e-3; %g/s
 para.sigma_gyro = sigma_gyro; %deg/s
-NF = filter_tight(para);
+NF = filter_single(para);
 
 %% 开始仿真
 sv_9_11 = [ones(svN,1)*2, ...

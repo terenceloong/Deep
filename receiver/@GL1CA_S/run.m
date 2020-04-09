@@ -27,13 +27,13 @@ obj.trackProcess;
 % 定位
 if (obj.ta-obj.tp)*[1;1e-3;1e-6]>=0 %定位时间到了
     switch obj.state
-        case 0 %初始化模式
+        case 0 %初始化
             obj.pos_init;
-        case 1 %正常模式
+        case 1 %正常
             obj.pos_normal;
-        case 2 %紧组合模式
+        case 2 %紧组合
             obj.pos_tight;
-        case 3 %深组合模式
+        case 3 %深组合
             obj.pos_deep;
     end
 end

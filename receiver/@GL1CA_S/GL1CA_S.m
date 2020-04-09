@@ -1,6 +1,7 @@
 classdef GL1CA_S < handle
 % GPS L1 C/A单天线接收机
 % state:接收机状态, 0-初始化, 1-正常, 2-紧组合, 3-深组合
+% deepMode:深组合模式, 1-码环矢量跟踪, 2-码环载波环都矢量跟踪
     
     properties
         Tms            %接收机总运行时间,ms
@@ -33,6 +34,7 @@ classdef GL1CA_S < handle
         tp             %下次定位的时间,[s,ms,us]
         imu            %IMU数据
         navFilter      %导航滤波器
+        deepMode       %深组合模式
         ns             %指向当前存储行,初值是0,存储之前加1
         storage        %存储接收机输出
         result         %接收机运行结果
@@ -129,16 +131,17 @@ classdef GL1CA_S < handle
         interact_constellation(obj)   %画交互星座图
         get_result(obj)               %获取接收机运行结果
         imu_input(obj, tp, imu)       %IMU数据输入
+        channel_deep(obj)             %通道切换深组合跟踪环路
     end
     
     methods (Access = private)
         acqProcess(obj)            %捕获过程
         trackProcess(obj)          %跟踪过程
         satmeas = get_satmeas(obj) %获取卫星测量
-        pos_init(obj)              %初始化模式定位
-        pos_normal(obj)            %正常模式定位
-        pos_tight(obj)             %紧组合模式定位
-        pos_deep(obj)              %深组合模式定位
+        pos_init(obj)              %初始化定位
+        pos_normal(obj)            %正常定位
+        pos_tight(obj)             %紧组合定位
+        pos_deep(obj)              %深组合定位
     end
     
 end %end classdef

@@ -1,5 +1,5 @@
-classdef filter_tight < handle
-% 紧组合导航滤波器
+classdef filter_single < handle
+% 单天线导航滤波器
     
     properties
         motion  %运动状态检测
@@ -25,7 +25,7 @@ classdef filter_tight < handle
     
     methods
         %% 构造函数
-        function obj = filter_tight(para)
+        function obj = filter_single(para)
             d2r = pi/180;
             obj.motion = motionDetector_gyro(para.gyro0, para.dt, 0.8);
             obj.pos = para.p0;

@@ -19,6 +19,11 @@ switch obj.state
             plot(obj.storage.pos(:,k), 'LineWidth',1)
         end
     case 3
+        for k=1:3
+            subplot(3,1,k)
+            plot(obj.storage.pos(:,k), 'LineWidth',1)
+            grid on
+        end
 end
 
 end

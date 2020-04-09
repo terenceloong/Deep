@@ -1,4 +1,4 @@
-%% GPS L1 C/A单天线紧组合
+%% GPS L1 C/A单天线深组合
 
 %%
 clear
@@ -102,12 +102,12 @@ for t=1:msToProcess
     data = fread(fileID, [2,blockSize], 'int16'); %从文件读数据
     nCoV.run(data); %接收机处理数据
     %---------------------------------------------------------------------%
-    if nCoV.state==2 %紧组合时,进行一次定位后为其设置下次定位时间和IMU数据
+    if nCoV.state==3 %深组合时,进行一次定位后为其设置下次定位时间和IMU数据
         if isnan(nCoV.tp(1)) %定位后tp会变成NaN
             ki = ki+1; %IMU索引加1
             nCoV.imu_input(imu(ki,1), imu(ki,2:7)); %输入IMU数据
         end
-    elseif nCoV.state==1 %当接收机初始化完成后进入紧组合
+    elseif nCoV.state==1 %当接收机初始化完成后进入深组合
         ki = find(imu(:,1)>nCoV.ta*[1;1e-3;1e-6], 1); %IMU索引
         if isempty(ki) || (imu(ki,1)-nCoV.ta(1))>1
             error('Data mismatch!')
@@ -115,7 +115,9 @@ for t=1:msToProcess
         nCoV.imu_input(imu(ki,1), imu(ki,2:7)); %输入IMU数据
         para.p0 = nCoV.pos;
         nCoV.navFilter = filter_single(para); %初始化导航滤波器
-        nCoV.state = 2; %接收机进入紧组合
+        nCoV.deepMode = 1; %设置深组合模式
+        nCoV.channel_deep; %通道切换深组合跟踪环路
+        nCoV.state = 3; %接收机进入深组合
     end
     %---------------------------------------------------------------------%
 end
