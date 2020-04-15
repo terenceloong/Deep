@@ -77,6 +77,7 @@ for k=1:length(PRN) %处理所有高度角大于0的卫星
     uimenu(c, 'MenuSelectedFcn',@scatterCallback, 'UserData',ch, 'Text','carrFreq');
     uimenu(c, 'MenuSelectedFcn',@scatterCallback, 'UserData',ch, 'Text','carrNco');
     uimenu(c, 'MenuSelectedFcn',@scatterCallback, 'UserData',ch, 'Text','carrAcc');
+    uimenu(c, 'MenuSelectedFcn',@scatterCallback, 'UserData',ch, 'Text','quality');
 end
             
     %% 在figure上右键的回调函数
@@ -129,6 +130,8 @@ end
                 plot_carrNco(channel)
             case 'carrAcc'
                 plot_carrAcc(channel)
+            case 'quality'
+                plot_quality(channel)
         end
     end
 

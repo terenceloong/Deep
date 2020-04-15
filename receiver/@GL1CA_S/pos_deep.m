@@ -35,8 +35,16 @@ sv(:,7) = sv(:,7) - codeDisc; %本地码超前,伪距偏短,码鉴相器为负,修正是减
 obj.navFilter.run(obj.imu, sv);
 
 % 使用滤波结果计算的理论相对距离和相对速度
-[rho0, rhodot0] = rho_rhodot_cal_ecef(satmeas(:,1:3), satmeas(:,4:6), ...
-                  obj.navFilter.rp, obj.navFilter.vp);
+[rho0, rhodot0, rspu] = rho_rhodot_cal_ecef(satmeas(:,1:3), satmeas(:,4:6), ...
+                        obj.navFilter.rp, obj.navFilter.vp);
+
+% 计算接收机运动引起的相对加速度
+Cnb = quat2dcm(obj.navFilter.quat);
+Cen = dcmecef2ned(obj.navFilter.pos(1), obj.navFilter.pos(2));
+fb = obj.imu(4:6) - obj.navFilter.bias(4:6); %g
+fn = (fb*Cnb + [0,0,1]) * obj.navFilter.g; %m/s^2
+fe = fn*Cen;
+acclos0 = rspu*fe';
 
 % 通道修正
 % 伪距短,码相位超前; 伪距率小,载波频率快
@@ -63,6 +71,8 @@ switch obj.deepMode
                 dcarrFreq = (rhodot0(k)-satmeas(k,8))/Lca; %相对估计频率的修正量
                 dcarrFreq = dcarrFreq + (channel.carrNco-channel.carrFreq); %相对驱动频率的修正量
                 channel.carrNco = channel.carrNco - dcarrFreq;
+                %----接收机运动引起的载波频率变化率
+                channel.carrAccR = -acclos0(k)/Lca;
             end
         end
 end

@@ -8,6 +8,8 @@ fclose('all'); %关闭之前打开的所有文件
 %% 选择IMU数据文件
 imu = IMU_read(0);
 gyro0 = mean(imu(1:200,2:4)); %计算初始陀螺零偏
+% psi0 = input('psi0 = '); %输入初始航向角
+psi0 = 38.1;
 
 %% 选择GNSS数据文件
 valid_prefix = 'B210-'; %文件名有效前缀
@@ -19,7 +21,7 @@ data_file = [path, file]; %数据文件完整路径,path最后带\
 
 %% 主机参数
 % 根据实际情况修改.
-msToProcess = 60*1000; %处理总时间
+msToProcess = 120*1000; %处理总时间
 sampleOffset = 0*4e6; %抛弃前多少个采样点
 sampleFreq = 4e6; %接收机采样频率
 blockSize = sampleFreq*0.001; %一个缓存块(1ms)的采样点数
@@ -58,7 +60,7 @@ para.dt = 0.01; %s,根据IMU采样周期设置
 para.gyro0 = gyro0; %deg/s
 para.p0 = [0,0,0];
 para.v0 = [0,0,0];
-para.a0 = [0,0,0]; %deg
+para.a0 = [psi0,0,0]; %deg
 para.P0_att = 1; %deg
 para.P0_vel = 1; %m/s
 para.P0_pos = 5; %m

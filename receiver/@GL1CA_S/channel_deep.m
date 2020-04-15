@@ -19,6 +19,8 @@ switch obj.deepMode
                 channel.codeMode = 2; %更换码环
                 channel.carrMode = 3; %更换载波环
                 channel.markCurrStorage;
+%                 [K1, K2] = order2LoopCoefD(15, 0.707, channel.timeIntS);
+%                 channel.PLL2 = [K1, K2];
             end
         end
 end

@@ -23,7 +23,8 @@ classdef channel < handle
         trackBlockSize  %跟踪数据段采样点个数
         trackDataHead   %跟踪结束点在数据缓存中的位置
         dataIndex       %跟踪开始点在文件中的位置
-        carrAcc         %载波频率变化率
+        carrAccS        %卫星运动引起的载波频率变化率
+        carrAccR        %接收机运动引起的载波频率变化率
         carrNco         %载波发生器驱动频率
         codeNco         %码发生器驱动频率
         remCarrPhase    %跟踪开始点的载波相位
@@ -38,6 +39,7 @@ classdef channel < handle
         carrMode        %载波跟踪模式
         codeMode        %码跟踪模式
         quality         %信号质量
+        SQI             %信号质量指示器
         tc0             %下一伪码周期的开始时间,ms
         msgStage        %电文解析阶段(字符)
         msgCnt          %电文解析计数器
@@ -90,6 +92,7 @@ classdef channel < handle
             obj.storage.I_Q          = zeros(row,6,'int32');
             obj.storage.disc         =   NaN(row,3,'single');
             obj.storage.bitFlag      = zeros(row,1,'uint8'); %导航电文比特开始标志
+            obj.storage.quality      = zeros(row,1,'uint8');
         end
     end
     

@@ -14,7 +14,7 @@ obj.storage.codeFreq(n)     = obj.codeFreq;
 obj.storage.remCarrPhase(n) = obj.remCarrPhase;
 obj.storage.carrFreq(n)     = obj.carrFreq;
 obj.storage.carrNco(n)      = obj.carrNco;
-obj.storage.carrAcc(n)      = obj.carrAcc;
+obj.storage.carrAcc(n)      = obj.carrAccS + obj.carrAccR;
 
 % 指向下次更新的开始点
 obj.dataIndex = obj.dataIndex + obj.trackBlockSize;
@@ -139,13 +139,15 @@ obj.storage.disc(n,:) = [codeError, carrError, freqError];
 %         % 卫星运动引起的载波频率变化率总是负的,大约是-0.3~-0.6Hz/s
 %         % 如果不加前馈,测的载波频率偏大,大约0.01Hz~0.02Hz
 %         % 验证加前馈的效果看载波鉴相器均值,加完前馈均值会更接近0
-%         obj.PLL2(3) = obj.PLL2(3) + obj.PLL2(2)*carrError + obj.carrAcc*obj.timeIntS;
+%         carrAcc = obj.carrAccS + obj.carrAccR;
+%         obj.PLL2(3) = obj.PLL2(3) + obj.PLL2(2)*carrError + carrAcc*obj.timeIntS;
 %         obj.carrNco = obj.PLL2(3) + obj.PLL2(1)*carrError;
 %         obj.carrFreq = obj.PLL2(3);
 %     end
     function order2PLL(carrError)
         % PLL2 = [K1, K2]
-        obj.carrFreq = obj.carrFreq + obj.PLL2(2)*carrError + obj.carrAcc*obj.timeIntS;
+        carrAcc = obj.carrAccS + obj.carrAccR;
+        obj.carrFreq = obj.carrFreq + obj.PLL2(2)*carrError + carrAcc*obj.timeIntS;
         obj.carrNco = obj.carrFreq + obj.PLL2(1)*carrError;
     end
 
@@ -155,13 +157,21 @@ obj.storage.disc(n,:) = [codeError, carrError, freqError];
         % 估计频率靠二阶环路估计,驱动频率靠外部更新
         % 参见程序track_sim.m
         dt = obj.timeIntS; %时间间隔
-        fi = obj.carrAcc * dt; %载波加速度引起的频率增量
+        fi = (obj.carrAccS+obj.carrAccR) * dt; %载波加速度引起的频率增量
         obj.carrFreq = obj.carrFreq + fi;
         obj.carrNco = obj.carrNco + fi;
         df = obj.carrNco - obj.carrFreq;
         dp = -carrError - df*dt;
         obj.remCarrPhase = obj.remCarrPhase - df*dt - obj.PLL2(1)*dt*dp; %alpha=K1*dt
         obj.carrFreq = obj.carrFreq - obj.PLL2(2)*dp; %beta=K2
+        if obj.quality<2
+            obj.carrFreq = obj.carrNco;
+%             if obj.carrFreq>obj.carrNco+1 %积分限幅
+%                 obj.carrFreq = obj.carrNco + 1;
+%             elseif obj.carrFreq<obj.carrNco-1
+%                 obj.carrFreq = obj.carrNco - 1;
+%             end
+        end
     end
 
     %% 二阶延迟锁定环

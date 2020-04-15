@@ -29,7 +29,8 @@ obj.trackDataHead = obj.trackDataTail + obj.trackBlockSize - 1;
 obj.dataIndex = obj.trackDataTail + n;
 
 % 初始化本地信号发生器
-obj.carrAcc = 0;
+obj.carrAccS = 0;
+obj.carrAccR = 0;
 obj.carrNco = acqResult(2);
 obj.codeNco = 1.023e6 + obj.carrNco/1540;
 obj.remCarrPhase = 0;
@@ -69,7 +70,8 @@ obj.carrMode = 1;
 obj.codeMode = 1;
 
 % 初始信号质量
-obj.quality = 2;
+obj.quality = 0;
+obj.SQI = sigqual_indicator(20, 20, 200);
 
 % 初始化伪码时间
 obj.tc0 = NaN;

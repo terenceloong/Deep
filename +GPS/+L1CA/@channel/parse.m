@@ -23,6 +23,9 @@ switch obj.msgStage %I,B,W,H,C,E
         if obj.msgCnt==1 %记录比特开始标志
             obj.storage.bitFlag(obj.ns) = obj.msgStage;
         end
+        obj.SQI.run(obj.I, obj.Q); %评估信号质量
+        obj.quality = obj.SQI.quality;
+        obj.storage.quality(obj.ns) = obj.quality;
         if obj.msgCnt==obj.pointInt %跟踪完一个比特
             obj.msgCnt = 0; %计数器清零
             obj.frameBuffPtr = obj.frameBuffPtr + 1; %帧缓存指针加1

@@ -1,4 +1,4 @@
-function [rho, rhodot] = rho_rhodot_cal_ecef(rs, vs, rp, vp)
+function [rho, rhodot, rspu] = rho_rhodot_cal_ecef(rs, vs, rp, vp)
 % 使用接收机的ecef位置速度计算理论相对距离相对速度(多颗卫星)
 
 n = size(rs,1); %卫星个数

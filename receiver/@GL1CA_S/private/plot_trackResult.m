@@ -32,11 +32,11 @@ plot(ax2, t, double(obj.storage.I_Q(:,1))) %横纵坐标数据类型要一样
 set(ax2, 'XLim',[1,ceil(obj.Tms/1000)])
 
 % 载波频率
-plot(ax4, t, obj.storage.carrFreq, 'LineWidth',1.5)
+plot(ax4, t, obj.storage.carrFreq, 'LineWidth',0.5)
 set(ax4, 'XLim',[1,ceil(obj.Tms/1000)])
 
 % 载波频率变化率
-plot(ax5, t, obj.storage.carrAcc, 'LineWidth',1.5)
+plot(ax5, t, obj.storage.carrAcc, 'LineWidth',0.5)
 set(ax5, 'XLim',[1,ceil(obj.Tms/1000)])
 
 end
