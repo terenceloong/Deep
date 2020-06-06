@@ -19,7 +19,7 @@ for k=1:chN
     if channel.state==3
         quality(k) = channel.quality;
         [co, ~] = channel.getDiscOutput;
-        codeDisc(k) = mean(co)*Lco;
+        codeDisc(k) = sum(co)/length(co)*Lco;
         R_rho(k) = 4^2;
         R_rhodot(k) = 0.04^2;
     end
@@ -108,6 +108,7 @@ obj.storage.P(m,:) = sqrt(diag(P));
 Cnb = quat2dcm(obj.navFilter.quat);
 P_angle = var_phi2angle(P(1:3,1:3), Cnb);
 obj.storage.P(m,1:3) = sqrt(diag(P_angle));
+obj.storage.quality(m,:) = quality;
 
 % 更新下次定位时间
 obj.tp(1) = NaN;

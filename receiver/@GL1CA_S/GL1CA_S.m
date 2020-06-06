@@ -118,6 +118,7 @@ classdef GL1CA_S < handle
             obj.storage.imu     =   NaN(row,6,'single');
             obj.storage.bias    =   NaN(row,6,'single');
             obj.storage.P       =   NaN(row,17,'single');
+            obj.storage.quality = zeros(row,obj.chN,'uint8');
         end
     end
 	

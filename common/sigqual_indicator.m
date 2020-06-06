@@ -33,12 +33,13 @@ classdef sigqual_indicator < handle
         function run(obj, I, Q)
             obj.index = obj.index + 1;
             ki = obj.index;
+            n = obj.N; %一个比特的数据点数
             obj.buffI(ki) = I;
             obj.buffQ(ki) = Q;
-            if ki==obj.N %存够一个比特的数
+            if ki==n %存够一个比特的数
                 obj.index = 0;
-                bit = sign(mean(obj.buffI(1:obj.N))); %比特符号
-                for k=1:obj.N
+                bit = sign(sum(obj.buffI(1:n))/n); %比特符号
+                for k=1:n
                     obj.Im.update(obj.buffI(k)*bit);
                     obj.Q2m.update(obj.buffQ(k)^2);
                 end

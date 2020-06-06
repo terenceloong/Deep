@@ -17,7 +17,7 @@ result1 = zeros(M,n); %搜索结果表格,行是载波频率,列是码相位
 result2 = zeros(M,n);
 
 % 搜索每个频率
-t = -2i*pi * (0:N-1)/fs;
+t = -2i*pi/fs * (0:N-1);
 for k=1:M
     carrier = exp(obj.acqFreq(k)*t); %本地复载波,负频率
     x = signal1.*carrier;

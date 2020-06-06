@@ -7,6 +7,8 @@ fclose('all'); %关闭之前打开的所有文件
 
 %% 选择IMU数据文件
 imu = IMU_read(0);
+imu(:,2:4) = movmean(imu(:,2:4),5,1); %预滤波
+imu(:,5:7) = movmean(imu(:,5:7),4,1);
 gyro0 = mean(imu(1:200,2:4)); %计算初始陀螺零偏
 % psi0 = input('psi0 = '); %输入初始航向角
 psi0 = 38.1;
@@ -21,8 +23,8 @@ data_file = [path, file]; %数据文件完整路径,path最后带\
 
 %% 主机参数
 % 根据实际情况修改.
-msToProcess = 120*1000; %处理总时间
-sampleOffset = 0*4e6; %抛弃前多少个采样点
+msToProcess = 80*1000; %处理总时间
+sampleOffset = 40*4e6; %抛弃前多少个采样点
 sampleFreq = 4e6; %接收机采样频率
 blockSize = sampleFreq*0.001; %一个缓存块(1ms)的采样点数
 p0 = [45.730952, 126.624970, 212]; %初始位置,不用特别精确

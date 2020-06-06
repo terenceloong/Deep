@@ -23,8 +23,9 @@ obj.dataIndex = obj.dataIndex + obj.trackBlockSize;
 fs = obj.sampleFreq * (1+deltaFreq);
 
 % 时间序列
-t = (0:obj.trackBlockSize-1) / fs;
-te = obj.trackBlockSize / fs;
+dts = 1/fs; %采样时间间隔
+t = (0:obj.trackBlockSize-1) * dts;
+te = obj.trackBlockSize * dts;
 
 % 本地载波
 theta = (obj.remCarrPhase + obj.carrNco*t) * pi2; %乘2因为后面是以pi为单位求三角函数
