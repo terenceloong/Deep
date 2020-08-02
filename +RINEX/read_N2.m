@@ -53,11 +53,8 @@ dataPos = ftell(fileID); %数据开始位置
 SVtable = zeros(1,32); %卫星统计表
 SVn = length(SVtable); %卫星总数
 
-while 1 %扫描数据部分
+while ~feof(fileID) %扫描数据部分
     tline = fgetl(fileID);
-    if tline==-1 %读到文件尾tline返回-1
-        break
-    end
     if tline(2)~=' ' %星历首行
         PRN = sscanf(tline(1:2),'%d');
         SVtable(PRN) = SVtable(PRN) + 1;
@@ -90,11 +87,8 @@ ki = zeros(1,SVn); %指向当前记录行,每颗卫星由于数据量不同,需要为其独立分配值
 day0 = datenum(1980,1,6); %GPS时间起点
 
 % 因为取的字符一定有数据,使用eval替代str2num
-while 1
+while ~feof(fileID)
     tline = fgetl(fileID); %第1行
-    if tline==-1 %读到文件尾tline返回-1
-        break
-    end
     PRN = sscanf(tline(1:2),'%d');
     ki(PRN) = ki(PRN) + 1;
     k = ki(PRN); %当前记录行

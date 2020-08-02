@@ -1,7 +1,7 @@
 function ionoflag = parse(obj)
 % 解析导航电文
-% 从捕获到进入比特同步要500ms
-% 比特同步过程要2s,开始寻找帧头要多一点时间,因为等待比特边界到达
+% 从捕获到进入比特同步要500ms(200ms锁频,300ms锁相环稳定)
+% 比特同步过程要2s(100bits),开始寻找帧头要多一点时间,因为等待比特边界到达
 % 比特同步后开始寻找帧头,接收一个完整子帧才能校验帧头,至少6s,最多12s
 % 验证帧头后就可以确定码发射时间
 % 6s一个子帧,30s解析星历一次
@@ -19,19 +19,20 @@ switch obj.msgStage %I,B,W,H,C,E
     case 'W' %等待比特开始
         waitBitStart;
     otherwise %已经完成比特同步
-        obj.bitBuff(obj.msgCnt) = obj.I; %往比特缓存中存数
         if obj.msgCnt==1 %记录比特开始标志
             obj.storage.bitFlag(obj.ns) = obj.msgStage;
         end
         obj.SQI.run(obj.I, obj.Q); %评估信号质量
         obj.quality = obj.SQI.quality;
         obj.storage.quality(obj.ns) = obj.quality;
+        %------------------------------------------
+        obj.bitBuff(obj.msgCnt) = obj.I; %往比特缓存中存数
         if obj.msgCnt==obj.pointInt %跟踪完一个比特
             obj.msgCnt = 0; %计数器清零
             obj.frameBuffPtr = obj.frameBuffPtr + 1; %帧缓存指针加1
             bit = (double(sum(obj.bitBuff(1:obj.pointInt))>0) - 0.5) * 2; %一个比特,±1
             obj.frameBuff(obj.frameBuffPtr) = bit; %往比特缓存里存
-            switch obj.msgStage
+            switch obj.msgStage %以下都在处理frameBuff中的内容
                 case 'H' %寻找帧头
                     findFrameHead;
                 case 'C' %校验帧头
@@ -69,7 +70,7 @@ end
                 % 比特同步成功,确定电平翻转位置(电平翻转大都发生在一个点上)
                 [~,obj.msgCnt] = max(obj.bitSyncTable); %将计数值设为同步表最大值的索引
                 obj.bitSyncTable = zeros(1,20); %比特同步统计表清零
-                obj.msgCnt = -obj.msgCnt + 1; %如果索引为1,下个I路积分值就为比特开始处
+                obj.msgCnt = -obj.msgCnt + 1; %如果索引为1,下个积分值就为比特开始处
                 obj.msgStage = 'W'; %等待比特开始
                 waitBitStart;
             else
@@ -144,18 +145,28 @@ end
     %% 解析星历
     function parseEphemeris
         if obj.frameBuffPtr==1502 %跟踪完5帧
+            % 检查第一帧的子帧ID,不能是子帧3(如果是子帧3,星历不是一起发的)
+            bits = -obj.frameBuff(32) * obj.frameBuff(52:54); %电平翻转,50~52比特
+            bits = dec2bin(bits>0)'; %±1数组转化为01字符串
+            subframeID = bin2dec(bits); %01字符串转换为十进制数
+            if subframeID==3
+                obj.frameBuff(1:1202) = obj.frameBuff(301:1502); %将后四帧提前
+                obj.frameBuffPtr = 1202;
+                return
+            end
+            %---------------------------------------------------------
             [ephe, iono] = GPS.L1CA.epheParse(obj.frameBuff); %解析星历
             if ~isempty(ephe) %星历解析成功
-                if ephe(3)==ephe(4) %IODC==IODE
+                if ~isempty(iono) %有电离层参数
+                    obj.iono = iono; %更新电离层参数
+                    ionoflag = 1; %设置电离层参数标志
+                end
+                if mod(ephe(3),255)==ephe(4) %IODC的低8位==IODE
                     log_str = sprintf('Ephemeris is parsed at %.8fs', obj.dataIndex/obj.sampleFreq);
                     obj.log = [obj.log; string(log_str)];
-                    obj.state = 2; %改变通道状态
                     obj.ephe = ephe; %更新星历
-                    if ~isempty(iono)
-                        obj.iono = iono; %更新电离层参数
-                        ionoflag = 1; %设置电离层参数标志
-                    end
-                else %IODC~=IODE
+                    obj.state = 2; %改变通道状态
+                else %IODC的低8位~=IODE
                     log_str = sprintf('***Ephemeris changes at %.8fs, IODC=%d, IODE=%d', ...
                                       obj.dataIndex/obj.sampleFreq, ephe(3), ephe(4));
                     obj.log = [obj.log; string(log_str)];

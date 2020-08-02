@@ -3,7 +3,7 @@ classdef channel < handle
 % state:通道状态, 0-未激活, 1-已激活但没有星历, 2-可以进行伪距伪距率测量, 3-深组合
     
     properties
-        Tms             %总运行时间,ms
+        Tms             %总运行时间,ms,用来确定画图的横坐标
         sampleFreq      %标称采样频率,Hz
         buffSize        %数据缓存总采样点数
         PRN             %卫星编号
@@ -105,6 +105,16 @@ classdef channel < handle
         print_log(obj)                             %打印通道日志
         markCurrStorage(obj)                       %标记当前存储行(深组合)
         [codeDisc, carrDisc] = getDiscOutput(obj)  %获取定位间隔内鉴相器输出(深组合)
+        
+        plot_trackResult(obj)
+        plot_I_Q(obj)
+        plot_I_P(obj)
+        plot_I_P_flag(obj)
+        plot_codeFreq(obj)
+        plot_carrFreq(obj)
+        plot_carrNco(obj)
+        plot_carrAcc(obj)
+        plot_quality(obj)
     end
     
 end %end classdef

@@ -28,7 +28,7 @@ t = (0:obj.trackBlockSize-1) * dts;
 te = obj.trackBlockSize * dts;
 
 % 本地载波
-theta = (obj.remCarrPhase + obj.carrNco*t) * pi2; %乘2因为后面是以pi为单位求三角函数
+theta = (obj.remCarrPhase + obj.carrNco*t) * pi2;
 carr_cos = cos(theta);
 carr_sin = sin(theta);
 theta_next = obj.remCarrPhase + obj.carrNco*te;
@@ -147,8 +147,8 @@ obj.storage.disc(n,:) = [codeError, carrError, freqError];
 %     end
     function order2PLL(carrError)
         % PLL2 = [K1, K2]
-        carrAcc = obj.carrAccS + obj.carrAccR;
-        obj.carrFreq = obj.carrFreq + obj.PLL2(2)*carrError + carrAcc*obj.timeIntS;
+        carrAcc = obj.carrAccS + obj.carrAccR; %载波加速度前馈
+        obj.carrFreq = obj.carrFreq + obj.PLL2(2)*carrError + carrAcc*obj.timeIntS; %积分器是载波频率估计值
         obj.carrNco = obj.carrFreq + obj.PLL2(1)*carrError;
     end
 

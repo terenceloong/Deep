@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>&#24120;&#29992;&#31243;&#24207;&#29255;&#27573;</title><meta name="generator" content="MATLAB 9.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2020-03-04"><meta name="DC.source" content="fragment.m"><style type="text/css">
+      --><title>&#24120;&#29992;&#31243;&#24207;&#29255;&#27573;</title><meta name="generator" content="MATLAB 9.8"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2020-07-17"><meta name="DC.source" content="fragment.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -23,7 +23,7 @@ a:visited { color:#004aa0; text-decoration:none; }
 
 p { padding:0px; margin:0px 0px 20px; }
 img { padding:0px; margin:0px 0px 20px; border:none; }
-p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
 
 ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
 ul li { padding:0px; margin:0px 0px 7px 0px; }
@@ -52,6 +52,7 @@ span.comment { color:#228B22 }
 span.string { color:#A020F0 }
 span.untermstring { color:#B20000 }
 span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
 
 .footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
 .footer p { margin:0px; }
@@ -66,7 +67,7 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h1>&#24120;&#29992;&#31243;&#24207;&#29255;&#27573;</h1><!--introduction--><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">&#28155;&#21152;&#36335;&#24452;</a></li><li><a href="#2">&#31227;&#38500;&#36335;&#24452;</a></li><li><a href="#3">&#21382;&#20070;&#30456;&#20851;</a></li><li><a href="#4">&#26143;&#21382;&#30456;&#20851;</a></li><li><a href="#6">&#26143;&#24231;&#22270;</a></li><li><a href="#10">kml&#36755;&#20986;</a></li><li><a href="#11">&#30005;&#31163;&#23618;</a></li><li><a href="#12">&#25429;&#33719;</a></li></ul></div><h2 id="1">&#28155;&#21152;&#36335;&#24452;</h2><pre class="codeinput"><span class="comment">% addpath(genpath('xxx')) %&#21253;&#21547;&#23376;&#25991;&#20214;&#22841;</span>
+  </style></head><body><div class="content"><h1>&#24120;&#29992;&#31243;&#24207;&#29255;&#27573;</h1><!--introduction--><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">&#28155;&#21152;&#36335;&#24452;</a></li><li><a href="#2">&#31227;&#38500;&#36335;&#24452;</a></li><li><a href="#3">&#21382;&#20070;&#30456;&#20851;</a></li><li><a href="#5">&#26143;&#21382;&#30456;&#20851;</a></li><li><a href="#7">&#26143;&#24231;&#22270;</a></li><li><a href="#11">kml&#36755;&#20986;</a></li><li><a href="#12">&#30005;&#31163;&#23618;</a></li><li><a href="#13">&#25429;&#33719;</a></li></ul></div><h2 id="1">&#28155;&#21152;&#36335;&#24452;</h2><pre class="codeinput"><span class="comment">% addpath(genpath('xxx')) %&#21253;&#21547;&#23376;&#25991;&#20214;&#22841;</span>
 addpath(<span class="string">'common'</span>)
 addpath(<span class="string">'override'</span>)
 addpath(<span class="string">'receiver'</span>)
@@ -76,11 +77,13 @@ rmpath(<span class="string">'override'</span>)
 rmpath(<span class="string">'receiver'</span>)
 </pre><h2 id="3">&#21382;&#20070;&#30456;&#20851;</h2><pre>&#19979;&#36733;GPS&#21382;&#20070;&#24182;&#35835;&#21462;</pre><pre class="codeinput">filename = GPS.almanac.download(<span class="string">'~temp\almanac'</span>, UTC2GPS([2020,2,23,15,0,0],8));
 almanac = GPS.almanac.read(filename);
-</pre><h2 id="4">&#26143;&#21382;&#30456;&#20851;</h2><pre>&#19979;&#36733;GPS&#26143;&#21382;&#24182;&#35835;&#21462;</pre><pre class="codeinput">filename = GPS.ephemeris.download(<span class="string">'~temp\ephemeris'</span>, <span class="string">'2020-02-22'</span>);
+</pre><pre>&#19979;&#36733;BDS&#21382;&#20070;&#24182;&#35835;&#21462;</pre><pre class="codeinput">filename = BDS.almanac.download(<span class="string">'~temp\almanac'</span>, <span class="string">'2020-07-16'</span>);
+almanac = BDS.almanac.read(filename);
+</pre><h2 id="5">&#26143;&#21382;&#30456;&#20851;</h2><pre>&#19979;&#36733;GPS&#26143;&#21382;&#24182;&#35835;&#21462;</pre><pre class="codeinput">filename = GPS.ephemeris.download(<span class="string">'~temp\ephemeris'</span>, <span class="string">'2020-02-22'</span>);
 ephe = RINEX.read_N2(filename);
 </pre><pre>&#19979;&#36733;BDS&#26143;&#21382;&#24182;&#35835;&#21462;</pre><pre class="codeinput">filename = BDS.ephemeris.download(<span class="string">'~temp\ephemeris'</span>, <span class="string">'2020-02-22'</span>);
 ephe = RINEX.read_B303(filename);
-</pre><h2 id="6">&#26143;&#24231;&#22270;</h2><pre>&#26174;&#31034;GPS&#26143;&#24231;&#22270;</pre><pre class="codeinput">c = [2020,2,23,11,50,0];
+</pre><h2 id="7">&#26143;&#24231;&#22270;</h2><pre>&#26174;&#31034;GPS&#26143;&#24231;&#22270;</pre><pre class="codeinput">c = [2020,2,23,11,50,0];
 p = [42.27452, 123.85232, 105];
 ax = GPS.constellation(<span class="string">'~temp\almanac'</span>, c, 8, p);
 </pre><pre>&#26174;&#31034;BDS&#26143;&#24231;&#22270;</pre><pre class="codeinput">c = [2020,2,23,11,50,0];
@@ -93,17 +96,22 @@ ax = BDS.constellation(<span class="string">'~temp\ephemeris'</span>, c, 8, p, a
 </pre><pre>&#26174;&#31034;&#26410;&#26469;&#19968;&#27573;&#26102;&#38388;GPS&#21355;&#26143;&#36712;&#36857;</pre><pre class="codeinput">c = [2020,2,23,11,50,0];
 p = [42.27452, 123.85232, 105];
 GPS.visibility(<span class="string">'~temp\almanac'</span>, c, 8, p, 1);
-</pre><h2 id="10">kml&#36755;&#20986;</h2><pre>&#32428;&#24230;&#32463;&#24230;&#20889;&#20837;kml&#25991;&#20214;</pre><pre class="codeinput">kmlwriteline(<span class="string">'~temp\traj.kml'</span>, nCoV.storage.pos(:,1),nCoV.storage.pos(:,2), <span class="string">'Color'</span>,<span class="string">'r'</span>, <span class="string">'Width'</span>,2);
-</pre><h2 id="11">&#30005;&#31163;&#23618;</h2><pre>&#35745;&#31639;&#19968;&#22825;&#20013;&#30340;&#30005;&#31163;&#23618;&#26657;&#27491;&#20540;</pre><pre class="codeinput">date = <span class="string">'2019-08-26'</span>;
+</pre><h2 id="11">kml&#36755;&#20986;</h2><pre>&#32428;&#24230;&#32463;&#24230;&#20889;&#20837;kml&#25991;&#20214;</pre><pre class="codeinput">kmlwriteline(<span class="string">'~temp\traj.kml'</span>, nCoV.storage.pos(:,1),nCoV.storage.pos(:,2), <span class="string">'Color'</span>,<span class="string">'r'</span>, <span class="string">'Width'</span>,2);
+</pre><h2 id="12">&#30005;&#31163;&#23618;</h2><pre>&#35745;&#31639;&#19968;&#22825;&#20013;&#30340;&#30005;&#31163;&#23618;&#26657;&#27491;&#20540;</pre><pre class="codeinput">date = <span class="string">'2019-08-26'</span>;
 p = [45.730952, 126.624970, 212];
 GPS.iono_24h(<span class="string">'~temp\ephemeris'</span>, date, p, 8, 10);
-</pre><h2 id="12">&#25429;&#33719;</h2><pre>GPS L1 C/A&#20449;&#21495;&#25429;&#33719;</pre><pre class="codeinput">filename = <span class="string">'C:\Users\longt\Desktop\B210_20190823_194010_ch1.dat'</span>;
+</pre><h2 id="13">&#25429;&#33719;</h2><pre>GPS L1 C/A&#20449;&#21495;&#25429;&#33719;</pre><pre class="codeinput">filename = <span class="string">'C:\Users\longt\Desktop\B210_20190823_194010_ch1.dat'</span>;
 fs = 4e6;
 acqConf.time = 2;
 acqConf.freqMax = 5e3;
 acqConf.threshold = 1.4;
 acqResult = GPS.L1CA.acquisition(filename, fs, 0*fs, acqConf);
-</pre><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2019a</a><br></p></div><!--
+</pre><pre>&#21271;&#26007;B1C&#20449;&#21495;&#25429;&#33719;</pre><pre class="codeinput">filename = <span class="string">'C:\Users\longt\Desktop\B210_20190823_194010_ch1.dat'</span>;
+fs = 4e6;
+acqConf.freqMax = 5e3;
+acqConf.threshold = 1.4;
+acqResult = BDS.B1C.acquisition(filename, fs, 0*fs, acqConf);
+</pre><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2020a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% 常用程序片段
 
@@ -125,6 +133,10 @@ rmpath('receiver')
 %  下载GPS历书并读取
 filename = GPS.almanac.download('~temp\almanac', UTC2GPS([2020,2,23,15,0,0],8));
 almanac = GPS.almanac.read(filename);
+%%
+%  下载BDS历书并读取
+filename = BDS.almanac.download('~temp\almanac', '2020-07-16');
+almanac = BDS.almanac.read(filename);
 
 %% 星历相关
 %  下载GPS星历并读取
@@ -175,5 +187,12 @@ acqConf.time = 2;
 acqConf.freqMax = 5e3;
 acqConf.threshold = 1.4;
 acqResult = GPS.L1CA.acquisition(filename, fs, 0*fs, acqConf);
+%%
+%  北斗B1C信号捕获
+filename = 'C:\Users\longt\Desktop\B210_20190823_194010_ch1.dat';
+fs = 4e6;
+acqConf.freqMax = 5e3;
+acqConf.threshold = 1.4;
+acqResult = BDS.B1C.acquisition(filename, fs, 0*fs, acqConf);
 ##### SOURCE END #####
 --></body></html>

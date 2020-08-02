@@ -18,6 +18,10 @@ rmpath('receiver')
 %  下载GPS历书并读取
 filename = GPS.almanac.download('~temp\almanac', UTC2GPS([2020,2,23,15,0,0],8));
 almanac = GPS.almanac.read(filename);
+%%
+%  下载BDS历书并读取
+filename = BDS.almanac.download('~temp\almanac', '2020-07-16');
+almanac = BDS.almanac.read(filename);
 
 %% 星历相关
 %  下载GPS星历并读取
@@ -68,3 +72,11 @@ acqConf.time = 2;
 acqConf.freqMax = 5e3;
 acqConf.threshold = 1.4;
 acqResult = GPS.L1CA.acquisition(filename, fs, 0*fs, acqConf);
+
+%%
+%  北斗B1C信号捕获
+filename = 'C:\Users\longt\Desktop\B210_20190823_194010_ch1.dat';
+fs = 4e6;
+acqConf.freqMax = 5e3;
+acqConf.threshold = 1.4;
+acqResult = BDS.B1C.acquisition(filename, fs, 0*fs, acqConf);

@@ -77,16 +77,18 @@ end
 
 % »­Í¼
 for k=1:length(PRN)
-    if ele(k)<10 %µÍ¸ß¶È½ÇÎÀÐÇ,Í¸Ã÷
-        polarscatter(ax, azi(k),ele(k), 220, 'MarkerFaceColor',[255,65,65]/255, ...
-                     'MarkerEdgeColor',[127,127,127]/255, 'MarkerFaceAlpha',0.5)
-        text(azi(k),ele(k),num2str(PRN(k)), 'HorizontalAlignment','center', ...
-                                            'VerticalAlignment','middle')
-    else
-        polarscatter(ax, azi(k),ele(k), 220, 'MarkerFaceColor',[255,65,65]/255, ...
-                     'MarkerEdgeColor',[127,127,127]/255)
-        text(azi(k),ele(k),num2str(PRN(k)), 'HorizontalAlignment','center', ...
-                                            'VerticalAlignment','middle')
+    if ismember(PRN(k),[19:30,32:46]) %±±¶·ÈýºÅ
+        if ele(k)<10 %µÍ¸ß¶È½ÇÎÀÐÇ,Í¸Ã÷
+            polarscatter(ax, azi(k),ele(k), 220, 'MarkerFaceColor',[255,65,65]/255, ...
+                         'MarkerEdgeColor',[127,127,127]/255, 'MarkerFaceAlpha',0.5)
+            text(azi(k),ele(k),num2str(PRN(k)), 'HorizontalAlignment','center', ...
+                                                'VerticalAlignment','middle')
+        else
+            polarscatter(ax, azi(k),ele(k), 220, 'MarkerFaceColor',[255,65,65]/255, ...
+                         'MarkerEdgeColor',[127,127,127]/255)
+            text(azi(k),ele(k),num2str(PRN(k)), 'HorizontalAlignment','center', ...
+                                                'VerticalAlignment','middle')
+        end
     end
 end
 

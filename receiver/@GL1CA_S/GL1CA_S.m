@@ -104,7 +104,7 @@ classdef GL1CA_S < handle
             obj.iono = NaN(1,8);
             %----设置定位控制参数
             obj.dtpos = conf.dtpos;
-            obj.tp = obj.ta + [2,0,0]; %当前接收机时间的2s后
+            obj.tp = [obj.ta(1)+2,0,0]; %当前接收机时间的2s后
             %----申请数据存储空间
             obj.ns = 0;
             row = floor(obj.Tms/obj.dtpos); %存储空间行数
@@ -121,7 +121,7 @@ classdef GL1CA_S < handle
             obj.storage.quality = zeros(row,obj.chN,'uint8');
         end
     end
-	
+    
     methods (Access = public)
         run(obj, data)                %运行函数
         clean_storage(obj)            %清理数据存储

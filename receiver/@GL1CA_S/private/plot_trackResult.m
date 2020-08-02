@@ -7,7 +7,7 @@ PRN_str = ['PRN ',sprintf('%d',obj.PRN)];
 figure('Position',screenBlock(1140,670,0.5,0.5), 'Name',PRN_str);
 ax1 = axes('Position',[0.08, 0.4, 0.38, 0.53]);
 hold(ax1,'on');
-axis(ax1, 'equal');
+axis(ax1,'equal');
 title(PRN_str)
 ax2 = axes('Position',[0.53, 0.7 , 0.42, 0.25]);
 hold(ax2,'on');

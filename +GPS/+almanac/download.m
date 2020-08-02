@@ -2,6 +2,7 @@ function filename = download(filepath, t)
 % 下载GPS历书
 % filepath:文件存储路径,结尾不带\
 % t:[week,second],GPS周数(从起始周开始的),GPS周内秒数
+% http://celestrak.com
 
 % 检查目标文件夹是否存在
 if ~exist(filepath,'dir')
