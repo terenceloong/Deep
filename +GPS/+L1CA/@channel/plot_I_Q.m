@@ -1,5 +1,5 @@
 function plot_I_Q(obj)
-% ç”»I/Qå›¾
+% »­I/QÍ¼
 
 PRN_str = ['GPS ',sprintf('%d',obj.PRN)];
 figure('Name',PRN_str)

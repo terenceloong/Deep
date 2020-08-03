@@ -1,27 +1,27 @@
 function [PRN, SOH, ephe, sf3] = epheParse(bits)
-% B-CNAV1å¯¼èˆªç”µæ–‡è§£æ
-% è¾“å…¥å®Œæ•´1800æ¯”ç‰¹å¯¼èˆªç”µæ–‡(Â±1)
-% PRN:å«æ˜Ÿç¼–å·, SOHå°æ—¶å†…ç§’è®¡æ•°, ephe:æ˜Ÿå†, sf3:å­å¸§3
-% å¦‚æœæ ¡éªŒä¸é€šè¿‡,epheä¸ºç©º
+% B-CNAV1µ¼º½µçÎÄ½âÎö
+% ÊäÈëÍêÕû1800±ÈÌØµ¼º½µçÎÄ(¡À1)
+% PRN:ÎÀĞÇ±àºÅ, SOHĞ¡Ê±ÄÚÃë¼ÆÊı, ephe:ĞÇÀú, sf3:×ÓÖ¡3
+% Èç¹ûĞ£Ñé²»Í¨¹ı,epheÎª¿Õ
 
-subFrame1 = dec2bin(bits(1:72)>0)'; %å­å¸§1,äºŒè¿›åˆ¶01å­—ç¬¦ä¸²
-PRN = bin2dec(subFrame1(1:6)); %å«æ˜Ÿç¼–å·
-SOH = bin2dec(subFrame1(22:29)) * 18; %å°æ—¶å†…ç§’æ•°
+subFrame1 = dec2bin(bits(1:72)>0)'; %×ÓÖ¡1,¶ş½øÖÆ01×Ö·û´®
+PRN = bin2dec(subFrame1(1:6)); %ÎÀĞÇ±àºÅ
+SOH = bin2dec(subFrame1(22:29)) * 18; %Ğ¡Ê±ÄÚÃëÊı
 
-% è§£äº¤ç»‡
-frame = double(bits>0); %Â±1è½¬æ¢æˆ01
-subFrameRaw23 = frame(73:1800); %è§£äº¤ç»‡å‰2,3å­å¸§,è¡Œå‘é‡
-table = reshape(subFrameRaw23',36,48); %æ’æˆè¡¨æ ¼
-subFrame2_table = table([1,2,4,5,7,8,10,11,13,14,16,17,19,20,22,23,25,26,28,29,31,32,34,35,36],:); %ä»è¡¨æ ¼ä¸­æå–å­å¸§2çš„è¡Œ
-subFrame2 = reshape(subFrame2_table',1,1200); % æ’æˆä¸€è¡Œ,è§£äº¤ç»‡åçš„å­å¸§2
-subFrame3_table = table([3,6,9,12,15,18,21,24,27,30,33],:); %ä»è¡¨æ ¼ä¸­æå–å­å¸§3çš„è¡Œ
-subFrame3 = reshape(subFrame3_table',1,528); %æ’æˆä¸€è¡Œ,è§£äº¤ç»‡åçš„å­å¸§3
+% ½â½»Ö¯
+frame = double(bits>0); %¡À1×ª»»³É01
+subFrameRaw23 = frame(73:1800); %½â½»Ö¯Ç°2,3×ÓÖ¡,ĞĞÏòÁ¿
+table = reshape(subFrameRaw23',36,48); %ÅÅ³É±í¸ñ
+subFrame2_table = table([1,2,4,5,7,8,10,11,13,14,16,17,19,20,22,23,25,26,28,29,31,32,34,35,36],:); %´Ó±í¸ñÖĞÌáÈ¡×ÓÖ¡2µÄĞĞ
+subFrame2 = reshape(subFrame2_table',1,1200); % ÅÅ³ÉÒ»ĞĞ,½â½»Ö¯ºóµÄ×ÓÖ¡2
+subFrame3_table = table([3,6,9,12,15,18,21,24,27,30,33],:); %´Ó±í¸ñÖĞÌáÈ¡×ÓÖ¡3µÄĞĞ
+subFrame3 = reshape(subFrame3_table',1,528); %ÅÅ³ÉÒ»ĞĞ,½â½»Ö¯ºóµÄ×ÓÖ¡3
 
-% CRCæ ¡éªŒ
-det = crc.detector([1 1 0 0 0 0 1 1 0 0 1 0 0 1 1 0 0 1 1 1 1 1 0 1 1]); %æ ¡éªŒå™¨
-[~, error2] = detect(det, subFrame2(1:600)'); %å­å¸§2,è¾“å…¥æ•°æ®åˆ—å‘é‡
-[~, error3] = detect(det, subFrame3(1:264)'); %å­å¸§3
-if error2~=0 || error3~=0 %æ ¡éªŒå¤±è´¥
+% CRCĞ£Ñé
+det = crc.detector([1 1 0 0 0 0 1 1 0 0 1 0 0 1 1 0 0 1 1 1 1 1 0 1 1]); %Ğ£ÑéÆ÷
+[~, error2] = detect(det, subFrame2(1:600)'); %×ÓÖ¡2,ÊäÈëÊı¾İÁĞÏòÁ¿
+[~, error3] = detect(det, subFrame3(1:264)'); %×ÓÖ¡3
+if error2~=0 || error3~=0 %Ğ£ÑéÊ§°Ü
     ephe = [];
     sf3 = [];
     return
@@ -29,16 +29,16 @@ end
 
 bdPi = 3.1415926535898; 
 
-% è½¬æ¢æˆäºŒè¿›åˆ¶01å­—ç¬¦ä¸²
-subFrame2 = dec2bin(subFrame2>0)'; %è¡Œå‘é‡
-subFrame3 = dec2bin(subFrame3>0)'; %è¡Œå‘é‡
+% ×ª»»³É¶ş½øÖÆ01×Ö·û´®
+subFrame2 = dec2bin(subFrame2>0)'; %ĞĞÏòÁ¿
+subFrame3 = dec2bin(subFrame3>0)'; %ĞĞÏòÁ¿
 
-% è§£æ(è§’åº¦çš„å•ä½éƒ½è½¬ä¸ºå¼§åº¦)
-WN = bin2dec(subFrame2(1:13)); %2006å¹´1æœˆ1æ—¥0æ—¶ä¸ºèµ·å§‹
+% ½âÎö(½Ç¶ÈµÄµ¥Î»¶¼×ªÎª»¡¶È)
+WN = bin2dec(subFrame2(1:13)); %2006Äê1ÔÂ1ÈÕ0Ê±ÎªÆğÊ¼
 HOW = bin2dec(subFrame2(14:21));
 IODC = bin2dec(subFrame2(22:31));
 IODE = bin2dec(subFrame2(32:39));
-toe = bin2dec(subFrame2(40:50)) * 300; %æ˜Ÿå†å‚è€ƒæ—¶åˆ»
+toe = bin2dec(subFrame2(40:50)) * 300; %ĞÇÀú²Î¿¼Ê±¿Ì
 SatType = bin2dec(subFrame2(51:52)); %1:GEO 2:IGSO 3:MEO
 dA = twosComp2dec(subFrame2(53:78)) * 2^(-9);
 A_dot = twosComp2dec(subFrame2(79:103)) * 2^(-21);
@@ -57,7 +57,7 @@ Crs = twosComp2dec(subFrame2(375:398)) * 2^(-8);
 Crc = twosComp2dec(subFrame2(399:422)) * 2^(-8);
 Cus = twosComp2dec(subFrame2(423:443)) * 2^(-30);
 Cuc = twosComp2dec(subFrame2(444:464)) * 2^(-30);
-toc = bin2dec(subFrame2(465:475)) * 300; %é’Ÿå·®å‚æ•°å‚è€ƒæ—¶åˆ»
+toc = bin2dec(subFrame2(465:475)) * 300; %ÖÓ²î²ÎÊı²Î¿¼Ê±¿Ì
 a0 = twosComp2dec(subFrame2(476:500)) * 2^(-34);
 a1 = twosComp2dec(subFrame2(501:522)) * 2^(-50);
 a2 = twosComp2dec(subFrame2(523:533)) * 2^(-66);
@@ -97,16 +97,16 @@ ephe(28) = T_GDB2ap;
 ephe(29) = ISC_B1Cd;
 ephe(30) = T_GDB1Cp;
 
-pageID = bin2dec(subFrame3(1:6)); %é¡µé¢ç±»å‹
+pageID = bin2dec(subFrame3(1:6)); %Ò³ÃæÀàĞÍ
 sf3.pageID = pageID;
-sf3.HS = bin2dec(subFrame3(7:8)); %å¥åº·çŠ¶æ€,0:å¥åº· 1:ä¸å¥åº·/æµ‹è¯•
-sf3.DIF = bin2dec(subFrame3(9)); %ç”µæ–‡å®Œå¥½æ€§è¡¨ç¤º,0æ­£å¸¸
-sf3.SIF = bin2dec(subFrame3(10)); %ä¿¡å·å®Œå¥½æ€§è¡¨ç¤º,0æ­£å¸¸
-sf3.AIF = bin2dec(subFrame3(11)); %ç³»ç»Ÿè­¦å‘Šæ ‡è¯†,0æ­£å¸¸
-sf3.SISMAI = bin2dec(subFrame3(12:15)); %ç©ºé—´ä¿¡å·ç›‘æµ‹ç²¾åº¦æŒ‡æ•°(é«˜æ–¯åˆ†å¸ƒçš„æ–¹å·®)
+sf3.HS = bin2dec(subFrame3(7:8)); %½¡¿µ×´Ì¬,0:½¡¿µ 1:²»½¡¿µ/²âÊÔ
+sf3.DIF = bin2dec(subFrame3(9)); %µçÎÄÍêºÃĞÔ±íÊ¾,0Õı³£
+sf3.SIF = bin2dec(subFrame3(10)); %ĞÅºÅÍêºÃĞÔ±íÊ¾,0Õı³£
+sf3.AIF = bin2dec(subFrame3(11)); %ÏµÍ³¾¯¸æ±êÊ¶,0Õı³£
+sf3.SISMAI = bin2dec(subFrame3(12:15)); %¿Õ¼äĞÅºÅ¼à²â¾«¶ÈÖ¸Êı(¸ßË¹·Ö²¼µÄ·½²î)
 switch pageID
     case 1
-        sf3.BDGIM = zeros(9,1); %åŒ—æ–—å…¨çƒç”µç¦»å±‚å»¶è¿Ÿä¿®æ­£å‚æ•°
+        sf3.BDGIM = zeros(9,1); %±±¶·È«ÇòµçÀë²ãÑÓ³ÙĞŞÕı²ÎÊı
         sf3.BDGIM(1) = bin2dec(subFrame3(43:52)) * 2^(-3);
         sf3.BDGIM(2) = twosComp2dec(subFrame3(53:60)) * 2^(-3);
         sf3.BDGIM(3) = bin2dec(subFrame3(61:68)) * 2^(-3);
@@ -119,10 +119,10 @@ switch pageID
     case 2
         
     case 3
-        sf3.BGTO = zeros(6,1); %BDT-GNSSæ—¶é—´åŒæ­¥å‚æ•°
-        sf3.BGTO(1) = bin2dec(subFrame3(159:161)); %GNSSç³»ç»Ÿæ ‡è¯†
-        sf3.BGTO(2) = bin2dec(subFrame3(162:174)); %å‚è€ƒæ—¶é—´å‘¨æ•°
-        sf3.BGTO(3) = bin2dec(subFrame3(175:190))* 2^4; %å‚è€ƒæ—¶åˆ»å¯¹åº”çš„å‘¨å†…æ—¶é—´
+        sf3.BGTO = zeros(6,1); %BDT-GNSSÊ±¼äÍ¬²½²ÎÊı
+        sf3.BGTO(1) = bin2dec(subFrame3(159:161)); %GNSSÏµÍ³±êÊ¶
+        sf3.BGTO(2) = bin2dec(subFrame3(162:174)); %²Î¿¼Ê±¼äÖÜÊı
+        sf3.BGTO(3) = bin2dec(subFrame3(175:190))* 2^4; %²Î¿¼Ê±¿Ì¶ÔÓ¦µÄÖÜÄÚÊ±¼ä
         sf3.BGTO(4) = twosComp2dec(subFrame3(191:206)) * 2^(-35); %A0
         sf3.BGTO(5) = twosComp2dec(subFrame3(207:219)) * 2^(-51); %A1
         sf3.BGTO(6) = twosComp2dec(subFrame3(220:226)) * 2^(-68); %A2

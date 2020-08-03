@@ -1,5 +1,5 @@
 function plot_I_Q(obj)
-% Г■╩I/QЕ⌡╬(Ф∙╟Ф█╝Е┬├И┤▐IХ╥╞,Е╞╪И╒▒Е┬├И┤▐QХ╥╞)
+% ╩╜I/Qм╪(йЩ╬щ╥жа©Iб╥,╣╪ф╣╥жа©Qб╥)
 
 PRN_str = ['BDS ',sprintf('%d',obj.PRN)];
 figure('Name',PRN_str)

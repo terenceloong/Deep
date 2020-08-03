@@ -1,9 +1,9 @@
 function pos_normal(obj)
-% 姝ｅ父瀹氫綅
+% 正常定位
 
 
 
-% 鏇存柊涓嬫瀹氫綅鏃堕棿
+% 更新下次定位时间
 obj.tp = timeCarry(obj.tp + [0,obj.dtpos,0]);
 
 end

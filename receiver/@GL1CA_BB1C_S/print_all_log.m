@@ -1,5 +1,5 @@
 function print_all_log(obj)
-% 鎵撳嵃鎵�鏈夐�氶亾鏃ュ織
+% 打印所有通道日志
 
 if obj.GPSflag==1
     disp('<----GPS---------------------------------------------->')

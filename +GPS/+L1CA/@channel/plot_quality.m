@@ -1,43 +1,43 @@
 function plot_quality(obj)
-% ç”»ä¿¡å·è´¨é‡
+% »­ĞÅºÅÖÊÁ¿
 
-% å¸¦ä¿¡å·è´¨é‡æ ‡è®°çš„Iè·¯è¾“å‡º
-quality = obj.storage.quality; %ä¿¡å·è´¨é‡
-I = double(obj.storage.I_Q(:,1)); %Iè·¯è¾“å‡º
+% ´øĞÅºÅÖÊÁ¿±ê¼ÇµÄIÂ·Êä³ö
+quality = obj.storage.quality; %ĞÅºÅÖÊÁ¿
+I = double(obj.storage.I_Q(:,1)); %IÂ·Êä³ö
 I1 = I;
-I1(quality<1) = NaN; %ä¿ç•™å¼ºä¿¡å·å’Œå¼±ä¿¡å·
+I1(quality<1) = NaN; %±£ÁôÇ¿ĞÅºÅºÍÈõĞÅºÅ
 I2 = I;
-I2(quality<2) = NaN; %ä¿ç•™å¼ºä¿¡å·
+I2(quality<2) = NaN; %±£ÁôÇ¿ĞÅºÅ
 
 PRN_str = ['GPS ',sprintf('%d',obj.PRN)];
 figure('Position', screenBlock(1000,300,0.5,0.5), 'Name',PRN_str);
 axes('Position', [0.05, 0.15, 0.9, 0.75]);
 t = obj.storage.dataIndex/obj.sampleFreq;
-plot(t, I, 'Color',[0.929,0.694,0.125]) %å¤±é”,é»„
+plot(t, I, 'Color',[0.929,0.694,0.125]) %Ê§Ëø,»Æ
 hold on
-plot(t, I1, 'Color',[0.85,0.325,0.098]) %å¼±ä¿¡å·,æ©˜é»„
-plot(t, I2, 'Color',[0,0.447,0.741]) %å¼ºä¿¡å·,è“è‰²
+plot(t, I1, 'Color',[0.85,0.325,0.098]) %ÈõĞÅºÅ,éÙ»Æ
+plot(t, I2, 'Color',[0,0.447,0.741]) %Ç¿ĞÅºÅ,À¶É«
 set(gca, 'XLim',[0,ceil(obj.Tms/1000)])
 
-% å¸¦ä¿¡å·è´¨é‡æ ‡è®°çš„è½½æ³¢é¢‘ç‡
-quality = obj.storage.quality; %ä¿¡å·è´¨é‡
-fc = obj.storage.carrFreq; %è½½æ³¢é¢‘ç‡
+% ´øĞÅºÅÖÊÁ¿±ê¼ÇµÄÔØ²¨ÆµÂÊ
+quality = obj.storage.quality; %ĞÅºÅÖÊÁ¿
+fc = obj.storage.carrFreq; %ÔØ²¨ÆµÂÊ
 fc1 = fc;
-fc1(quality<1) = NaN; %ä¿ç•™å¼ºä¿¡å·å’Œå¼±ä¿¡å·
+fc1(quality<1) = NaN; %±£ÁôÇ¿ĞÅºÅºÍÈõĞÅºÅ
 fc2 = fc;
-fc2(quality<2) = NaN; %ä¿ç•™å¼ºä¿¡å·
+fc2(quality<2) = NaN; %±£ÁôÇ¿ĞÅºÅ
 
 PRN_str = ['GPS ',sprintf('%d',obj.PRN)];
 figure('Position', screenBlock(1000,300,0.5,0.5), 'Name',PRN_str);
 axes('Position', [0.05, 0.15, 0.9, 0.75]);
 t = obj.storage.dataIndex/obj.sampleFreq;
-plot(t, fc, 'Color',[0.929,0.694,0.125]) %å¤±é”,é»„
+plot(t, fc, 'Color',[0.929,0.694,0.125]) %Ê§Ëø,»Æ
 hold on
 grid on
-plot(t, fc1, 'Color',[0.85,0.325,0.098]) %å¼±ä¿¡å·,æ©˜é»„
-plot(t, fc2, 'Color',[0,0.447,0.741]) %å¼ºä¿¡å·,è“è‰²
-plot(t, obj.storage.carrNco+1, 'Color',[0.5,0.5,0.5], 'LineStyle','--') %ä¸Šç•Œ
-plot(t, obj.storage.carrNco-1, 'Color',[0.5,0.5,0.5], 'LineStyle','--') %ä¸‹ç•Œ
+plot(t, fc1, 'Color',[0.85,0.325,0.098]) %ÈõĞÅºÅ,éÙ»Æ
+plot(t, fc2, 'Color',[0,0.447,0.741]) %Ç¿ĞÅºÅ,À¶É«
+plot(t, obj.storage.carrNco+1, 'Color',[0.5,0.5,0.5], 'LineStyle','--') %ÉÏ½ç
+plot(t, obj.storage.carrNco-1, 'Color',[0.5,0.5,0.5], 'LineStyle','--') %ÏÂ½ç
 set(gca, 'XLim',[0,ceil(obj.Tms/1000)])
 
 end

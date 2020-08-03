@@ -1,5 +1,5 @@
 function plot_I_P_flag(obj)
-% ç”»I_På›¾(æ•°æ®åˆ†é‡),å¸¦æ¯”ç‰¹å¼€å§‹æ ‡å¿—
+% »­I_PÍ¼(Êı¾İ·ÖÁ¿),´ø±ÈÌØ¿ªÊ¼±êÖ¾
 
 PRN_str = ['BDS ',sprintf('%d',obj.PRN)];
 figure('Position', screenBlock(1000,300,0.5,0.5), 'Name',PRN_str);
@@ -9,17 +9,17 @@ plot(t, double(obj.storage.I_Q(:,7)))
 set(gca, 'XLim',[0,ceil(obj.Tms/1000)])
 hold on
 
-% æ ‡è®°å¸§åŒæ­¥é˜¶æ®µ(ç²‰è‰²)
+% ±ê¼ÇÖ¡Í¬²½½×¶Î(·ÛÉ«)
 index = find(obj.storage.bitFlag=='F');
 t = obj.storage.dataIndex(index)/obj.sampleFreq;
 plot(t, double(obj.storage.I_Q(index,7)), 'LineStyle','none', 'Marker','.', 'Color','m')
 
-% æ ‡è®°ç­‰å¾…å¸§å¤´é˜¶æ®µ(è“è‰²)
+% ±ê¼ÇµÈ´ıÖ¡Í·½×¶Î(À¶É«)
 index = find(obj.storage.bitFlag=='H');
 t = obj.storage.dataIndex(index)/obj.sampleFreq;
 plot(t, double(obj.storage.I_Q(index,7)), 'LineStyle','none', 'Marker','.', 'Color','b')
 
-% æ ‡è®°è§£ææ˜Ÿå†é˜¶æ®µ(çº¢è‰²),å‰6ä¸ªæ¯”ç‰¹ä¸ºå«æ˜Ÿç¼–å·
+% ±ê¼Ç½âÎöĞÇÀú½×¶Î(ºìÉ«),Ç°6¸ö±ÈÌØÎªÎÀĞÇ±àºÅ
 index = find(obj.storage.bitFlag=='E');
 t = obj.storage.dataIndex(index)/obj.sampleFreq;
 plot(t, double(obj.storage.I_Q(index,7)), 'LineStyle','none', 'Marker','.', 'Color','r')

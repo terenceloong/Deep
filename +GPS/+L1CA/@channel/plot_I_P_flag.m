@@ -1,5 +1,5 @@
 function plot_I_P_flag(obj)
-% ç”»I_På›¾,å¸¦æ¯”ç‰¹å¼€å§‹æ ‡å¿—
+% »­I_PÍ¼,´ø±ÈÌØ¿ªÊ¼±êÖ¾
 
 PRN_str = ['GPS ',sprintf('%d',obj.PRN)];
 figure('Position', screenBlock(1000,300,0.5,0.5), 'Name',PRN_str);
@@ -9,17 +9,17 @@ plot(t, double(obj.storage.I_Q(:,1)))
 set(gca, 'XLim',[0,ceil(obj.Tms/1000)])
 hold on
 
-% æ ‡è®°å¯»æ‰¾å¸§å¤´é˜¶æ®µ(ç²‰è‰²),è¯¥é˜¶æ®µçš„ç»“å°¾ä¸€å®šæ˜¯[1,0,0,0,1,0,1,1]
+% ±ê¼ÇÑ°ÕÒÖ¡Í·½×¶Î(·ÛÉ«),¸Ã½×¶ÎµÄ½áÎ²Ò»¶¨ÊÇ[1,0,0,0,1,0,1,1]
 index = find(obj.storage.bitFlag=='H');
 t = obj.storage.dataIndex(index)/obj.sampleFreq;
 plot(t, double(obj.storage.I_Q(index,1)), 'LineStyle','none', 'Marker','.', 'Color','m')
 
-% æ ‡è®°æ ¡éªŒå¸§å¤´é˜¶æ®µ(è“è‰²),è¯¥é˜¶æ®µçš„ç»“å°¾ä¸€å®šæ˜¯[1,0,0,0,1,0,1,1]
+% ±ê¼ÇĞ£ÑéÖ¡Í·½×¶Î(À¶É«),¸Ã½×¶ÎµÄ½áÎ²Ò»¶¨ÊÇ[1,0,0,0,1,0,1,1]
 index = find(obj.storage.bitFlag=='C');
 t = obj.storage.dataIndex(index)/obj.sampleFreq;
 plot(t, double(obj.storage.I_Q(index,1)), 'LineStyle','none', 'Marker','.', 'Color','b')
 
-% æ ‡è®°è§£ææ˜Ÿå†é˜¶æ®µ(çº¢è‰²)
+% ±ê¼Ç½âÎöĞÇÀú½×¶Î(ºìÉ«)
 index = find(obj.storage.bitFlag=='E');
 t = obj.storage.dataIndex(index)/obj.sampleFreq;
 plot(t, double(obj.storage.I_Q(index,1)), 'LineStyle','none', 'Marker','.', 'Color','r')

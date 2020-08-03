@@ -1,7 +1,7 @@
 function plot_trackResult(obj)
-% ç”»è·Ÿè¸ªç»“æœ
+% »­¸ú×Ù½á¹û
 
-% åˆ›å»ºç”»å›¾çª—å£
+% ´´½¨»­Í¼´°¿Ú
 PRN_str = ['GPS ',sprintf('%d',obj.PRN)];
 figure('Position',screenBlock(1140,670,0.5,0.5), 'Name',PRN_str);
 ax1 = axes('Position',[0.08, 0.4, 0.38, 0.53]);
@@ -20,21 +20,21 @@ ax5 = axes('Position',[0.05, 0.06, 0.42, 0.25]);
 hold(ax5,'on');
 grid(ax5,'on');
 
-t = obj.storage.dataIndex/obj.sampleFreq; %ä½¿ç”¨é‡‡æ ·ç‚¹è®¡ç®—çš„æ—¶é—´
+t = obj.storage.dataIndex/obj.sampleFreq; %Ê¹ÓÃ²ÉÑùµã¼ÆËãµÄÊ±¼ä
 
-% I/Qå›¾
+% I/QÍ¼
 plot(ax1, obj.storage.I_Q(1001:end,1), obj.storage.I_Q(1001:end,4), ...
           'LineStyle','none', 'Marker','.')
 
-% I_På›¾
-plot(ax2, t, double(obj.storage.I_Q(:,1))) %æ¨ªçºµåæ ‡æ•°æ®ç±»å‹è¦ä¸€æ ·
+% I_PÍ¼
+plot(ax2, t, double(obj.storage.I_Q(:,1))) %ºá×İ×ø±êÊı¾İÀàĞÍÒªÒ»Ñù
 set(ax2, 'XLim',[0,ceil(obj.Tms/1000)])
 
-% è½½æ³¢é¢‘ç‡
+% ÔØ²¨ÆµÂÊ
 plot(ax4, t, obj.storage.carrFreq, 'LineWidth',0.5)
 set(ax4, 'XLim',[0,ceil(obj.Tms/1000)])
 
-% è½½æ³¢é¢‘ç‡å˜åŒ–ç‡
+% ÔØ²¨ÆµÂÊ±ä»¯ÂÊ
 plot(ax5, t, obj.storage.carrAcc, 'LineWidth',0.5)
 set(ax5, 'XLim',[0,ceil(obj.Tms/1000)])
 

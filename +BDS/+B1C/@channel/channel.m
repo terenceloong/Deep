@@ -119,6 +119,9 @@ classdef channel < handle
         plot_carrFreq(obj)
         plot_carrNco(obj)
         plot_carrAcc(obj)
+        plot_codeDisc(obj)
+        plot_carrDisc(obj)
+        plot_freqDisc(obj)
 %         plot_quality(obj)
     end
     

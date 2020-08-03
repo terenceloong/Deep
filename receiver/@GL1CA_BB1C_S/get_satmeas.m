@@ -1,5 +1,5 @@
 function satmeas = get_satmeas(obj)
-% è·å–å«æ˜Ÿæµ‹é‡
+% »ñÈ¡ÎÀĞÇ²âÁ¿
 
 
 

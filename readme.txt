@@ -125,7 +125,7 @@ G(GPS),R(GLONASS),E(Galileo),C(BDS),J(QZSS),I(IRNSS),参见RINEX 3.03
 <===Version 1.16===>2020.6.6
 1.IMU数据预滤波
 
-<===Version 1.17===>2020.8.2
+<===Version 2.0===>2020.8.2
 1.添加北斗历书下载
 2.添加NovAtel数据解析
 3.添加SBG数据导入
@@ -135,3 +135,8 @@ G(GPS),R(GLONASS),E(Galileo),C(BDS),J(QZSS),I(IRNSS),参见RINEX 3.03
 7.修改交互星座图回调函数机制
 8.GPS星历解析时不能以第三子帧开始
 9.添加GPS+BDS接收机
+
+<===Version 2.1===>2020.8.3
+1.添加通道类画鉴相器输出
+2.组合导航滤波器加零偏估计约束
+3.整理编码格式

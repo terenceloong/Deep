@@ -161,7 +161,7 @@ end
                     obj.iono = iono; %更新电离层参数
                     ionoflag = 1; %设置电离层参数标志
                 end
-                if mod(ephe(3),255)==ephe(4) %IODC的低8位==IODE
+                if mod(ephe(3),256)==ephe(4) %IODC的低8位==IODE
                     log_str = sprintf('Ephemeris is parsed at %.8fs', obj.dataIndex/obj.sampleFreq);
                     obj.log = [obj.log; string(log_str)];
                     obj.ephe = ephe; %更新星历

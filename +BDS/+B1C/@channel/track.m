@@ -38,8 +38,10 @@ obj.remCarrPhase = mod(theta_next, 1); %剩余载波相位,周
 % 本地码
 tcode = obj.remCodePhase + obj.codeNco*t + 2; %加2保证求滞后码时大于1
 codeE = obj.codePilot(floor(tcode+0.3)); %超前码
-codeP = obj.codePilot(floor(tcode));     %即时码
+% codeP = obj.codePilot(floor(tcode));     %即时码
 codeL = obj.codePilot(floor(tcode-0.3)); %滞后码
+index = floor(tcode);
+codeP = obj.codePilot(index);     %即时码
 obj.remCodePhase = mod(obj.remCodePhase + obj.codeNco*te, 20460); %剩余码相位,码片
 
 % 原始数据乘载波
@@ -55,7 +57,8 @@ I_L = signalI * codeL;
 Q_L = signalQ * codeL;
 
 % 数据分量积分值
-codeDP = obj.codeData(floor(tcode));
+% codeDP = obj.codeData(floor(tcode));
+codeDP = obj.codeData(index);
 obj.Id = -signalQ * codeDP; %当导频分量与x轴正向重合时,数据分量沿y轴反向
 obj.Ip = I_P;
 

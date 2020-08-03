@@ -1,5 +1,5 @@
 function plot_I_P(obj)
-% ç”»I_På›¾
+% »­I_PÍ¼
 
 PRN_str = ['GPS ',sprintf('%d',obj.PRN)];
 figure('Position', screenBlock(1000,300,0.5,0.5), 'Name',PRN_str);

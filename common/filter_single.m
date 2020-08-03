@@ -167,6 +167,36 @@ classdef filter_single < handle
                     Ysub(1,3) = -(Cnb(1,1)^2+Cnb(1,2)^2);
                     Y = [Y; Ysub];
                 end
+                if abs(obj.bias(1)+X(12)*r2d)>0.1
+                    Ysub = zeros(1,17);
+                    Ysub(1,12) = 1;
+                    Y = [Y; Ysub];
+                end
+                if abs(obj.bias(2)+X(13)*r2d)>0.1
+                    Ysub = zeros(1,17);
+                    Ysub(1,13) = 1;
+                    Y = [Y; Ysub];
+                end
+                if abs(obj.bias(3)+X(14)*r2d)>0.1
+                    Ysub = zeros(1,17);
+                    Ysub(1,14) = 1;
+                    Y = [Y; Ysub];
+                end
+                if abs(obj.bias(4)+X(15)/obj.g)>5e-3
+                    Ysub = zeros(1,17);
+                    Ysub(1,15) = 1;
+                    Y = [Y; Ysub];
+                end
+                if abs(obj.bias(5)+X(16)/obj.g)>5e-3
+                    Ysub = zeros(1,17);
+                    Ysub(1,16) = 1;
+                    Y = [Y; Ysub];
+                end
+                if abs(obj.bias(6)+X(17)/obj.g)>5e-3
+                    Ysub = zeros(1,17);
+                    Ysub(1,17) = 1;
+                    Y = [Y; Ysub];
+                end
 %                 if n1<4 %伪距量测小于4,不修钟差
 %                     Ysub = zeros(1,17);
 %                     Ysub(1,10) = 1;

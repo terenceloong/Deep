@@ -1,5 +1,5 @@
 function plot_I_P(obj)
-% Г■╩I_PЕ⌡╬(Е╞╪И╒▒Е┬├И┤▐)
+% ╩╜I_Pм╪(╣╪ф╣╥жа©)
 
 PRN_str = ['BDS ',sprintf('%d',obj.PRN)];
 figure('Position', screenBlock(1000,300,0.5,0.5), 'Name',PRN_str);

@@ -1,20 +1,20 @@
 function varargout = SBG_imu_read(plotflag)
-% å¯¼å…¥SBG IMUæ•°æ®,å›ºå®š100Hz
-% ç¬¬ä¸€åˆ—ä¸ºGPSå‘¨å†…ç§’æ•°,s
-% è§’é€Ÿåº¦å•ä½deg/s,åŠ é€Ÿåº¦å•ä½m/s^2
+% µ¼ÈëSBG IMUÊı¾İ,¹Ì¶¨100Hz
+% µÚÒ»ÁĞÎªGPSÖÜÄÚÃëÊı,s
+% ½ÇËÙ¶Èµ¥Î»deg/s,¼ÓËÙ¶Èµ¥Î»m/s^2
 
-% é€‰æ‹©æ–‡ä»¶
-[file, path] = uigetfile('*.txt', 'é€‰æ‹©SBGæ•°æ®æ–‡ä»¶'); %æ–‡ä»¶é€‰æ‹©å¯¹è¯æ¡†
+% Ñ¡ÔñÎÄ¼ş
+[file, path] = uigetfile('*.txt', 'Ñ¡ÔñSBGÊı¾İÎÄ¼ş'); %ÎÄ¼şÑ¡Ôñ¶Ô»°¿ò
 if ~ischar(file)
     error('File error!')
 end
-filename = [path, file]; %æ•°æ®æ–‡ä»¶å®Œæ•´è·¯å¾„,pathæœ€åå¸¦\
+filename = [path, file]; %Êı¾İÎÄ¼şÍêÕûÂ·¾¶,path×îºó´ø\
 
-% æ‰“å¼€æ–‡ä»¶
+% ´ò¿ªÎÄ¼ş
 fileID = fopen(filename);
 
-% ç»Ÿè®¡è¡Œæ•°
-fgetl(fileID); %å¿½ç•¥å‰ä¸¤è¡Œ
+% Í³¼ÆĞĞÊı
+fgetl(fileID); %ºöÂÔÇ°Á½ĞĞ
 fgetl(fileID);
 n = 0;
 while ~feof(fileID)
@@ -22,30 +22,30 @@ while ~feof(fileID)
     n = n + 1;
 end
 
-% è¯»å–æ•°æ®
+% ¶ÁÈ¡Êı¾İ
 data = zeros(n,12);
-fseek(fileID, 0, 'bof'); %ä»å¤´å¼€å§‹
-fgetl(fileID); %å¿½ç•¥å‰ä¸¤è¡Œ
+fseek(fileID, 0, 'bof'); %´ÓÍ·¿ªÊ¼
+fgetl(fileID); %ºöÂÔÇ°Á½ĞĞ
 fgetl(fileID);
 for k=1:n
     tline = fgetl(fileID);
     data(k,:) = sscanf(tline,'%d-%d-%d %d:%d:%f %f %f %f %f %f %f');
 end
 
-% è½¬åŒ–æˆGPSæ—¶é—´
-t0 = UTC2GPS(data(1,1:6), 0); %ç¬¬ä¸€ä¸ªæ•°çš„GPSæ—¶é—´ï¼Œå‘¨å’Œç§’
+% ×ª»¯³ÉGPSÊ±¼ä
+t0 = UTC2GPS(data(1,1:6), 0); %µÚÒ»¸öÊıµÄGPSÊ±¼ä£¬ÖÜºÍÃë
 imu_data = [t0(2)+(0:n-1)'*0.01, data(:,7:12)];
 
-% æ£€éªŒæ˜¯å¦ä¸¢æ•°
-t1 = UTC2GPS(data(end,1:6), 0); %æœ€åä¸€ä¸ªæ•°çš„GPSæ—¶é—´ï¼Œå‘¨å’Œç§’
+% ¼ìÑéÊÇ·ñ¶ªÊı
+t1 = UTC2GPS(data(end,1:6), 0); %×îºóÒ»¸öÊıµÄGPSÊ±¼ä£¬ÖÜºÍÃë
 if imu_data(end,1)~=t1(2)
     error('Data lost!')
 end
 
-% å…³é—­æ–‡ä»¶
+% ¹Ø±ÕÎÄ¼ş
 fclose(fileID);
 
-% ç”»å›¾
+% »­Í¼
 if plotflag
     figure
     t = imu_data(:,1) - imu_data(1,1);
@@ -75,7 +75,7 @@ if plotflag
     set(gca, 'xlim', [t(1),t(end)])
 end
 
-% è¾“å‡º
+% Êä³ö
 if nargout==1
     varargout{1} = imu_data;
 end

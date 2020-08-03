@@ -1,5 +1,5 @@
 function plot_carrNco(obj)
-% ç”»è½½æ³¢é©±åŠ¨é¢‘çŽ‡
+% »­ÔØ²¨Çý¶¯ÆµÂÊ
 
 PRN_str = ['BDS ',sprintf('%d',obj.PRN)];
 figure('Name',PRN_str)

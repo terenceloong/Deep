@@ -1,32 +1,32 @@
-% å‚è§ã€ŠOEM6 Family Firmware Reference Manualã€‹
+% ²Î¼û¡¶OEM6 Family Firmware Reference Manual¡·
 
 clear
 clc
 
-%% é€‰æ–‡ä»¶
-[file, path] = uigetfile('*.gps', 'é€‰æ‹©NovAtel logæ–‡ä»¶'); %æ–‡ä»¶é€‰æ‹©å¯¹è¯æ¡†
+%% Ñ¡ÎÄ¼ş
+[file, path] = uigetfile('*.gps', 'Ñ¡ÔñNovAtel logÎÄ¼ş'); %ÎÄ¼şÑ¡Ôñ¶Ô»°¿ò
 if ~ischar(file)
     error('File error!')
 end
-data_file = [path, file]; %æ•°æ®æ–‡ä»¶å®Œæ•´è·¯å¾„,pathæœ€åå¸¦\
+data_file = [path, file]; %Êı¾İÎÄ¼şÍêÕûÂ·¾¶,path×îºó´ø\
 
-%% è¯»æ–‡ä»¶
+%% ¶ÁÎÄ¼ş
 fileID = fopen(data_file);
 stream = fread(fileID, 'uint8=>uint8');
 fclose(fileID);
-n = length(stream); %æ€»å­—èŠ‚æ•°
+n = length(stream); %×Ü×Ö½ÚÊı
 
-%% ç»Ÿè®¡å¸§æ•°
-cnt = 0; %è®°æœ‰å¤šå°‘å¸§æ¶ˆæ¯
+%% Í³¼ÆÖ¡Êı
+cnt = 0; %¼ÇÓĞ¶àÉÙÖ¡ÏûÏ¢
 k = 1;
 while 1
-    if k+9>n %ä¿è¯è¯»åˆ°æ¶ˆæ¯é•¿åº¦
+    if k+9>n %±£Ö¤¶Áµ½ÏûÏ¢³¤¶È
         break
     end
-    if stream(k)==0xAA && stream(k+1)==0x44 && stream(k+2)==0x12 %å¸§å¤´
-        hl = double(stream(k+3)); %å¸§å¤´é•¿åº¦
-        ml = double(typecast(stream(k+8:k+9),'uint16')); %æ¶ˆæ¯é•¿åº¦
-        if k+hl+ml+4>n+1 %ä¿è¯æœ‰ä¸ªå®Œæ•´å¸§
+    if stream(k)==0xAA && stream(k+1)==0x44 && stream(k+2)==0x12 %Ö¡Í·
+        hl = double(stream(k+3)); %Ö¡Í·³¤¶È
+        ml = double(typecast(stream(k+8:k+9),'uint16')); %ÏûÏ¢³¤¶È
+        if k+hl+ml+4>n+1 %±£Ö¤ÓĞ¸öÍêÕûÖ¡
             break
         end
     end
@@ -34,27 +34,27 @@ while 1
     k = k + hl+ml+4;
 end
 
-%% ç»Ÿè®¡æ¶ˆæ¯å¤´,P23
+%% Í³¼ÆÏûÏ¢Í·,P23
 Header = zeros(cnt,10);
-ih = 1; %å­˜å‚¨ä½ç½®
+ih = 1; %´æ´¢Î»ÖÃ
 
-streamIndex = zeros(cnt,2); %ä¸€å¸§æ¶ˆæ¯å¤´å’Œå°¾çš„ç´¢å¼•
+streamIndex = zeros(cnt,2); %Ò»Ö¡ÏûÏ¢Í·ºÍÎ²µÄË÷Òı
 k = 1;
 while 1
-    if k+9>n %ä¿è¯è¯»åˆ°æ¶ˆæ¯é•¿åº¦
+    if k+9>n %±£Ö¤¶Áµ½ÏûÏ¢³¤¶È
         break
     end
-    if stream(k)==0xAA && stream(k+1)==0x44 && stream(k+2)==0x12 %å¸§å¤´
-        hl = double(stream(k+3)); %å¸§å¤´é•¿åº¦
-        ml = double(typecast(stream(k+8:k+9),'uint16')); %æ¶ˆæ¯é•¿åº¦
-        if k+hl+ml+4>n+1 %ä¿è¯æœ‰ä¸ªå®Œæ•´å¸§
+    if stream(k)==0xAA && stream(k+1)==0x44 && stream(k+2)==0x12 %Ö¡Í·
+        hl = double(stream(k+3)); %Ö¡Í·³¤¶È
+        ml = double(typecast(stream(k+8:k+9),'uint16')); %ÏûÏ¢³¤¶È
+        if k+hl+ml+4>n+1 %±£Ö¤ÓĞ¸öÍêÕûÖ¡
             break
         end
     end
-    frame = stream(k:k+hl+ml+3); %ä¸€å¸§æ¶ˆæ¯
+    frame = stream(k:k+hl+ml+3); %Ò»Ö¡ÏûÏ¢
     %---------------------------------------------------------------------%
-    streamIndex(ih,1) = k; %å¸§å¤´ç´¢å¼•
-    streamIndex(ih,2) = k+hl+ml+3; %å¸§å°¾ç´¢å¼•
+    streamIndex(ih,1) = k; %Ö¡Í·Ë÷Òı
+    streamIndex(ih,2) = k+hl+ml+3; %Ö¡Î²Ë÷Òı
     Header(ih,1)  = typecast(frame(5:6),'uint16');   %msgID
     Header(ih,2)  = frame(7);                        %msgType
     Header(ih,3)  = frame(8);                        %portAddr
@@ -64,7 +64,7 @@ while 1
     Header(ih,7)  = frame(14);                       %timeStatus
     Header(ih,8)  = typecast(frame(15:16),'uint16'); %GPSweek
     Header(ih,9)  = typecast(frame(17:20),'uint32'); %GPSms
-    Header(ih,10) = typecast(frame(21:24),'uint32'); %recStatus,0è¡¨ç¤ºæ²¡æœ‰é”™è¯¯
+    Header(ih,10) = typecast(frame(21:24),'uint32'); %recStatus,0±íÊ¾Ã»ÓĞ´íÎó
     ih = ih + 1;
     %---------------------------------------------------------------------%
     k = k + hl+ml+4;
@@ -75,25 +75,25 @@ Header = table(Header(:,1),Header(:,2),Header(:,3),Header(:,4),Header(:,5),...
 'VariableNames',{'msgID','msgType','portAddr','msgLength','sequence',...
                 'idleTime','timeStatus','GPSweek','GPSms','recStatus'});
 
-y = streamIndex(2:end,1) - streamIndex(1:end-1,2); %å½“å‰å¸§å¤´å‡å‰ä¸€å¸§å¸§å°¾åº”è¯¥ä¸º1
+y = streamIndex(2:end,1) - streamIndex(1:end-1,2); %µ±Ç°Ö¡Í·¼õÇ°Ò»Ö¡Ö¡Î²Ó¦¸ÃÎª1
 if ~isempty(find(y~=1,1))
     disp('data lost!')
 end
-messageID = unique(Header.msgID); %æ€»å…±æœ‰å¤šå°‘ç§æ¶ˆæ¯
+messageID = unique(Header.msgID); %×Ü¹²ÓĞ¶àÉÙÖÖÏûÏ¢
 % 7-GPSEPHEM
 % 42-BESTPOS
-% 43-RANGE(é•¿)
+% 43-RANGE(³¤)
 % 101-TIME
-% 140-RANGECMP(çŸ­)
+% 140-RANGECMP(¶Ì)
 % 243-PSRXYZ
 % 723-GLOEPHEMERIS
 % 971-HEADING
 % 1696-BDSEPHEMERIS
 
-%% è§£æ
-N42 = sum(Header.msgID==42); %æ¶ˆæ¯æ•°é‡
+%% ½âÎö
+N42 = sum(Header.msgID==42); %ÏûÏ¢ÊıÁ¿
 BESTPOS = zeros(N42,19);
-i42 = 1; %å­˜å‚¨ä½ç½®
+i42 = 1; %´æ´¢Î»ÖÃ
 
 N101 = sum(Header.msgID==101);
 TIME = zeros(N101,11);
@@ -113,22 +113,22 @@ i971 = 1;
 
 k = 1;
 while 1
-    if k+9>n %ä¿è¯è¯»åˆ°æ¶ˆæ¯é•¿åº¦
+    if k+9>n %±£Ö¤¶Áµ½ÏûÏ¢³¤¶È
         break
     end
-    if stream(k)==0xAA && stream(k+1)==0x44 && stream(k+2)==0x12 %å¸§å¤´
-        hl = double(stream(k+3)); %å¸§å¤´é•¿åº¦
-        ml = double(typecast(stream(k+8:k+9),'uint16')); %æ¶ˆæ¯é•¿åº¦
-        if k+hl+ml+4>n+1 %ä¿è¯æœ‰ä¸ªå®Œæ•´å¸§
+    if stream(k)==0xAA && stream(k+1)==0x44 && stream(k+2)==0x12 %Ö¡Í·
+        hl = double(stream(k+3)); %Ö¡Í·³¤¶È
+        ml = double(typecast(stream(k+8:k+9),'uint16')); %ÏûÏ¢³¤¶È
+        if k+hl+ml+4>n+1 %±£Ö¤ÓĞ¸öÍêÕûÖ¡
             break
         end
     end
-    frame = stream(k:k+hl+ml+3); %ä¸€å¸§æ¶ˆæ¯
+    frame = stream(k:k+hl+ml+3); %Ò»Ö¡ÏûÏ¢
     ID = typecast(frame(5:6),'uint16'); %Message ID
     %---------------------------------------------------------------------%
     switch ID
         case 42 %BESTPOS,P394
-            BESTPOS(i42,1)  = typecast(frame(hl+(1:4)),'uint32');   %solState,0è¡¨ç¤ºè§£ç®—å®Œæˆ
+            BESTPOS(i42,1)  = typecast(frame(hl+(1:4)),'uint32');   %solState,0±íÊ¾½âËãÍê³É
             BESTPOS(i42,2)  = typecast(frame(hl+(5:8)),'uint32');   %posType
             BESTPOS(i42,3)  = typecast(frame(hl+(9:16)),'double');  %lat
             BESTPOS(i42,4)  = typecast(frame(hl+(17:24)),'double'); %lon

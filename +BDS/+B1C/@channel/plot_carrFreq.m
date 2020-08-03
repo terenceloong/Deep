@@ -1,5 +1,5 @@
 function plot_carrFreq(obj)
-% ç”»è½½æ³¢é¢‘çŽ‡
+% »­ÔØ²¨ÆµÂÊ
 
 PRN_str = ['BDS ',sprintf('%d',obj.PRN)];
 figure('Name',PRN_str)

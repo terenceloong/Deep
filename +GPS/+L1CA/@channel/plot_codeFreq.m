@@ -1,5 +1,5 @@
 function plot_codeFreq(obj)
-% ç”»ç é¢‘ç‡
+% »­ÂëÆµÂÊ
 
 PRN_str = ['GPS ',sprintf('%d',obj.PRN)];
 figure('Name',PRN_str)

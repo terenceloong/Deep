@@ -1,5 +1,5 @@
 function plot_carrAcc(obj)
-% ç”»è½½æ³¢é¢‘ç‡å˜åŒ–ç‡
+% »­ÔØ²¨ÆµÂÊ±ä»¯ÂÊ
 
 PRN_str = ['GPS ',sprintf('%d',obj.PRN)];
 figure('Name',PRN_str)
@@ -7,7 +7,7 @@ t = obj.storage.dataIndex/obj.sampleFreq;
 plot(t, obj.storage.carrAcc, 'LineWidth',0.5)
 set(gca, 'XLim',[0,ceil(obj.Tms/1000)])
 grid on
-title('è½½æ³¢åŠ é€Ÿåº¦')
+title('ÔØ²¨¼ÓËÙ¶È')
 
 PRN_str = ['GPS ',sprintf('%d',obj.PRN)];
 figure('Name',PRN_str)
@@ -15,6 +15,6 @@ t = obj.storage.dataIndex/obj.sampleFreq;
 plot(t, cumsum(obj.storage.carrAcc), 'LineWidth',0.5)
 set(gca, 'XLim',[0,ceil(obj.Tms/1000)])
 grid on
-title('è½½æ³¢åŠ é€Ÿåº¦çš„ç§¯åˆ†')
+title('ÔØ²¨¼ÓËÙ¶ÈµÄ»ı·Ö')
 
 end

@@ -16,7 +16,7 @@ fclose('all'); %关闭之前打开的所有文件
 imu = SBG_imu_read(0);
 imu(:,5:7) = imu(:,5:7) / 9.806370601248435;
 gyro0 = mean(imu(1:200,2:4)); %计算初始陀螺零偏
-psi0 = 0;
+psi0 = 180;
 
 %% 选择GNSS数据文件
 valid_prefix = 'B210-'; %文件名有效前缀
@@ -28,8 +28,8 @@ data_file = [path, file]; %数据文件完整路径,path最后带\
 
 %% 主机参数
 % 根据实际情况修改.
-msToProcess = 60*1000; %处理总时间
-sampleOffset = 40*4e6; %抛弃前多少个采样点
+msToProcess = 300*1000; %处理总时间
+sampleOffset = 0*4e6; %抛弃前多少个采样点
 sampleFreq = 4e6; %接收机采样频率
 blockSize = sampleFreq*0.001; %一个缓存块(1ms)的采样点数
 p0 = [45.730952, 126.624970, 212]; %初始位置,不用特别精确
@@ -75,12 +75,17 @@ para.P0_dtr = 2e-8; %s
 para.P0_dtv = 3e-9; %s/s
 para.P0_gyro = 0.2; %deg/s
 para.P0_acc = 2e-3; %g
-para.Q_gyro = 0.15; %deg/s
-para.Q_acc = 2e-3; %g
+% para.Q_gyro = 0.15; %deg/s
+% para.Q_acc = 2e-3; %g
 para.Q_dtv = 0.01e-9; %1/s
-para.Q_dg = 0.01; %deg/s/s
-para.Q_da = 0.1e-3; %g/s
+% para.Q_dg = 0.01; %deg/s/s
+% para.Q_da = 0.1e-3; %g/s
 para.sigma_gyro = 0.15; %deg/s
+
+para.Q_gyro = 0.2; %deg/s
+para.Q_acc = 2e-3; %g
+para.Q_dg = 0.02; %deg/s/s
+para.Q_da = 0.2e-3; %g/s
 
 %% 创建接收机对象
 nCoV = GL1CA_S(receiver_conf);

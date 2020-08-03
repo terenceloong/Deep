@@ -1,118 +1,118 @@
 function parse(obj)
-% è§£æå¯¼èˆªç”µæ–‡
-% ä»æ•è·åˆ°è¿›å…¥æ¯”ç‰¹åŒæ­¥è¦300ms(ç­‰å¾…é”ç›¸ç¯ç¨³å®š)
-% æ¯”ç‰¹åŒæ­¥è¿‡ç¨‹è¦1s(100bits),å¼€å§‹å¯»æ‰¾å¸§å¤´è¦å¤šä¸€ç‚¹æ—¶é—´,å› ä¸ºç­‰å¾…æ¯”ç‰¹è¾¹ç•Œåˆ°è¾¾
-% æ¯”ç‰¹åŒæ­¥åä½¿ç”¨å¯¼é¢‘å­ç è¿›è¡Œå¸§åŒæ­¥
-% å¸§åŒæ­¥è¿‡ç¨‹è¦500ms(50bits),ç­‰åˆ°ä¸‹ä¸€å¸§å¼€å§‹æ‰è¿›å…¥æ˜Ÿå†è§£æ
-% å¸§åŒæ­¥åå°±ç¡®å®šäº†å¯¼é¢‘å­ç ç›¸ä½,æ ¹æ®éœ€è¦ç¿»è½¬è½½æ³¢ç›¸ä½,å¯åŠ¨çº¯é”ç›¸ç¯
-% ä¸€å¸§æ˜Ÿå†æ¥æ”¶å®Œåæ‰èƒ½ç¡®å®šç å‘å°„æ—¶é—´
-% æ˜Ÿå†18sä¸€æ¬¡
+% ½âÎöµ¼º½µçÎÄ
+% ´Ó²¶»ñµ½½øÈë±ÈÌØÍ¬²½Òª300ms(µÈ´ıËøÏà»·ÎÈ¶¨)
+% ±ÈÌØÍ¬²½¹ı³ÌÒª1s(100bits),¿ªÊ¼Ñ°ÕÒÖ¡Í·Òª¶àÒ»µãÊ±¼ä,ÒòÎªµÈ´ı±ÈÌØ±ß½çµ½´ï
+% ±ÈÌØÍ¬²½ºóÊ¹ÓÃµ¼Æµ×ÓÂë½øĞĞÖ¡Í¬²½
+% Ö¡Í¬²½¹ı³ÌÒª500ms(50bits),µÈµ½ÏÂÒ»Ö¡¿ªÊ¼²Å½øÈëĞÇÀú½âÎö
+% Ö¡Í¬²½ºó¾ÍÈ·¶¨ÁËµ¼Æµ×ÓÂëÏàÎ»,¸ù¾İĞèÒª·­×ªÔØ²¨ÏàÎ»,Æô¶¯´¿ËøÏà»·
+% Ò»Ö¡ĞÇÀú½ÓÊÕÍêºó²ÅÄÜÈ·¶¨Âë·¢ÉäÊ±¼ä
+% ĞÇÀú18sÒ»´Î
 
-obj.msgCnt = obj.msgCnt + 1; %è®¡æ•°åŠ 1
+obj.msgCnt = obj.msgCnt + 1; %¼ÆÊı¼Ó1
 
 switch obj.msgStage %I,B,W,F,H,E
-    case 'I' %ç©ºé—²
+    case 'I' %¿ÕÏĞ
         waitPLLstable;
-    case 'B' %æ¯”ç‰¹åŒæ­¥
+    case 'B' %±ÈÌØÍ¬²½
         bitSync;
-	case 'W' %ç­‰å¾…æ¯”ç‰¹å¼€å§‹
+	case 'W' %µÈ´ı±ÈÌØ¿ªÊ¼
         waitBitStart;
-    otherwise %å·²ç»å®Œæˆæ¯”ç‰¹åŒæ­¥
-        if obj.msgCnt==1 %è®°å½•æ¯”ç‰¹å¼€å§‹æ ‡å¿—
+    otherwise %ÒÑ¾­Íê³É±ÈÌØÍ¬²½
+        if obj.msgCnt==1 %¼ÇÂ¼±ÈÌØ¿ªÊ¼±êÖ¾
             obj.storage.bitFlag(obj.ns) = obj.msgStage;
         end
         %------------------------------------------
         switch obj.msgStage
-            case 'F' %å¸§åŒæ­¥
+            case 'F' %Ö¡Í¬²½
                 frameSync;
-            case 'H' %ç­‰å¾…å¸§å¤´
+            case 'H' %µÈ´ıÖ¡Í·
                 waitFrameHead;
-            case 'E' %è§£ææ˜Ÿå†
+            case 'E' %½âÎöĞÇÀú
                 parseEphemeris;
         end
 end
 
-    %% ç­‰å¾…é”ç›¸ç¯ç¨³å®š
+    %% µÈ´ıËøÏà»·ÎÈ¶¨
     function waitPLLstable
-        if obj.msgCnt==300 %åˆ°æ—¶é—´äº†å°±è®¤ä¸ºå·²ç»ç¨³å®š
-            obj.msgCnt = 0; %è®¡æ•°å™¨æ¸…é›¶
-            obj.msgStage = 'B'; %è¿›å…¥æ¯”ç‰¹åŒæ­¥é˜¶æ®µ
+        if obj.msgCnt==300 %µ½Ê±¼äÁË¾ÍÈÏÎªÒÑ¾­ÎÈ¶¨
+            obj.msgCnt = 0; %¼ÆÊıÆ÷ÇåÁã
+            obj.msgStage = 'B'; %½øÈë±ÈÌØÍ¬²½½×¶Î
             log_str = sprintf('Start bit synchronization at %.8fs', obj.dataIndex/obj.sampleFreq);
             obj.log = [obj.log; string(log_str)];
         end
     end
 
-    %% æ¯”ç‰¹åŒæ­¥
+    %% ±ÈÌØÍ¬²½
     function bitSync
-        if obj.Ip0*obj.Ip<0 %å‘ç°ç”µå¹³ç¿»è½¬
+        if obj.Ip0*obj.Ip<0 %·¢ÏÖµçÆ½·­×ª
             index = mod(obj.msgCnt-1,10) + 1;
-            obj.bitSyncTable(index) = obj.bitSyncTable(index) + 1; %ç»Ÿè®¡è¡¨ä¸­çš„å¯¹åº”ä½åŠ 1
+            obj.bitSyncTable(index) = obj.bitSyncTable(index) + 1; %Í³¼Æ±íÖĞµÄ¶ÔÓ¦Î»¼Ó1
         end
         obj.Ip0 = obj.Ip;
-        if obj.msgCnt==1000 %1såæ£€éªŒç»Ÿè®¡è¡¨,æ­¤æ—¶æœ‰100ä¸ªæ¯”ç‰¹
-            obj.Ip0 = 0; %Ip0åæ¥å°±ä¸ç”¨äº†,ç»™å®ƒå¤ä½
+        if obj.msgCnt==1000 %1sºó¼ìÑéÍ³¼Æ±í,´ËÊ±ÓĞ100¸ö±ÈÌØ
+            obj.Ip0 = 0; %Ip0ºóÀ´¾Í²»ÓÃÁË,¸øËü¸´Î»
             if max(obj.bitSyncTable)>10 && (sum(obj.bitSyncTable)-max(obj.bitSyncTable))<=2
-                % æ¯”ç‰¹åŒæ­¥æˆåŠŸ,ç¡®å®šç”µå¹³ç¿»è½¬ä½ç½®(ç”µå¹³ç¿»è½¬å¤§éƒ½å‘ç”Ÿåœ¨ä¸€ä¸ªç‚¹ä¸Š)
-                [~,obj.msgCnt] = max(obj.bitSyncTable); %å°†è®¡æ•°å€¼è®¾ä¸ºåŒæ­¥è¡¨æœ€å¤§å€¼çš„ç´¢å¼•
-                obj.bitSyncTable = zeros(1,10); %æ¯”ç‰¹åŒæ­¥ç»Ÿè®¡è¡¨æ¸…é›¶
-                obj.msgCnt = -obj.msgCnt + 1; %å¦‚æœç´¢å¼•ä¸º1,ä¸‹ä¸ªç§¯åˆ†å€¼å°±ä¸ºæ¯”ç‰¹å¼€å§‹å¤„
-                obj.msgStage = 'W'; %ç­‰å¾…æ¯”ç‰¹å¼€å§‹
+                % ±ÈÌØÍ¬²½³É¹¦,È·¶¨µçÆ½·­×ªÎ»ÖÃ(µçÆ½·­×ª´ó¶¼·¢ÉúÔÚÒ»¸öµãÉÏ)
+                [~,obj.msgCnt] = max(obj.bitSyncTable); %½«¼ÆÊıÖµÉèÎªÍ¬²½±í×î´óÖµµÄË÷Òı
+                obj.bitSyncTable = zeros(1,10); %±ÈÌØÍ¬²½Í³¼Æ±íÇåÁã
+                obj.msgCnt = -obj.msgCnt + 1; %Èç¹ûË÷ÒıÎª1,ÏÂ¸ö»ı·ÖÖµ¾ÍÎª±ÈÌØ¿ªÊ¼´¦
+                obj.msgStage = 'W'; %µÈ´ı±ÈÌØ¿ªÊ¼
                 waitBitStart;
             else
-                % æ¯”ç‰¹åŒæ­¥å¤±è´¥,å…³é—­é€šé“
+                % ±ÈÌØÍ¬²½Ê§°Ü,¹Ø±ÕÍ¨µÀ
                 obj.state = 0;
-                obj.ns = obj.ns + 1; %æ•°æ®å­˜å‚¨è·³ä¸€ä¸ª,ç›¸å½“äºåŠ ä¸€ä¸ªé—´æ–­ç‚¹
+                obj.ns = obj.ns + 1; %Êı¾İ´æ´¢ÌøÒ»¸ö,Ïàµ±ÓÚ¼ÓÒ»¸ö¼ä¶Ïµã
                 log_str = sprintf('***Bit synchronization failed at %.8fs', obj.dataIndex/obj.sampleFreq);
                 obj.log = [obj.log; string(log_str)];
             end
         end
     end
 
-    %% ç­‰å¾…æ¯”ç‰¹å¼€å§‹
+    %% µÈ´ı±ÈÌØ¿ªÊ¼
     function waitBitStart
         if obj.msgCnt==0
-            obj.msgStage = 'F'; %è¿›å…¥å¸§åŒæ­¥é˜¶æ®µ
+            obj.msgStage = 'F'; %½øÈëÖ¡Í¬²½½×¶Î
             log_str = sprintf('Start frame synchronization at %.8fs', obj.dataIndex/obj.sampleFreq);
             obj.log = [obj.log; string(log_str)];
         end
     end
 
-    %% å¸§åŒæ­¥
+    %% Ö¡Í¬²½
     function frameSync
-        obj.bitBuff(obj.msgCnt) = obj.Ip; %å¾€æ¯”ç‰¹ç¼“å­˜ä¸­å­˜æ•°,å¯¼é¢‘å­ç 
-        if obj.msgCnt==obj.pointInt %è·Ÿè¸ªå®Œä¸€ä¸ªæ¯”ç‰¹
-            obj.msgCnt = 0; %è®¡æ•°å™¨æ¸…é›¶
-            obj.frameBuffPtr = obj.frameBuffPtr + 1; %å¸§ç¼“å­˜æŒ‡é’ˆåŠ 1
-            bit = (double(sum(obj.bitBuff(1:obj.pointInt))>0) - 0.5) * 2; %ä¸€ä¸ªæ¯”ç‰¹,Â±1
-            obj.frameBuff(obj.frameBuffPtr) = bit; %å¾€æ¯”ç‰¹ç¼“å­˜é‡Œå­˜
-            % é‡‡é›†ä¸€æ®µæ—¶é—´å¯¼é¢‘å­ç ,ç¡®å®šå…¶åœ¨å­ç åºåˆ—ä¸­çš„ä½ç½®
-            if obj.frameBuffPtr==50 %å­˜äº†50ä¸ªæ¯”ç‰¹
-                R = zeros(1,1800); %50ä¸ªæ¯”ç‰¹åœ¨å­ç åºåˆ—ä¸åŒä½ç½®çš„ç›¸å…³ç»“æœ
+        obj.bitBuff(obj.msgCnt) = obj.Ip; %Íù±ÈÌØ»º´æÖĞ´æÊı,µ¼Æµ×ÓÂë
+        if obj.msgCnt==obj.pointInt %¸ú×ÙÍêÒ»¸ö±ÈÌØ
+            obj.msgCnt = 0; %¼ÆÊıÆ÷ÇåÁã
+            obj.frameBuffPtr = obj.frameBuffPtr + 1; %Ö¡»º´æÖ¸Õë¼Ó1
+            bit = (double(sum(obj.bitBuff(1:obj.pointInt))>0) - 0.5) * 2; %Ò»¸ö±ÈÌØ,¡À1
+            obj.frameBuff(obj.frameBuffPtr) = bit; %Íù±ÈÌØ»º´æÀï´æ
+            % ²É¼¯Ò»¶ÎÊ±¼äµ¼Æµ×ÓÂë,È·¶¨ÆäÔÚ×ÓÂëĞòÁĞÖĞµÄÎ»ÖÃ
+            if obj.frameBuffPtr==50 %´æÁË50¸ö±ÈÌØ
+                R = zeros(1,1800); %50¸ö±ÈÌØÔÚ×ÓÂëĞòÁĞ²»Í¬Î»ÖÃµÄÏà¹Ø½á¹û
                 code = [obj.codeSub, obj.codeSub(1:49)];
-                x = obj.frameBuff(1:50)'; %åˆ—å‘é‡
+                x = obj.frameBuff(1:50)'; %ÁĞÏòÁ¿
                 for k=1:1800
                     R(k) = code(k:k+49) * x;
                 end
-                [Rmax, index] = max(abs(R)); %å¯»æ‰¾ç›¸å…³ç»“æœçš„æœ€å¤§å€¼
-                if Rmax==50 %æœ€å¤§ç›¸å…³å€¼æ­£ç¡®
-                    %----å¯åŠ¨çº¯é”ç›¸ç¯----
+                [Rmax, index] = max(abs(R)); %Ñ°ÕÒÏà¹Ø½á¹ûµÄ×î´óÖµ
+                if Rmax==50 %×î´óÏà¹ØÖµÕıÈ·
+                    %----Æô¶¯´¿ËøÏà»·----
                     if R(index)<0
-                        obj.remCarrPhase = mod(obj.remCarrPhase+0.5, 1); %ç¿»è½¬è½½æ³¢ç›¸ä½
+                        obj.remCarrPhase = mod(obj.remCarrPhase+0.5, 1); %·­×ªÔØ²¨ÏàÎ»
                     end
-                    obj.subPhase = mod(index+49,1800) + 1; %ç¡®å®šå¯¼é¢‘å­ç ç›¸ä½
-                    obj.carrDiscFlag = 1; %ä½¿ç”¨å››è±¡é™è½½æ³¢é‰´ç›¸å™¨
+                    obj.subPhase = mod(index+49,1800) + 1; %È·¶¨µ¼Æµ×ÓÂëÏàÎ»
+                    obj.carrDiscFlag = 1; %Ê¹ÓÃËÄÏóÏŞÔØ²¨¼øÏàÆ÷
                     %-------------------
-                    obj.frameBuffPtr = mod(index+49,1800); %å¸§ç¼“å­˜æŒ‡é’ˆç§»åŠ¨
+                    obj.frameBuffPtr = mod(index+49,1800); %Ö¡»º´æÖ¸ÕëÒÆ¶¯
                     if obj.frameBuffPtr==0
-                        obj.msgStage = 'E'; %è¿›å…¥è§£ææ˜Ÿå†é˜¶æ®µ
+                        obj.msgStage = 'E'; %½øÈë½âÎöĞÇÀú½×¶Î
                         log_str = sprintf('Start parse ephemeris at %.8fs', obj.dataIndex/obj.sampleFreq);
                         obj.log = [obj.log; string(log_str)];
                     else
-                        obj.msgStage = 'H'; %ç­‰å¾…å¸§å¤´
+                        obj.msgStage = 'H'; %µÈ´ıÖ¡Í·
                     end
-                else %æœ€å¤§ç›¸å…³å€¼é”™è¯¯
-                    obj.frameBuffPtr = 0; %å¸§ç¼“å­˜æŒ‡é’ˆå½’ä½
-                    obj.msgStage = 'B'; %è¿”å›æ¯”ç‰¹åŒæ­¥é˜¶æ®µ(å¦‚æœè¿˜ç•™åœ¨å¸§åŒæ­¥é˜¶æ®µä¼šå‡ºä¸å»)
+                else %×î´óÏà¹ØÖµ´íÎó
+                    obj.frameBuffPtr = 0; %Ö¡»º´æÖ¸Õë¹éÎ»
+                    obj.msgStage = 'B'; %·µ»Ø±ÈÌØÍ¬²½½×¶Î(Èç¹û»¹ÁôÔÚÖ¡Í¬²½½×¶Î»á³ö²»È¥)
                     log_str = sprintf('***Frame synchronization failed at %.8fs', obj.dataIndex/obj.sampleFreq);
                     obj.log = [obj.log; string(log_str)];
                 end
@@ -120,44 +120,44 @@ end
         end
     end
 
-    %% ç­‰å¾…å¸§å¤´
-    function waitFrameHead %æ­¤æ—¶ä¸ç”¨å­˜æ•°ï¼Œç­‰ä¸‹ä¸€å¸§æ¥
-        if obj.msgCnt==obj.pointInt %è·Ÿè¸ªå®Œä¸€ä¸ªæ¯”ç‰¹
-            obj.msgCnt = 0; %è®¡æ•°å™¨æ¸…é›¶
-            obj.frameBuffPtr = obj.frameBuffPtr + 1; %å¸§ç¼“å­˜æŒ‡é’ˆåŠ 1
+    %% µÈ´ıÖ¡Í·
+    function waitFrameHead %´ËÊ±²»ÓÃ´æÊı£¬µÈÏÂÒ»Ö¡À´
+        if obj.msgCnt==obj.pointInt %¸ú×ÙÍêÒ»¸ö±ÈÌØ
+            obj.msgCnt = 0; %¼ÆÊıÆ÷ÇåÁã
+            obj.frameBuffPtr = obj.frameBuffPtr + 1; %Ö¡»º´æÖ¸Õë¼Ó1
             if obj.frameBuffPtr==1800
-                obj.frameBuffPtr = 0; %å¸§ç¼“å­˜æŒ‡é’ˆå½’ä½
-                obj.msgStage = 'E'; %è¿›å…¥è§£ææ˜Ÿå†é˜¶æ®µ
+                obj.frameBuffPtr = 0; %Ö¡»º´æÖ¸Õë¹éÎ»
+                obj.msgStage = 'E'; %½øÈë½âÎöĞÇÀú½×¶Î
                 log_str = sprintf('Start parse ephemeris at %.8fs', obj.dataIndex/obj.sampleFreq);
                 obj.log = [obj.log; string(log_str)];
             end
         end
     end
 
-    %% è§£ææ˜Ÿå†
+    %% ½âÎöĞÇÀú
     function parseEphemeris
-        obj.bitBuff(obj.msgCnt) = obj.Id; %å¾€æ¯”ç‰¹ç¼“å­˜ä¸­å­˜æ•°,å¯¼èˆªç”µæ–‡
-        if obj.msgCnt==obj.pointInt %è·Ÿè¸ªå®Œä¸€ä¸ªæ¯”ç‰¹
-            obj.msgCnt = 0; %è®¡æ•°å™¨æ¸…é›¶
-            obj.frameBuffPtr = obj.frameBuffPtr + 1; %å¸§ç¼“å­˜æŒ‡é’ˆåŠ 1
-            bit = (double(sum(obj.bitBuff(1:obj.pointInt))>0) - 0.5) * 2; %ä¸€ä¸ªæ¯”ç‰¹,Â±1
-            obj.frameBuff(obj.frameBuffPtr) = bit; %å¾€æ¯”ç‰¹ç¼“å­˜é‡Œå­˜
-            if obj.frameBuffPtr==1800 %å­˜äº†1800ä¸ªæ¯”ç‰¹(ä¸€å¸§)
-                obj.frameBuffPtr = 0; %å¸§ç¼“å­˜æŒ‡é’ˆå½’ä½
+        obj.bitBuff(obj.msgCnt) = obj.Id; %Íù±ÈÌØ»º´æÖĞ´æÊı,µ¼º½µçÎÄ
+        if obj.msgCnt==obj.pointInt %¸ú×ÙÍêÒ»¸ö±ÈÌØ
+            obj.msgCnt = 0; %¼ÆÊıÆ÷ÇåÁã
+            obj.frameBuffPtr = obj.frameBuffPtr + 1; %Ö¡»º´æÖ¸Õë¼Ó1
+            bit = (double(sum(obj.bitBuff(1:obj.pointInt))>0) - 0.5) * 2; %Ò»¸ö±ÈÌØ,¡À1
+            obj.frameBuff(obj.frameBuffPtr) = bit; %Íù±ÈÌØ»º´æÀï´æ
+            if obj.frameBuffPtr==1800 %´æÁË1800¸ö±ÈÌØ(Ò»Ö¡)
+                obj.frameBuffPtr = 0; %Ö¡»º´æÖ¸Õë¹éÎ»
                 [~, SOH, ephe, sf3] = BDS.B1C.epheParse(obj.frameBuff);
-                if ~isempty(ephe) %è§£ææ˜Ÿå†æˆåŠŸ
-                    obj.tc0 = (ephe(2)*3600 + SOH + 18) * 1000; %è®¾ç½®ä¼ªç æ—¶é—´
-                    if mod(ephe(3),255)==ephe(4) %IODCçš„ä½8ä½==IODE
+                if ~isempty(ephe) %½âÎöĞÇÀú³É¹¦
+                    obj.tc0 = (ephe(2)*3600 + SOH + 18) * 1000; %ÉèÖÃÎ±ÂëÊ±¼ä
+                    if mod(ephe(3),256)==ephe(4) %IODCµÄµÍ8Î»==IODE
                         log_str = sprintf('Ephemeris is parsed at %.8fs', obj.dataIndex/obj.sampleFreq);
                         obj.log = [obj.log; string(log_str)];
-                        obj.ephe = ephe; %æ›´æ–°æ˜Ÿå†
-                        obj.state = 2; %æ”¹å˜é€šé“çŠ¶æ€
-                    else %IODCçš„ä½8ä½~=IODE
+                        obj.ephe = ephe; %¸üĞÂĞÇÀú
+                        obj.state = 2; %¸Ä±äÍ¨µÀ×´Ì¬
+                    else %IODCµÄµÍ8Î»~=IODE
                         log_str = sprintf('***Ephemeris changes at %.8fs, IODC=%d, IODE=%d', ...
                                            obj.dataIndex/obj.sampleFreq, ephe(3), ephe(4));
                         obj.log = [obj.log; string(log_str)];
                     end
-                else %è§£ææ˜Ÿå†é”™è¯¯
+                else %½âÎöĞÇÀú´íÎó
                     log_str = sprintf('***Ephemeris error at %.8fs', obj.dataIndex/obj.sampleFreq);
                     obj.log = [obj.log; string(log_str)];
                 end
