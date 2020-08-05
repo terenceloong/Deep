@@ -18,8 +18,6 @@ obj.ta = timeCarry(obj.ta + dta);
 
 % GPS信号捕获跟踪
 if obj.GPSflag==1
-    % 更新GPS时间
-    obj.GPS.ta = timeCarry(obj.GPS.ta + dta);
     % 捕获
     if obj.tms==obj.blockNum || mod(obj.tms,2000)==0 %2s搜索一次
         obj.acqProcessGPS;
@@ -30,10 +28,8 @@ end
 
 % 北斗信号捕获跟踪
 if obj.BDSflag==1
-    % 更新北斗时间
-    obj.BDS.ta = timeCarry(obj.BDS.ta + dta);
     % 捕获
-    if obj.tms==obj.blockNum
+    if obj.tms==obj.blockNum %最开始搜索一次
         obj.acqProcessBDS;
     end
     % 跟踪

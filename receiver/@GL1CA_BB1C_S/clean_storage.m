@@ -13,4 +13,17 @@ if obj.BDSflag
     end
 end
 
+% 获取所有场名,元胞数组
+fields = fieldnames(obj.storage);
+
+% 清理多余的接收机输出存储空间
+n = obj.ns + 1;
+for k=1:length(fields)
+    if size(obj.storage.(fields{k}),3)==1 %二维存储空间
+        obj.storage.(fields{k})(n:end,:) = [];
+    else %三维存储空间
+        obj.storage.(fields{k})(:,:,n:end) = [];
+    end
+end
+
 end

@@ -24,7 +24,7 @@ for k=1:obj.GPS.chN
         ionoflag = channel.parse;
         %----提取电离层校正参数
         if ionoflag==1
-            obj.iono = channel.iono;
+            obj.GPS.iono = channel.iono;
         end
     end
 end

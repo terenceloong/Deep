@@ -9,6 +9,10 @@ f.UIContextMenu = c; %目录加到figure上,在figure空白处右键弹出
 % 创建figure目录项(*)
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'print_all_log'}, 'Text','Print log');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_all_trackResult'}, 'Text','Plot trackResult');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_df'}, 'Text','Plot df', 'Separator','on');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_pos'}, 'Text','Plot pos', 'Separator','on');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_vel'}, 'Text','Plot vel');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'kml_output'}, 'Text','KML output', 'Separator','on');
 
 % 创建极坐标轴
 ax = polaraxes; %创建极坐标轴
@@ -76,17 +80,17 @@ if obj.GPSflag==1
         objch = obj.GPS.channels(obj.GPS.svList==PRN(k)); %通道对象
         % 创建目录项(*)
         uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_trackResult'}, 'Text','trackResult');
-        uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_I_Q'}, 'Text','I_Q');
+        uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_I_Q'}, 'Text','I_Q', 'Separator','on');
         uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_I_P'}, 'Text','I_P');
         uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_I_P_flag'}, 'Text','I_P(flag)');
-        uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_codeFreq'}, 'Text','codeFreq');
-        uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_carrFreq'}, 'Text','carrFreq');
+        uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_codeFreq'}, 'Text','codeFreq', 'Separator','on');
+        uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_carrFreq'}, 'Text','carrFreq', 'Separator','on');
         uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_carrNco'}, 'Text','carrNco');
         uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_carrAcc'}, 'Text','carrAcc');
-        uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_codeDisc'}, 'Text','codeDisc');
+        uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_codeDisc'}, 'Text','codeDisc', 'Separator','on');
         uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_carrDisc'}, 'Text','carrDisc');
         uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_freqDisc'}, 'Text','freqDisc');
-        uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_quality'}, 'Text','quality');
+        uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_quality'}, 'Text','quality', 'Separator','on');
     end
 end
 
@@ -135,14 +139,14 @@ if obj.BDSflag==1
         objch = obj.BDS.channels(obj.BDS.svList==PRN(k)); %通道对象
         % 创建目录项(*)
         uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_trackResult'}, 'Text','trackResult');
-        uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_I_Q'}, 'Text','I_Q');
+        uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_I_Q'}, 'Text','I_Q', 'Separator','on');
         uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_I_P'}, 'Text','I_P');
         uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_I_P_flag'}, 'Text','I_P(flag)');
-        uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_codeFreq'}, 'Text','codeFreq');
-        uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_carrFreq'}, 'Text','carrFreq');
+        uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_codeFreq'}, 'Text','codeFreq', 'Separator','on');
+        uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_carrFreq'}, 'Text','carrFreq', 'Separator','on');
         uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_carrNco'}, 'Text','carrNco');
         uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_carrAcc'}, 'Text','carrAcc');
-        uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_codeDisc'}, 'Text','codeDisc');
+        uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_codeDisc'}, 'Text','codeDisc', 'Separator','on');
         uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_carrDisc'}, 'Text','carrDisc');
         uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_freqDisc'}, 'Text','freqDisc');
 %         uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_quality'}, 'Text','quality');
@@ -151,7 +155,7 @@ end
 
     %% 右键菜单的回调函数
     function menuCallback(varargin)
-        % 使用可变输入参数，头两个参数是固定的
+        % 使用可变输入参数,头两个参数是固定的
         % 第一个参数为matlab.ui.container.Menu对象
         % 第二个参数为ui.eventdata.ActionData
         % 第三个参数为类对象

@@ -23,6 +23,8 @@ af0 = ephe(2);
 af1 = ephe(3);
 af2 = ephe(4);
 TGD = ephe(5);
+a = ephe(7)^2; %半长轴
+ephe0 = ephe(6:end); %16参数星历,用于计算卫星位置速度
 
 % 计算卫星钟差
 dt = te0(1) - toc + te0(2)/1e3 + te0(3)/1e6; %s
@@ -34,7 +36,7 @@ dfsv = af1 + 2*af2*dt; %卫星钟频差,s/s
 te = te0(3)/1e6 - dtsv + te0(2)/1e3 + te0(1); %s
 
 % 计算卫星位置速度加速度
-[rsvsas, dtrel] = LNAV.rsvsas_ephe(ephe(6:end), te);
+[rsvsas, dtrel] = LNAV.rsvsas_ephe(ephe0, te);
 
 % 计算Saganc效应校正项
 rs = rsvsas(1:3);
@@ -44,7 +46,7 @@ dtsagnac = (rs(1)*rp(2)-rs(2)*rp(1))*w/c^2;
 % 最大6ps/s,跟卫星钟频差一个量级
 % <Springer Handbook of Global Navigation Satellite Systems>564页(19.16)
 % 2*miu/c^2=0.00887005737336
-dfrel = 0.00887005737336 * (1/ephe(7)^2 - 1/norm(rs));
+dfrel = 0.00887005737336 * (1/a - 1/norm(rs));
 
 % 计算电离层延迟
 if ~isnan(iono(1)) %参数有效

@@ -121,7 +121,7 @@ end
     end
 
     %% 等待帧头
-    function waitFrameHead %此时不用存数，等下一帧来
+    function waitFrameHead %此时不用存数,等下一帧来
         if obj.msgCnt==obj.pointInt %跟踪完一个比特
             obj.msgCnt = 0; %计数器清零
             obj.frameBuffPtr = obj.frameBuffPtr + 1; %帧缓存指针加1

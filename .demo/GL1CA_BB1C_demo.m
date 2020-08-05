@@ -18,7 +18,7 @@ data_file = 'C:\Users\longt\Desktop\GNSS data\B210_20200727_111615_ch1.dat';
 
 %% 主机参数
 % 根据实际情况修改.
-msToProcess = 10*1000; %处理总时间
+msToProcess = 50*1000; %处理总时间
 sampleOffset = 0*4e6; %抛弃前多少个采样点
 sampleFreq = 4e6; %接收机采样频率
 blockSize = sampleFreq*0.001; %一个缓存块(1ms)的采样点数
@@ -32,8 +32,8 @@ tag = [tg(2),0,0] + sample2dt(sampleOffset, sampleFreq); %接收机初始时间,[s,ms,u
 tag = timeCarry(round(tag,2)); %进位,微秒保留2位小数
 % 北斗时
 tb = UTC2BDT(tf, 8); %UTC时间转化为BDT时间,周+秒
-tab = [tb(2),0,0] + sample2dt(sampleOffset, sampleFreq);
-tab = timeCarry(round(tab,2));
+% tab = [tb(2),0,0] + sample2dt(sampleOffset, sampleFreq);
+% tab = timeCarry(round(tab,2));
 
 %% 获取历书
 % 需指定历书存储的文件夹.
@@ -51,11 +51,12 @@ receiver_conf.Tms = msToProcess; %接收机总运行时间,ms
 receiver_conf.sampleFreq = sampleFreq; %采样频率,Hz
 receiver_conf.blockSize = blockSize; %一个缓存块(1ms)的采样点数
 receiver_conf.blockNum = 100; %缓存块的数量
+receiver_conf.GPSweek = tg(1); %当前GPS周数
+receiver_conf.BDSweek = tb(1); %当前北斗周数
+receiver_conf.ta = tag; %接收机初始时间,[s,ms,us],使用GPS时间作为时间基准
 receiver_conf.GPSflag = 1; %是否启用GPS
 receiver_conf.BDSflag = 1; %是否启用北斗
 %-------------------------------------------------------------------------%
-receiver_conf.GPS.week = tg(1); %当前GPS周数
-receiver_conf.GPS.ta = tag; %接收机初始GPS时间,[s,ms,us]
 receiver_conf.GPS.almanac = almanac_GPS; %历书
 receiver_conf.GPS.eleMask = 10; %高度角阈值
 receiver_conf.GPS.svList = []; %跟踪卫星列表,[10,15,20,24]
@@ -63,8 +64,6 @@ receiver_conf.GPS.acqTime = 2; %捕获所用的数据长度,ms
 receiver_conf.GPS.acqThreshold = 1.4; %捕获阈值,最高峰与第二大峰的比值
 receiver_conf.GPS.acqFreqMax = 5e3; %最大搜索频率,Hz
 %-------------------------------------------------------------------------%
-receiver_conf.BDS.week = tb(1); %当前北斗周数
-receiver_conf.BDS.ta = tab; %接收机初始BDS时间,[s,ms,us]
 receiver_conf.BDS.almanac = almanac_BDS; %历书
 receiver_conf.BDS.eleMask = 10; %高度角阈值
 receiver_conf.BDS.svList = [19,20,29,35,38,40,44]; %跟踪卫星列表,[19,20,29,35,38,40,44]

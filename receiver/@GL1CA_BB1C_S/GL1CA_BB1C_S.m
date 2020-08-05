@@ -13,7 +13,10 @@ classdef GL1CA_BB1C_S < handle
         buffHead       %最新数据的位置,blockSize的倍数
         GPSflag        %是否启用GPS
         BDSflag        %是否启用北斗
-        ta             %接收机时间,周内秒数,具体使用什么时间系统取决于跟踪的信号,[s,ms,us]
+        GPSweek        %GPS周数
+        BDSweek        %北斗周数
+        ta             %接收机时间,GPS周内秒数,[s,ms,us]
+        dtBDS          %GPS时相对北斗时的时间差,[s,ms,us],tBDS=tGPS-dtBDS
         deltaFreq      %接收机时钟频率误差,无量纲,钟快为正
         tms            %接收机当前运行时间,ms,用采样点数计
         GPS            %GPS模块
@@ -46,25 +49,21 @@ classdef GL1CA_BB1C_S < handle
             obj.GPSflag = conf.GPSflag;
             obj.BDSflag = conf.BDSflag;
             %----设置接收机时钟
-            if obj.BDSflag==1
-                obj.ta = conf.BDS.ta;
-            end
-            if obj.GPSflag==1
-                obj.ta = conf.GPS.ta;
-            end
+            obj.GPSweek = conf.GPSweek;
+            obj.BDSweek = conf.BDSweek;
+            obj.ta = conf.ta;
+            obj.dtBDS = [14,0,0]; %GPS时比北斗时快14s
             obj.deltaFreq = 0;
             obj.tms = 0;
             %----设置GPS模块
             if obj.GPSflag==1
-                obj.GPS.week = conf.GPS.week;
-                obj.GPS.ta = conf.GPS.ta;
                 obj.GPS.almanac = conf.GPS.almanac;
                 obj.GPS.eleMask = conf.GPS.eleMask;
                 obj.GPS.svList = conf.GPS.svList;
                 % 使用历书计算所有卫星的方位角高度角
                 if ~isempty(obj.GPS.almanac)
                     index = find(obj.GPS.almanac(:,2)==0); %获取健康卫星的行号
-                    rs = rs_almanac(obj.GPS.almanac(index,6:end), obj.GPS.ta(1)); %卫星ecef位置
+                    rs = rs_almanac(obj.GPS.almanac(index,6:end), obj.ta(1)); %卫星ecef位置
                     [azi, ele] = aziele_xyz(rs, conf.p0);
                     obj.GPS.aziele = zeros(length(index),3); %[PRN,azi,ele]
                     obj.GPS.aziele(:,1) = obj.GPS.almanac(index,1);
@@ -92,18 +91,17 @@ classdef GL1CA_BB1C_S < handle
                     obj.GPS.channels(k) = GPS.L1CA.channel(obj.GPS.svList(k), channel_config);
                 end
                 obj.GPS.channels = obj.GPS.channels'; %转成列向量
+                obj.GPS.iono = NaN(1,8); %GPS电离层参数
             end
             %----设置BDS模块
             if obj.BDSflag==1
-                obj.BDS.week = conf.BDS.week;
-                obj.BDS.ta = conf.BDS.ta;
                 obj.BDS.almanac = conf.BDS.almanac;
                 obj.BDS.eleMask = conf.BDS.eleMask;
                 obj.BDS.svList = conf.BDS.svList;
                 % 使用历书计算所有卫星的方位角高度角
                 if ~isempty(obj.BDS.almanac)
                     index = find(obj.BDS.almanac(:,2)==0); %获取健康卫星的行号
-                    rs = rs_almanac(obj.BDS.almanac(index,6:end), obj.BDS.ta(1)); %卫星ecef位置
+                    rs = rs_almanac(obj.BDS.almanac(index,6:end), obj.ta(1)-14); %卫星ecef位置
                     [azi, ele] = aziele_xyz(rs, conf.p0);
                     obj.BDS.aziele = zeros(length(index),3); %[PRN,azi,ele]
                     obj.BDS.aziele(:,1) = obj.BDS.almanac(index,1);
@@ -130,6 +128,7 @@ classdef GL1CA_BB1C_S < handle
                     obj.BDS.channels(k) = BDS.B1C.channel(obj.BDS.svList(k), channel_config);
                 end
                 obj.BDS.channels = obj.BDS.channels'; %转成列向量
+                obj.BDS.iono = NaN(1,9); %BDS电离层参数
             end
             %----设置接收机状态
             obj.state = 0;
@@ -144,6 +143,13 @@ classdef GL1CA_BB1C_S < handle
             %----申请数据存储空间
             obj.ns = 0;
             row = floor(obj.Tms/obj.dtpos); %存储空间行数
+            obj.storage.ta        = zeros(row,1,'double');
+            obj.storage.df        = zeros(row,1,'single');
+            obj.storage.satnav    = zeros(row,8,'double');
+            obj.storage.satnavGPS = zeros(row,8,'double');
+            obj.storage.satnavBDS = zeros(row,8,'double');
+            obj.storage.pos       = zeros(row,3,'double');
+            obj.storage.vel       = zeros(row,3,'single');
         end
     end
     
@@ -153,18 +159,24 @@ classdef GL1CA_BB1C_S < handle
         print_all_log(obj)            %打印所有通道日志
         plot_all_trackResult(obj)     %显示所有通道跟踪结果
         interact_constellation(obj)   %画交互星座图
+        
+        plot_df(obj)
+        plot_pos(obj)
+        plot_vel(obj)
+        kml_output(obj)
     end
     
     methods (Access = private)
-        acqProcessGPS(obj)         %GPS捕获过程
-        trackProcessGPS(obj)       %GPS跟踪过程
-        acqProcessBDS(obj)         %BDS捕获过程
-        trackProcessBDS(obj)       %BDS跟踪过程
-        satmeas = get_satmeas(obj) %获取卫星测量
-        pos_init(obj)              %初始化定位
-        pos_normal(obj)            %正常定位
-%         pos_tight(obj)             %紧组合定位
-%         pos_deep(obj)              %深组合定位
+        acqProcessGPS(obj)             %GPS捕获过程
+        trackProcessGPS(obj)           %GPS跟踪过程
+        acqProcessBDS(obj)             %BDS捕获过程
+        trackProcessBDS(obj)           %BDS跟踪过程
+        satmeas = get_satmeas_GPS(obj) %获取GPS卫星测量
+        satmeas = get_satmeas_BDS(obj) %获取BDS卫星测量
+        pos_init(obj)                  %初始化定位
+        pos_normal(obj)                %正常定位
+%         pos_tight(obj)                 %紧组合定位
+%         pos_deep(obj)                  %深组合定位
     end
     
 end %end classdef

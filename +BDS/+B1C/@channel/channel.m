@@ -55,6 +55,7 @@ classdef channel < handle
         frameBuff       %帧缓存
         frameBuffPtr    %帧缓存指针
         ephe            %星历
+        iono            %电离层校正参数
         
         log             %日志
         ns              %指向当前存储行,初值是0,刚开始运行track时加1
@@ -86,6 +87,7 @@ classdef channel < handle
             obj.CODE = fft(code);
             %---申请星历空间
             obj.ephe = NaN(1,30);
+            obj.iono = NaN(1,9);
             %----申请数据存储空间
             obj.ns = 0;
             row = obj.Tms; %存储空间行数

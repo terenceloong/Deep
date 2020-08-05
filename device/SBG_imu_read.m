@@ -33,11 +33,11 @@ for k=1:n
 end
 
 % 转化成GPS时间
-t0 = UTC2GPS(data(1,1:6), 0); %第一个数的GPS时间，周和秒
+t0 = UTC2GPS(data(1,1:6), 0); %第一个数的GPS时间,周和秒
 imu_data = [t0(2)+(0:n-1)'*0.01, data(:,7:12)];
 
 % 检验是否丢数
-t1 = UTC2GPS(data(end,1:6), 0); %最后一个数的GPS时间，周和秒
+t1 = UTC2GPS(data(end,1:6), 0); %最后一个数的GPS时间,周和秒
 if imu_data(end,1)~=t1(2)
     error('Data lost!')
 end

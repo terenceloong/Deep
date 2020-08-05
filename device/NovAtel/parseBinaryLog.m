@@ -162,8 +162,14 @@ while 1
             TIME(i101,11) = typecast(frame(hl+(41:44)),'uint32'); %UTC status
             i101 = i101 + 1;
         case 140 %RANGECMP,P593
-            svN = typecast(frame(hl+(1:4)),'uint32'); %number of SVs
+            svN = double(typecast(frame(hl+(1:4)),'uint32')); %number of SVs
             RANGECMP{i140,1} = svN;
+%             RANGECMP{i140,2} = zeros(svN,10);
+%             for m=1:svN
+%                 record = frame(hl+4+24*(m-1)+(1:24)); %一个记录(uint8)
+%                 recordBit = reshape(dec2bin(record,8)',1,[]); %将其转为01字符转
+%                 RANGECMP{i140,2}(m,1) = twosComp2dec(recordBit(33:60))/256;
+%             end
             i140 = i140 + 1;
         case 243 %PSRXYZ,P572
             PSRXYZ(i243,1)  = typecast(frame(hl+(1:4)),'uint32');     %P_solState
