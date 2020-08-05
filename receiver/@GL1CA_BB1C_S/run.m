@@ -29,7 +29,7 @@ end
 % 北斗信号捕获跟踪
 if obj.BDSflag==1
     % 捕获
-    if obj.tms==obj.blockNum %最开始搜索一次
+    if obj.tms==obj.blockNum %|| mod(obj.tms,10000)==0 %10s搜索一次
         obj.acqProcessBDS;
     end
     % 跟踪

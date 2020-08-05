@@ -1,7 +1,6 @@
 function [azi, ele] = cal_aziele(obj)
 % 计算有卫星测量的卫星方位角高度角
 % azi,ele:每列一颗卫星
-% obj:接收机对象
 
 if isempty(obj.result.satmeasIndex) %如果没有数据,直接返回
     return

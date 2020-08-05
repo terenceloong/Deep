@@ -1,6 +1,5 @@
 function plot_sv_3d(obj)
 % 在三维直角坐标画跟踪到的卫星
-% obj:接收机对象
 
 % 提取方位角高度角
 index = obj.result.trackedIndex; %跟踪到的卫星通道索引

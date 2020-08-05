@@ -1,6 +1,5 @@
 function plot_bias_gyro(obj)
 % 画陀螺仪零偏输出
-% obj:接收机对象
 
 figure('Name','陀螺零偏')
 switch obj.state

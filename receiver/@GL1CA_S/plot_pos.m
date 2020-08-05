@@ -1,6 +1,5 @@
 function plot_pos(obj)
 % 画位置输出
-% obj:接收机对象
 
 figure('Name','位置')
 switch obj.state

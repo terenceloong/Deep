@@ -6,19 +6,19 @@ clc
 fclose('all'); %关闭之前打开的所有文件
 
 %% 选择GNSS数据文件
-% valid_prefix = 'B210-'; %文件名有效前缀
-% [file, path] = uigetfile('*.dat', '选择GNSS数据文件'); %文件选择对话框
-% if ~ischar(file) || ~contains(valid_prefix, strtok(file,'_'))
-%     error('File error!')
-% end
-% data_file = [path, file]; %数据文件完整路径,path最后带\
+valid_prefix = 'B210-'; %文件名有效前缀
+[file, path] = uigetfile('*.dat', '选择GNSS数据文件'); %文件选择对话框
+if ~ischar(file) || ~contains(valid_prefix, strtok(file,'_'))
+    error('File error!')
+end
+data_file = [path, file]; %数据文件完整路径,path最后带\
 
 % data_file = 'C:\Users\longt\Desktop\B210_20190823_194010_ch1.dat'; %指定文件,用于测试
-data_file = 'C:\Users\longt\Desktop\GNSS data\B210_20200727_111615_ch1.dat';
+% data_file = 'C:\Users\longt\Desktop\GNSS data\B210_20200727_111615_ch1.dat';
 
 %% 主机参数
 % 根据实际情况修改.
-msToProcess = 50*1000; %处理总时间
+msToProcess = 60*1000; %处理总时间
 sampleOffset = 0*4e6; %抛弃前多少个采样点
 sampleFreq = 4e6; %接收机采样频率
 blockSize = sampleFreq*0.001; %一个缓存块(1ms)的采样点数
@@ -66,7 +66,7 @@ receiver_conf.GPS.acqFreqMax = 5e3; %最大搜索频率,Hz
 %-------------------------------------------------------------------------%
 receiver_conf.BDS.almanac = almanac_BDS; %历书
 receiver_conf.BDS.eleMask = 10; %高度角阈值
-receiver_conf.BDS.svList = [19,20,29,35,38,40,44]; %跟踪卫星列表,[19,20,29,35,38,40,44]
+receiver_conf.BDS.svList = []; %跟踪卫星列表,[19,20,29,35,38,40,44]
 receiver_conf.BDS.acqThreshold = 1.4; %捕获阈值,最高峰与第二大峰的比值
 receiver_conf.BDS.acqFreqMax = 5e3; %最大搜索频率,Hz
 %-------------------------------------------------------------------------%
@@ -106,3 +106,6 @@ clearvars -except data_file receiver_conf nCoV tf p0
 
 %% 画交互星座图
 nCoV.interact_constellation;
+
+%% 保存结果
+save('~temp\result.mat')

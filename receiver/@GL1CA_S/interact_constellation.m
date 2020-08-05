@@ -22,16 +22,18 @@ c = uicontextmenu; %创建目录
 f.UIContextMenu = c; %目录加到figure上,在figure空白处右键弹出
 
 % 创建figure目录项(*)
-uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Print log');
-uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Plot trackResult');
-uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Plot 3D');
-uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Cal aziele', 'Separator','on');
-uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Cal iono');
-uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Plot pos', 'Separator','on');
-uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Plot vel');
-uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Plot att');
-uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Plot bias_gyro');
-uimenu(c, 'MenuSelectedFcn',@figureCallback, 'Text','Plot bias_acc');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'print_all_log'}, 'Text','Print log');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_all_trackResult'}, 'Text','Plot trackResult');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_sv_3d'}, 'Text','Plot 3D');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'cal_aziele'}, 'Text','Cal aziele', 'Separator','on');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'cal_iono'}, 'Text','Cal iono');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_df'}, 'Text','Plot df', 'Separator','on');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_pos'}, 'Text','Plot pos', 'Separator','on');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_vel'}, 'Text','Plot vel');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_att'}, 'Text','Plot att');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_bias_gyro'}, 'Text','Plot bias_gyro');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_bias_acc'}, 'Text','Plot bias_acc');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'kml_output'}, 'Text','KML output', 'Separator','on');
 
 % 创建极坐标轴
 ax = polaraxes; %创建极坐标轴
@@ -67,72 +69,30 @@ for k=1:length(PRN) %处理所有高度角大于0的卫星
                                             'VerticalAlignment','middle');
     c = uicontextmenu; %创建目录
     t.UIContextMenu = c; %目录加到text上,因为文字覆盖了圆圈
-    ch = find(obj.svList==PRN(k)); %该颗卫星的通道号
+    objch = obj.channels(obj.svList==PRN(k)); %通道对象
     % 创建目录项(*)
-    uimenu(c, 'MenuSelectedFcn',@scatterCallback, 'UserData',ch, 'Text','trackResult');
-    uimenu(c, 'MenuSelectedFcn',@scatterCallback, 'UserData',ch, 'Text','I_Q');
-    uimenu(c, 'MenuSelectedFcn',@scatterCallback, 'UserData',ch, 'Text','I_P');
-    uimenu(c, 'MenuSelectedFcn',@scatterCallback, 'UserData',ch, 'Text','I_P(flag)');
-    uimenu(c, 'MenuSelectedFcn',@scatterCallback, 'UserData',ch, 'Text','codeFreq');
-    uimenu(c, 'MenuSelectedFcn',@scatterCallback, 'UserData',ch, 'Text','carrFreq');
-    uimenu(c, 'MenuSelectedFcn',@scatterCallback, 'UserData',ch, 'Text','carrNco');
-    uimenu(c, 'MenuSelectedFcn',@scatterCallback, 'UserData',ch, 'Text','carrAcc');
-    uimenu(c, 'MenuSelectedFcn',@scatterCallback, 'UserData',ch, 'Text','quality');
+    uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_trackResult'}, 'Text','trackResult');
+    uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_I_Q'}, 'Text','I_Q', 'Separator','on');
+    uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_I_P'}, 'Text','I_P');
+    uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_I_P_flag'}, 'Text','I_P(flag)');
+    uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_codeFreq'}, 'Text','codeFreq', 'Separator','on');
+    uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_carrFreq'}, 'Text','carrFreq', 'Separator','on');
+    uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_carrNco'}, 'Text','carrNco');
+    uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_carrAcc'}, 'Text','carrAcc');
+    uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_codeDisc'}, 'Text','codeDisc', 'Separator','on');
+    uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_carrDisc'}, 'Text','carrDisc');
+    uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_freqDisc'}, 'Text','freqDisc');
+    uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_quality'}, 'Text','quality', 'Separator','on');
 end
-            
-    %% 在figure上右键的回调函数
-    function figureCallback(source, ~)
-        switch source.Text
-            case 'Print log'
-                obj.print_all_log;
-            case 'Plot trackResult'
-                obj.plot_all_trackResult;
-            case 'Plot 3D'
-                plot_sv_3d(obj);
-            case 'Cal aziele'
-                cal_aziele(obj);
-            case 'Cal iono'
-                cal_iono(obj);
-            case 'Plot pos'
-                plot_pos(obj);
-            case 'Plot vel'
-                plot_vel(obj);
-            case 'Plot att'
-                plot_att(obj);
-            case 'Plot bias_gyro'
-                plot_bias_gyro(obj);
-            case 'Plot bias_acc'
-                plot_bias_acc(obj);
-        end
-    end
-            
-    %% 在卫星上右键的回调函数
-    function scatterCallback(source, ~)
-        % 必须要有两个输入参数(source, callbackdata),名字不重要
-        % 第一个返回matlab.ui.container.Menu对象
-        % 第二个返回ui.eventdata.ActionData
-        % source.UserData为通道号
-        channel = obj.channels(source.UserData);
-        switch source.Text
-            case 'trackResult'
-                plot_trackResult(channel)
-            case 'I_Q'
-                plot_I_Q(channel)
-            case 'I_P'
-                plot_I_P(channel)
-            case 'I_P(flag)'
-                plot_I_P_flag(channel)
-            case 'codeFreq'
-                plot_codeFreq(channel)
-            case 'carrFreq'
-                plot_carrFreq(channel)
-            case 'carrNco'
-                plot_carrNco(channel)
-            case 'carrAcc'
-                plot_carrAcc(channel)
-            case 'quality'
-                plot_quality(channel)
-        end
+
+    %% 右键菜单的回调函数
+    function menuCallback(varargin)
+        % 使用可变输入参数,头两个参数是固定的
+        % 第一个参数为matlab.ui.container.Menu对象
+        % 第二个参数为ui.eventdata.ActionData
+        % 第三个参数为类对象
+        % 第四个参数为需要调用的类成员函数字符串(不带参数)
+        eval(['varargin{3}.',varargin{4},';'])
     end
 
 end

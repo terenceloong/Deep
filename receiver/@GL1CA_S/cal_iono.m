@@ -1,6 +1,5 @@
 function cal_iono(obj)
 % 计算所有卫星的电离层校正值(只画图)
-% obj:接收机对象
 
 % 如果没有电离层参数或者没有数据,直接返回
 if isnan(obj.iono(1)) || isempty(obj.result.satmeasIndex)
@@ -8,7 +7,7 @@ if isnan(obj.iono(1)) || isempty(obj.result.satmeasIndex)
 end
 
 % 计算有卫星测量的卫星方位角高度角
-[azi, ele] = cal_aziele(obj); %每列一颗卫星
+[azi, ele] = obj.cal_aziele; %每列一颗卫星
 
 % 计算电离层校正值
 [n, svN] = size(azi); %n:数据点数,svN:卫星数

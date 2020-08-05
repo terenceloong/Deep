@@ -1,6 +1,5 @@
 function plot_bias_acc(obj)
 % 画加速度计零偏输出
-% obj:接收机对象
 
 figure('Name','加计零偏')
 switch obj.state

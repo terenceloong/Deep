@@ -1,6 +1,5 @@
 function plot_att(obj)
 % 画姿态输出
-% obj:接收机对象
 
 figure('Name','姿态')
 switch obj.state

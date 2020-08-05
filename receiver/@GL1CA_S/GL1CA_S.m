@@ -133,6 +133,17 @@ classdef GL1CA_S < handle
         get_result(obj)               %获取接收机运行结果
         imu_input(obj, tp, imu)       %IMU数据输入
         channel_deep(obj)             %通道切换深组合跟踪环路
+        
+        plot_sv_3d(obj)
+        [azi, ele] = cal_aziele(obj)
+        cal_iono(obj)
+        plot_df(obj)
+        plot_pos(obj)
+        plot_vel(obj)
+        plot_att(obj)
+        plot_bias_gyro(obj)
+        plot_bias_acc(obj)
+        kml_output(obj)
     end
     
     methods (Access = private)

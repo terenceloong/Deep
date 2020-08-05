@@ -11,7 +11,9 @@ if obj.BDSflag==1
                  'Color',[255,65,65]/255, 'Width',2);
 end
 
-kmlwriteline('~temp\trajMulti.kml', obj.storage.satnav(:,1),obj.storage.satnav(:,2), ...
-             'Color','g', 'Width',2);
+if obj.GPSflag==1 && obj.BDSflag==1
+    kmlwriteline('~temp\trajMulti.kml', obj.storage.satnav(:,1),obj.storage.satnav(:,2), ...
+                 'Color','g', 'Width',2);
+end
 
 end

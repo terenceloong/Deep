@@ -149,7 +149,7 @@ if obj.BDSflag==1
         uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_codeDisc'}, 'Text','codeDisc', 'Separator','on');
         uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_carrDisc'}, 'Text','carrDisc');
         uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_freqDisc'}, 'Text','freqDisc');
-%         uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_quality'}, 'Text','quality');
+%         uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_quality'}, 'Text','quality', 'Separator','on');
     end
 end
 
@@ -160,7 +160,7 @@ end
         % 第二个参数为ui.eventdata.ActionData
         % 第三个参数为类对象
         % 第四个参数为需要调用的类成员函数字符串(不带参数)
-        eval(['varargin{3}.',varargin{4}])
+        eval(['varargin{3}.',varargin{4},';'])
     end
 
 end

@@ -1,6 +1,5 @@
 function plot_vel(obj)
 % 画速度输出
-% obj:接收机对象
 
 figure('Name','速度')
 switch obj.state
