@@ -24,14 +24,14 @@ for k=1:chN
         R_rhodot(k) = 0.04^2;
     end
 end
+sv = [satmeas, quality, R_rho, R_rhodot]; %带信号质量评价的卫星测量信息
+sv(:,7) = sv(:,7) - codeDisc; %用码鉴相器输出修正伪距,本地码超前,伪距偏短,码鉴相器为负,修正是减
 
 % 卫星导航解算
-sv = satmeas(quality>=1,:); %选星
-satnav = satnavSolve(sv, obj.rp);
+sv1 = sv(sv(:,9)>=1,1:8); %选信号质量不为0的卫星
+satnav = satnavSolve(sv1, obj.rp);
 
 % 导航滤波
-sv = [satmeas, quality, R_rho, R_rhodot];
-sv(:,7) = sv(:,7) - codeDisc; %本地码超前,伪距偏短,码鉴相器为负,修正是减
 obj.navFilter.run(obj.imu, sv);
 
 % 使用滤波结果计算的理论相对距离和相对速度
@@ -46,35 +46,35 @@ fn = (fb*Cnb + [0,0,1]) * obj.navFilter.g; %m/s^2
 fe = fn*Cen;
 acclos0 = rspu*fe';
 
-% 通道修正
-% 伪距短,码相位超前; 伪距率小,载波频率快
-switch obj.deepMode
-    case 1
-        for k=1:chN
-            channel = obj.channels(k);
-            if channel.state==3
-                channel.markCurrStorage;
-                %----码相位修正
-                dcodePhase = (rho0(k)-satmeas(k,7))/Lco; %码相位修正量
-                channel.remCodePhase = channel.remCodePhase - dcodePhase;
-            end
+% 通道修正 (伪距短,码相位超前; 伪距率小,载波频率快)
+if obj.deepMode==1 %只修码相位
+    for k=1:chN
+        channel = obj.channels(k);
+        if channel.state==3
+            channel.markCurrStorage;
+            %----码相位修正
+            dcodePhase = (rho0(k)-satmeas(k,7))/Lco; %码相位修正量
+            channel.remCodePhase = channel.remCodePhase - dcodePhase;
+            %----接收机运动引起的载波频率变化率
+            channel.carrAccR = -acclos0(k)/Lca;
         end
-    case 2
-        for k=1:chN
-            channel = obj.channels(k);
-            if channel.state==3
-                channel.markCurrStorage;
-                %----码相位修正
-                dcodePhase = (rho0(k)-satmeas(k,7))/Lco; %码相位修正量
-                channel.remCodePhase = channel.remCodePhase - dcodePhase;
-                %----载波驱动频率修正
-                dcarrFreq = (rhodot0(k)-satmeas(k,8))/Lca; %相对估计频率的修正量
-                dcarrFreq = dcarrFreq + (channel.carrNco-channel.carrFreq); %相对驱动频率的修正量
-                channel.carrNco = channel.carrNco - dcarrFreq;
-                %----接收机运动引起的载波频率变化率
-                channel.carrAccR = -acclos0(k)/Lca;
-            end
+    end
+elseif obj.deepMode==2 %修码相位和载波驱动频率
+    for k=1:chN
+        channel = obj.channels(k);
+        if channel.state==3
+            channel.markCurrStorage;
+            %----码相位修正
+            dcodePhase = (rho0(k)-satmeas(k,7))/Lco; %码相位修正量
+            channel.remCodePhase = channel.remCodePhase - dcodePhase;
+            %----载波驱动频率修正
+            dcarrFreq = (rhodot0(k)-satmeas(k,8))/Lca; %相对估计频率的修正量
+            dcarrFreq = dcarrFreq + (channel.carrNco-channel.carrFreq); %相对驱动频率的修正量
+            channel.carrNco = channel.carrNco - dcarrFreq;
+            %----接收机运动引起的载波频率变化率
+            channel.carrAccR = -acclos0(k)/Lca;
         end
+    end
 end
 
 % 新跟踪的通道切换深组合跟踪环路

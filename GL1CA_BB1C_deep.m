@@ -1,9 +1,16 @@
-%% GPS L1 C/A & BDS B1C单天线接收机例程
+%% GPS L1 C/A & BDS B1C单天线深组合
 
 %%
 clear
 clc
 fclose('all'); %关闭之前打开的所有文件
+
+%% 选择IMU数据文件
+imu = SBG_imu_read(0);
+imu(:,5:7) = imu(:,5:7) / 9.806370601248435;
+gyro0 = mean(imu(1:200,2:4)); %计算初始陀螺零偏
+% psi0 = input('psi0 = '); %输入初始航向角,deg
+psi0 = 180;
 
 %% 选择GNSS数据文件
 valid_prefix = 'B210-'; %文件名有效前缀
@@ -18,7 +25,7 @@ data_file = [path, file]; %数据文件完整路径,path最后带\
 
 %% 主机参数
 % 根据实际情况修改.
-msToProcess = 60*1000; %处理总时间
+msToProcess = 300*1000; %处理总时间
 sampleOffset = 0*4e6; %抛弃前多少个采样点
 sampleFreq = 4e6; %接收机采样频率
 blockSize = sampleFreq*0.001; %一个缓存块(1ms)的采样点数
@@ -73,6 +80,26 @@ receiver_conf.BDS.acqFreqMax = 5e3; %最大搜索频率,Hz
 receiver_conf.p0 = p0; %初始位置,纬经高
 receiver_conf.dtpos = 10; %定位时间间隔,ms
 
+%% 导航滤波器参数
+para.dt = 0.01; %s,根据IMU采样周期设置
+para.gyro0 = gyro0; %deg/s
+para.p0 = [0,0,0];
+para.v0 = [0,0,0];
+para.a0 = [psi0,0,0]; %deg
+para.P0_att = 1; %deg
+para.P0_vel = 1; %m/s
+para.P0_pos = 5; %m
+para.P0_dtr = 2e-8; %s
+para.P0_dtv = 3e-9; %s/s
+para.P0_gyro = 0.2; %deg/s
+para.P0_acc = 2e-3; %g
+para.Q_gyro = 0.2; %deg/s
+para.Q_acc = 2e-3; %g
+para.Q_dtv = 0.01e-9; %1/s
+para.Q_dg = 0.02; %deg/s/s
+para.Q_da = 0.2e-3; %g/s
+para.sigma_gyro = 0.15; %deg/s
+
 %% 创建接收机对象
 nCoV = GL1CA_BB1C_S(receiver_conf);
 
@@ -97,6 +124,24 @@ for t=1:msToProcess
     end
     data = fread(fileID, [2,blockSize], 'int16'); %从文件读数据
     nCoV.run(data); %接收机处理数据
+    %---------------------------------------------------------------------%
+    if nCoV.state==3 %深组合时,进行一次定位后为其设置下次定位时间和IMU数据
+        if isnan(nCoV.tp(1)) %定位后tp会变成NaN
+            ki = ki+1; %IMU索引加1
+            nCoV.imu_input(imu(ki,1), imu(ki,2:7)); %输入IMU数据
+        end
+    elseif nCoV.state==1 %当接收机初始化完成后进入深组合
+        ki = find(imu(:,1)>nCoV.ta*[1;1e-3;1e-6], 1); %IMU索引
+        if isempty(ki) || (imu(ki,1)-nCoV.ta(1))>1
+            error('Data mismatch!')
+        end
+        nCoV.imu_input(imu(ki,1), imu(ki,2:7)); %输入IMU数据
+        para.p0 = nCoV.pos;
+        nCoV.navFilter = filter_single(para); %初始化导航滤波器
+        nCoV.deepMode = 2; %设置深组合模式
+        nCoV.channel_deep; %通道切换深组合跟踪环路
+        nCoV.state = 3; %接收机进入深组合
+    end
 end
 nCoV.clean_storage;
 toc
@@ -109,7 +154,7 @@ close(f);
 nCoV.save_ephemeris(ephemeris_file);
 
 %% 清除变量
-clearvars -except data_file receiver_conf nCoV tf p0
+clearvars -except data_file receiver_conf nCoV tf p0 imu
 
 %% 画交互星座图
 nCoV.interact_constellation;

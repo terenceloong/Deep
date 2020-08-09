@@ -1,5 +1,6 @@
 classdef channel < handle
 % 北斗B1C信号跟踪通道
+% state:通道状态, 0-未激活, 1-已激活但没有星历, 2-可以进行伪距伪距率测量, 3-深组合
 
     properties
         Tms             %总运行时间,ms,用来确定画图的横坐标
@@ -60,6 +61,10 @@ classdef channel < handle
         log             %日志
         ns              %指向当前存储行,初值是0,刚开始运行track时加1
         storage         %存储跟踪结果
+        
+        quality         %信号质量
+        SQI             %信号质量指示器
+        ns0             %指向上次定位的存储行,深组合时用来获取定位间隔内的鉴相器输出
     end
     
     methods
@@ -90,6 +95,7 @@ classdef channel < handle
             obj.iono = NaN(1,9);
             %----申请数据存储空间
             obj.ns = 0;
+            obj.ns0 = 0;
             row = obj.Tms; %存储空间行数
             obj.storage.dataIndex    =   NaN(row,1,'double'); %使用预设NaN存数据,方便通道断开时数据显示有中断
             obj.storage.remCodePhase =   NaN(row,1,'single');
@@ -113,6 +119,11 @@ classdef channel < handle
         clean_storage(obj)                         %清理数据存储
         print_log(obj)                             %打印通道日志
         
+        % 深组合
+        markCurrStorage(obj)                       %标记当前存储行
+        [codeDisc, carrDisc] = getDiscOutput(obj)  %获取定位间隔内鉴相器输出
+        
+        % 通道画图
         plot_trackResult(obj)
         plot_I_Q(obj)
         plot_I_P(obj)
@@ -124,7 +135,7 @@ classdef channel < handle
         plot_codeDisc(obj)
         plot_carrDisc(obj)
         plot_freqDisc(obj)
-%         plot_quality(obj)
+        plot_quality(obj)
     end
     
 end %end classdef

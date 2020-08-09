@@ -147,3 +147,6 @@ G(GPS),R(GLONASS),E(Galileo),C(BDS),J(QZSS),I(IRNSS),参见RINEX 3.03
 
 <===Version 2.3===>2020.8.6
 1.将GPS接收机的交互星座图改为新方法
+
+<===Version 2.4===>2020.8.8
+1.添加GPS+BDS深组合

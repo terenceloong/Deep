@@ -24,7 +24,7 @@ obj.pointInt = 20;
 
 % 确定数据缓存数据段
 obj.trackDataTail = obj.sampleFreq*0.001 - acqResult(1) + 2;
-obj.trackBlockSize = obj.sampleFreq*0.001; %0.001表示1ms积分时间
+obj.trackBlockSize = obj.sampleFreq*0.001; %初始是1ms积分时间
 obj.trackDataHead = obj.trackDataTail + obj.trackBlockSize - 1;
 obj.dataIndex = obj.trackDataTail + n;
 
@@ -72,6 +72,7 @@ obj.codeMode = 1;
 % 初始信号质量
 obj.quality = 0;
 obj.SQI = sigqual_indicator(20, 20, 200);
+% 一个比特最多20次积分,初始1ms积分时间时一个比特20个点,200ms平均窗口
 
 % 初始化伪码时间
 obj.tc0 = NaN;

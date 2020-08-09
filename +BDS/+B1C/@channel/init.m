@@ -62,8 +62,12 @@ obj.PLL2 = [K1, K2];
 obj.DLL2 = [K1, K2];
 
 % 初始化跟踪模式
-obj.carrMode = 1;
+obj.carrMode = 2; %直接进锁相环
 obj.codeMode = 1;
+
+% 初始信号质量
+obj.quality = 0;
+obj.SQI = sigqual_indicator(10, 10, 200);
 
 % 初始化伪码时间
 obj.tc0 = NaN;

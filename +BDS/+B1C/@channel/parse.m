@@ -21,6 +21,9 @@ switch obj.msgStage %I,B,W,F,H,E
         if obj.msgCnt==1 %记录比特开始标志
             obj.storage.bitFlag(obj.ns) = obj.msgStage;
         end
+        obj.SQI.run(obj.I, obj.Q); %评估信号质量
+        obj.quality = obj.SQI.quality;
+        obj.storage.quality(obj.ns) = obj.quality;
         %------------------------------------------
         switch obj.msgStage
             case 'F' %帧同步

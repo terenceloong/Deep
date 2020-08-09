@@ -1,16 +1,16 @@
 function pos_normal(obj)
 % 正常定位
 
-% 获取卫星测量信息&单独卫星导航解算
+% 获取卫星测量信息 & 单独卫星导航解算
 if obj.GPSflag==1
     satmeasGPS = obj.get_satmeasGPS;
-    svGPS = satmeasGPS(~isnan(satmeasGPS(:,1)),:); %选星
-    satnavGPS = satnavSolve(svGPS, obj.rp);
+    sv = satmeasGPS(~isnan(satmeasGPS(:,1)),:); %选星
+    satnavGPS = satnavSolve(sv, obj.rp);
 end
 if obj.BDSflag==1
     satmeasBDS = obj.get_satmeasBDS;
-    svBDS = satmeasBDS(~isnan(satmeasBDS(:,1)),:); %选星
-    satnavBDS = satnavSolve(svBDS, obj.rp);
+    sv = satmeasBDS(~isnan(satmeasBDS(:,1)),:); %选星
+    satnavBDS = satnavSolve(sv, obj.rp);
 end
 
 % 卫星导航解算

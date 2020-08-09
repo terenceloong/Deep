@@ -1,0 +1,45 @@
+msgType:消息类型,P23
+    0-二进制消息
+
+portAddr:端口地址,P24
+    33-COM1_1
+
+timeStatus:接收机时间状态,P32
+    180-时钟良好,被控制
+
+recStatus:接收机状态,P646
+    0-无错误
+
+solState:解算状态,P395
+    0-解算完成
+
+posType/velType:定位/测速类型,P396
+    8-使用瞬时多普勒计算速度
+    16-单点定位
+    50-窄巷整周模糊度解算
+
+undulation:平均海平面比参考椭球面高多少,P323
+
+datumID:基准,P116
+    61-WGS84参考椭球
+
+trackSVs:跟踪的卫星数,P394
+solSVs:用于解算的卫星数
+solL1SVs:用于解算的L1/E1/B1卫星数
+solMultiSVs:用于解算的多频卫星数
+
+extSolState:拓展解算状态,P398
+    1-RTK解算
+    6-多频计算
+
+Gal&BeiDouMask:伽利略&北斗卫星使用情况,P398
+    48-北斗B1 B2使用(00110000)
+
+Gps&GloMask:GPS和GLONASS卫星使用情况,P398
+    51-GPS L1 L2使用,GLONASS L1 L2使用(00110011)
+
+solSource:解算源,P488
+    0-主天线
+
+UTCstatus:UTC状态,P716
+    1-有效

@@ -1,5 +1,7 @@
 classdef GL1CA_BB1C_S < handle
 % GPS L1 C/A & BDS B1C 单天线接收机
+% state:接收机状态, 0-初始化, 1-正常, 2-紧组合, 3-深组合
+% deepMode:深组合模式, 1-码环矢量跟踪, 2-码环载波环都矢量跟踪
 
     properties
         Tms            %接收机总运行时间,ms
@@ -31,6 +33,10 @@ classdef GL1CA_BB1C_S < handle
         tp             %下次定位的时间,[s,ms,us]
         ns             %指向当前存储行,初值是0,存储之前加1
         storage        %存储接收机输出
+        % 深组合相关变量在深组合初始化时才赋值
+        imu            %IMU数据
+        navFilter      %导航滤波器
+        deepMode       %深组合模式
     end
     
     methods
@@ -150,19 +156,32 @@ classdef GL1CA_BB1C_S < handle
             obj.storage.satnavBDS = zeros(row,8,'double');
             obj.storage.pos       = zeros(row,3,'double');
             obj.storage.vel       = zeros(row,3,'single');
+            obj.storage.att     =   NaN(row,3,'single');
+            obj.storage.imu     =   NaN(row,6,'single');
+            obj.storage.bias    =   NaN(row,6,'single');
+            obj.storage.P       =   NaN(row,17,'single');
         end
     end
     
     methods (Access = public)
         run(obj, data)                %运行函数
         clean_storage(obj)            %清理数据存储
+        set_ephemeris(obj, filename)  %预设星历
+        save_ephemeris(obj, filename) %保存星历
         print_all_log(obj)            %打印所有通道日志
         plot_all_trackResult(obj)     %显示所有通道跟踪结果
         interact_constellation(obj)   %画交互星座图
+%         get_result(obj)               %获取接收机运行结果
+        imu_input(obj, tp, imu)       %IMU数据输入
+        channel_deep(obj)             %通道切换深组合跟踪环路
         
+%         plot_sv_3d(obj)
         plot_df(obj)
         plot_pos(obj)
         plot_vel(obj)
+        plot_att(obj)
+        plot_bias_gyro(obj)
+        plot_bias_acc(obj)
         kml_output(obj)
     end
     
@@ -176,7 +195,7 @@ classdef GL1CA_BB1C_S < handle
         pos_init(obj)                  %初始化定位
         pos_normal(obj)                %正常定位
 %         pos_tight(obj)                 %紧组合定位
-%         pos_deep(obj)                  %深组合定位
+        pos_deep(obj)                  %深组合定位
     end
     
 end %end classdef

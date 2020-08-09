@@ -45,8 +45,8 @@ if (obj.ta-obj.tp)*[1;1e-3;1e-6]>=0 %定位时间到了
             obj.pos_normal;
 %         case 2 %紧组合
 %             obj.pos_tight;
-%         case 3 %深组合
-%             obj.pos_deep;
+        case 3 %深组合
+            obj.pos_deep;
     end
 end
 

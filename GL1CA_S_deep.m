@@ -28,7 +28,7 @@ data_file = [path, file]; %数据文件完整路径,path最后带\
 
 %% 主机参数
 % 根据实际情况修改.
-msToProcess = 300*1000; %处理总时间
+msToProcess = 60*1000; %处理总时间
 sampleOffset = 0*4e6; %抛弃前多少个采样点
 sampleFreq = 4e6; %接收机采样频率
 blockSize = sampleFreq*0.001; %一个缓存块(1ms)的采样点数
@@ -80,12 +80,13 @@ para.P0_acc = 2e-3; %g
 para.Q_dtv = 0.01e-9; %1/s
 % para.Q_dg = 0.01; %deg/s/s
 % para.Q_da = 0.1e-3; %g/s
-para.sigma_gyro = 0.15; %deg/s
+% para.sigma_gyro = 0.15; %deg/s
 
 para.Q_gyro = 0.2; %deg/s
 para.Q_acc = 2e-3; %g
 para.Q_dg = 0.02; %deg/s/s
 para.Q_da = 0.2e-3; %g/s
+para.sigma_gyro = 0.15; %deg/s
 
 %% 创建接收机对象
 nCoV = GL1CA_S(receiver_conf);

@@ -61,6 +61,7 @@ classdef filter_single < handle
                           para.Q_dg   *[1,1,1]*d2r, ...
                           para.Q_da   *[1,1,1]*9.8, ...
                          ])^2 * obj.T^2; %para的Q都是标准差
+%             obj.Q(6,6) = obj.Q(6,6) * 100; %可以让地向速度估计有噪声,地向速度估计的偏置是高度变化引起的
             obj.Rwb = (para.sigma_gyro*d2r)^2;
         end
         

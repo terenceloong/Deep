@@ -84,14 +84,19 @@ obj.Q = Q_P;
 
 % 载波跟踪
 switch obj.carrMode
-    case 1 %锁相环
+%     case 1 %频率牵引
+    case 2 %锁相环
         order2PLL(carrError);
+    case 3 %深组合锁相环
+        deepPLL(carrError);
 end
 
 % 码跟踪
 switch obj.codeMode
     case 1 %延迟锁定环
         order2DLL(codeError);
+    case 2 %码开环
+        openDLL(deltaFreq);
 end
 
 % 更新目标码相位,导频子码相位,伪码周期时间
@@ -127,12 +132,35 @@ obj.storage.disc(n,:) = [codeError/2, carrError, freqError]; %码相位误差除以2,换
         obj.carrFreq = obj.carrFreq + obj.PLL2(2)*carrError + carrAcc*obj.timeIntS;
         obj.carrNco = obj.carrFreq + obj.PLL2(1)*carrError;
     end
+
+    %% 深组合锁相环
+    function deepPLL(carrError)
+        % PLL2 = [K1, K2]
+        dt = obj.timeIntS; %时间间隔
+        fi = (obj.carrAccS+obj.carrAccR) * dt; %载波加速度引起的频率增量
+        obj.carrFreq = obj.carrFreq + fi;
+        obj.carrNco = obj.carrNco + fi;
+        df = obj.carrNco - obj.carrFreq;
+        dp = -carrError - df*dt;
+        obj.remCarrPhase = obj.remCarrPhase - df*dt - obj.PLL2(1)*dt*dp; %alpha=K1*dt
+        obj.carrFreq = obj.carrFreq - obj.PLL2(2)*dp; %beta=K2
+        if obj.quality<2 %不是强信号不对载波频率进行估计,弱信号转为强信号相当于重启锁相环
+            obj.carrFreq = obj.carrNco;
+        end
+    end
     
     %% 二阶延迟锁定环
     function order2DLL(codeError)
         % DLL2 = [K1, K2]
         obj.codeFreq = obj.codeFreq + obj.DLL2(2)*codeError;
         obj.codeNco = obj.codeFreq + obj.DLL2(1)*codeError;
+    end
+
+    %% 码开环
+    function openDLL(deltaFreq)
+        carrFreq = obj.carrFreq + deltaFreq*1575.42e6;
+        obj.codeNco = (1.023e6 + carrFreq/1540) * 2; %因为有子载波,要乘2
+        obj.codeFreq = obj.codeNco;
     end
 
 end

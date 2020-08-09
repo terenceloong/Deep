@@ -2,21 +2,17 @@ function pos_init(obj)
 % 初始化定位
 
 % 获取卫星测量信息
+satmeasGPS = [];
 if obj.GPSflag==1
     satmeasGPS = obj.get_satmeasGPS;
 end
+satmeasBDS = [];
 if obj.BDSflag==1
     satmeasBDS = obj.get_satmeasBDS;
 end
 
 % 卫星导航解算
-if obj.GPSflag==1 && obj.BDSflag==0
-    satmeas = satmeasGPS;
-elseif obj.GPSflag==0 && obj.BDSflag==1
-    satmeas = satmeasBDS;
-elseif obj.GPSflag==1 && obj.BDSflag==1
-    satmeas = [satmeasGPS; satmeasBDS];
-end
+satmeas = [satmeasGPS; satmeasBDS];
 sv = satmeas(~isnan(satmeas(:,1)),:); %选星
 satnav = satnavSolve(sv, obj.rp);
 dtr = satnav(13); %接收机钟差,s
