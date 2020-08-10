@@ -5,12 +5,13 @@ clear
 clc
 fclose('all'); %关闭之前打开的所有文件
 
+% psi0 = input('psi0 = '); %输入初始航向角
+
 %% 选择IMU数据文件
 % imu = IMU_read(0);
 % imu(:,2:4) = movmean(imu(:,2:4),5,1); %预滤波
 % imu(:,5:7) = movmean(imu(:,5:7),4,1);
 % gyro0 = mean(imu(1:200,2:4)); %计算初始陀螺零偏
-% % psi0 = input('psi0 = '); %输入初始航向角
 % psi0 = 38.1;
 
 imu = SBG_imu_read(0);

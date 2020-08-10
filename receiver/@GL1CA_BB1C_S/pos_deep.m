@@ -5,9 +5,75 @@ function pos_deep(obj)
 Lca = 299792458/1575.42e6; %载波长,m
 Lco = 299792458/1.023e6; %码长,m
 
+%% 不加权
+% % 获取卫星测量信息 & 获取通道信息 & 单独卫星导航解算
+% if obj.GPSflag==1
+%     satmeasGPS = obj.get_satmeasGPS; %卫星测量信息
+%     %---------------------------------------------------------------------%
+%     chN = obj.GPS.chN;
+%     quality = zeros(chN,1); %信号质量
+%     codeDisc = zeros(chN,1); %定位间隔内码鉴相器输出的平均值,m
+%     R_rho = zeros(chN,1); %伪距测量噪声方差,m^2
+%     R_rhodot = zeros(chN,1); %伪距率测量噪声方差,(m/s)^2
+%     for k=1:chN
+%         channel = obj.GPS.channels(k);
+%         if channel.state==3
+%             quality(k) = channel.quality;
+%             [co, ~] = channel.getDiscOutput;
+%             codeDisc(k) = sum(co)/length(co)*Lco;
+%             R_rho(k) = 4^2;
+%             R_rhodot(k) = 0.04^2;
+%         end
+%     end
+%     svGPS = [satmeasGPS, quality, R_rho, R_rhodot]; %带信号质量评价的卫星测量信息
+%     svGPS(:,7) = svGPS(:,7) - codeDisc; %本地码超前,伪距偏短,码鉴相器为负,修正是减
+%     %---------------------------------------------------------------------%
+%     sv = svGPS(svGPS(:,9)>=1,1:8); %选信号质量不为0的卫星
+%     satnavGPS = satnavSolve(sv, obj.rp);
+% end
+% if obj.BDSflag==1
+%     satmeasBDS = obj.get_satmeasBDS; %卫星测量信息
+%     %---------------------------------------------------------------------%
+%     chN = obj.BDS.chN;
+%     quality = zeros(chN,1); %信号质量
+%     codeDisc = zeros(chN,1); %定位间隔内码鉴相器输出的平均值,m
+%     R_rho = zeros(chN,1); %伪距测量噪声方差,m^2
+%     R_rhodot = zeros(chN,1); %伪距率测量噪声方差,(m/s)^2
+%     for k=1:chN
+%         channel = obj.BDS.channels(k);
+%         if channel.state==3
+%             quality(k) = channel.quality;
+%             [co, ~] = channel.getDiscOutput;
+%             codeDisc(k) = sum(co)/length(co)*Lco;
+%             R_rho(k) = 4^2;
+%             R_rhodot(k) = 0.04^2;
+%         end
+%     end
+%     svBDS = [satmeasBDS, quality, R_rho, R_rhodot]; %带信号质量评价的卫星测量信息
+%     svBDS(:,7) = svBDS(:,7) - codeDisc; %本地码超前,伪距偏短,码鉴相器为负,修正是减
+%     %---------------------------------------------------------------------%
+%     sv = svBDS(svBDS(:,9)>=1,1:8); %选信号质量不为0的卫星
+%     satnavBDS = satnavSolve(sv, obj.rp);
+% end
+% 
+% % 卫星导航解算 & 导航滤波
+% if obj.GPSflag==1 && obj.BDSflag==0
+%     satnav = satnavGPS;
+%     obj.navFilter.run(obj.imu, svGPS);
+% elseif obj.GPSflag==0 && obj.BDSflag==1
+%     satnav = satnavBDS;
+%     obj.navFilter.run(obj.imu, svBDS);
+% elseif obj.GPSflag==1 && obj.BDSflag==1
+%     sv = [svGPS(svGPS(:,9)>=1,1:8); svBDS(svBDS(:,9)>=1,1:8)];
+%     satnav = satnavSolve(sv, obj.rp);
+%     obj.navFilter.run(obj.imu, [svGPS;svBDS]);
+% end
+
+%% 加权
 % 获取卫星测量信息 & 获取通道信息 & 单独卫星导航解算
 if obj.GPSflag==1
     satmeasGPS = obj.get_satmeasGPS; %卫星测量信息
+    [~, ele] = aziele_xyz(satmeasGPS(:,1:3), obj.pos); %卫星高度角
     %---------------------------------------------------------------------%
     chN = obj.GPS.chN;
     quality = zeros(chN,1); %信号质量
@@ -20,18 +86,19 @@ if obj.GPSflag==1
             quality(k) = channel.quality;
             [co, ~] = channel.getDiscOutput;
             codeDisc(k) = sum(co)/length(co)*Lco;
-            R_rho(k) = 4^2;
-            R_rhodot(k) = 0.04^2;
+            R_rho(k) = (sqrt(channel.codeVar.D/length(co))*Lco + 1.2*(1+16*(0.5-ele(k)/180)^3))^2;
+            R_rhodot(k) = channel.carrVar.D*(6.15*Lca)^2;
         end
     end
     svGPS = [satmeasGPS, quality, R_rho, R_rhodot]; %带信号质量评价的卫星测量信息
     svGPS(:,7) = svGPS(:,7) - codeDisc; %本地码超前,伪距偏短,码鉴相器为负,修正是减
     %---------------------------------------------------------------------%
-    sv = svGPS(svGPS(:,9)>=1,1:8); %选信号质量不为0的卫星
-    satnavGPS = satnavSolve(sv, obj.rp);
+    sv = svGPS(svGPS(:,9)>=1,[1:8,10,11]); %选信号质量不为0的卫星
+    satnavGPS = satnavSolveWeighted(sv, obj.rp);
 end
 if obj.BDSflag==1
     satmeasBDS = obj.get_satmeasBDS; %卫星测量信息
+    [~, ele] = aziele_xyz(satmeasBDS(:,1:3), obj.pos); %卫星高度角
     %---------------------------------------------------------------------%
     chN = obj.BDS.chN;
     quality = zeros(chN,1); %信号质量
@@ -44,15 +111,15 @@ if obj.BDSflag==1
             quality(k) = channel.quality;
             [co, ~] = channel.getDiscOutput;
             codeDisc(k) = sum(co)/length(co)*Lco;
-            R_rho(k) = 4^2;
-            R_rhodot(k) = 0.04^2;
+            R_rho(k) = (sqrt(channel.codeVar.D/length(co))*Lco + 1.2*(1+16*(0.5-ele(k)/180)^3))^2;
+            R_rhodot(k) = channel.carrVar.D*(6.15*Lca)^2;
         end
     end
     svBDS = [satmeasBDS, quality, R_rho, R_rhodot]; %带信号质量评价的卫星测量信息
     svBDS(:,7) = svBDS(:,7) - codeDisc; %本地码超前,伪距偏短,码鉴相器为负,修正是减
     %---------------------------------------------------------------------%
-    sv = svBDS(svBDS(:,9)>=1,1:8); %选信号质量不为0的卫星
-    satnavBDS = satnavSolve(sv, obj.rp);
+    sv = svBDS(svBDS(:,9)>=1,[1:8,10,11]); %选信号质量不为0的卫星
+    satnavBDS = satnavSolveWeighted(sv, obj.rp);
 end
 
 % 卫星导航解算 & 导航滤波
@@ -63,11 +130,12 @@ elseif obj.GPSflag==0 && obj.BDSflag==1
     satnav = satnavBDS;
     obj.navFilter.run(obj.imu, svBDS);
 elseif obj.GPSflag==1 && obj.BDSflag==1
-    sv = [svGPS(svGPS(:,9)>=1,1:8); svBDS(svBDS(:,9)>=1,1:8)];
-    satnav = satnavSolve(sv, obj.rp);
+    sv = [svGPS(svGPS(:,9)>=1,[1:8,10,11]); svBDS(svBDS(:,9)>=1,[1:8,10,11])];
+    satnav = satnavSolveWeighted(sv, obj.rp);
     obj.navFilter.run(obj.imu, [svGPS;svBDS]);
 end
 
+%%
 % 计算加速度在ecef系下的表示
 Cnb = quat2dcm(obj.navFilter.quat);
 Cen = dcmecef2ned(obj.navFilter.pos(1), obj.navFilter.pos(2));
@@ -183,6 +251,9 @@ obj.storage.P(m,:) = sqrt(diag(P));
 Cnb = quat2dcm(obj.navFilter.quat);
 P_angle = var_phi2angle(P(1:3,1:3), Cnb);
 obj.storage.P(m,1:3) = sqrt(diag(P_angle));
+obj.storage.qualGPS(m,:) = svGPS(:,9);
+obj.storage.qualBDS(m,:) = svBDS(:,9);
+obj.storage.motion(m) = obj.navFilter.motion.state;
 
 % 更新下次定位时间
 obj.tp(1) = NaN;

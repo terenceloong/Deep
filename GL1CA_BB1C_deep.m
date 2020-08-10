@@ -5,12 +5,21 @@ clear
 clc
 fclose('all'); %关闭之前打开的所有文件
 
-%% 选择IMU数据文件
-imu = SBG_imu_read(0);
-imu(:,5:7) = imu(:,5:7) / 9.806370601248435;
-gyro0 = mean(imu(1:200,2:4)); %计算初始陀螺零偏
 % psi0 = input('psi0 = '); %输入初始航向角,deg
-psi0 = 180;
+
+%% 选择IMU数据文件
+imu = IMU_read(0);
+imu(:,2:4) = movmean(imu(:,2:4),5,1); %预滤波
+imu(:,5:7) = movmean(imu(:,5:7),4,1);
+gyro0 = mean(imu(1:200,2:4)); %计算初始陀螺零偏
+imu(:,2:4) = imu(:,2:4) - ones(size(imu,1),1)*gyro0;
+psi0 = 38.1;
+
+% imu = SBG_imu_read(0);
+% imu(:,5:7) = imu(:,5:7) / 9.806370601248435;
+% gyro0 = mean(imu(1:200,2:4)); %计算初始陀螺零偏
+% imu(:,2:4) = imu(:,2:4) - ones(size(imu,1),1)*gyro0;
+% psi0 = 180;
 
 %% 选择GNSS数据文件
 valid_prefix = 'B210-'; %文件名有效前缀
@@ -25,7 +34,7 @@ data_file = [path, file]; %数据文件完整路径,path最后带\
 
 %% 主机参数
 % 根据实际情况修改.
-msToProcess = 300*1000; %处理总时间
+msToProcess = 600*1000; %处理总时间
 sampleOffset = 0*4e6; %抛弃前多少个采样点
 sampleFreq = 4e6; %接收机采样频率
 blockSize = sampleFreq*0.001; %一个缓存块(1ms)的采样点数
@@ -47,10 +56,13 @@ tb = UTC2BDT(tf, 8); %UTC时间转化为BDT时间,周+秒
 almanac_file_GPS = GPS.almanac.download('~temp\almanac', tg); %下载历书
 almanac_GPS = GPS.almanac.read(almanac_file_GPS); %读历书
 date = sprintf('%4d-%02d-%02d', tf(1),tf(2),tf(3)); %当前日期
-almanac_file_BDS = BDS.almanac.download('~temp\almanac', date); %下载历书
-almanac_BDS = BDS.almanac.read(almanac_file_BDS); %读历书
-index = ismember(almanac_BDS(:,1), [19:30,32:46]);
-almanac_BDS = almanac_BDS(index,:); %只要北斗三号卫星的历书
+almanac_BDS = [];
+if datenum(tf(1),tf(2),tf(3))>=datenum(2020,5,18) %2020年5月18号后才有全的历书
+    almanac_file_BDS = BDS.almanac.download('~temp\almanac', date); %下载历书
+    almanac_BDS = BDS.almanac.read(almanac_file_BDS); %读历书
+    index = ismember(almanac_BDS(:,1), [19:30,32:46]);
+    almanac_BDS = almanac_BDS(index,:); %只要北斗三号卫星的历书
+end
 
 %% 接收机配置
 % 根据实际配置修改.
@@ -73,7 +85,7 @@ receiver_conf.GPS.acqFreqMax = 5e3; %最大搜索频率,Hz
 %-------------------------------------------------------------------------%
 receiver_conf.BDS.almanac = almanac_BDS; %历书
 receiver_conf.BDS.eleMask = 10; %高度角阈值
-receiver_conf.BDS.svList = []; %跟踪卫星列表,[19,20,29,35,38,40,44]
+receiver_conf.BDS.svList = [19,21,22,34,38]; %跟踪卫星列表,[19,21,22,34,38]
 receiver_conf.BDS.acqThreshold = 1.4; %捕获阈值,最高峰与第二大峰的比值
 receiver_conf.BDS.acqFreqMax = 5e3; %最大搜索频率,Hz
 %-------------------------------------------------------------------------%
@@ -82,7 +94,7 @@ receiver_conf.dtpos = 10; %定位时间间隔,ms
 
 %% 导航滤波器参数
 para.dt = 0.01; %s,根据IMU采样周期设置
-para.gyro0 = gyro0; %deg/s
+para.gyro0 = gyro0*0; %deg/s
 para.p0 = [0,0,0];
 para.v0 = [0,0,0];
 para.a0 = [psi0,0,0]; %deg
@@ -144,6 +156,7 @@ for t=1:msToProcess
     end
 end
 nCoV.clean_storage;
+nCoV.get_result;
 toc
 
 %% 关闭文件,关闭进度条

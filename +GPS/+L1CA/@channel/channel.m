@@ -31,6 +31,8 @@ classdef channel < handle
         remCodePhase    %跟踪开始点的码相位
         carrFreq        %测量的载波频率
         codeFreq        %测量的码频率
+        carrVar         %载波鉴相器方差计算
+        codeVar         %码鉴相器方差计算
         I               %I路积分值
         Q               %Q路积分值
         FLLp            %频率牵引锁频环
@@ -90,7 +92,7 @@ classdef channel < handle
             obj.storage.carrNco      =   NaN(row,1,'double');
             obj.storage.carrAcc      =   NaN(row,1,'single');
             obj.storage.I_Q          = zeros(row,6,'int32');
-            obj.storage.disc         =   NaN(row,3,'single');
+            obj.storage.disc         =   NaN(row,5,'single');
             obj.storage.bitFlag      = zeros(row,1,'uint8'); %导航电文比特开始标志
             obj.storage.quality      = zeros(row,1,'uint8');
         end

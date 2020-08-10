@@ -154,7 +154,9 @@ end
                         log_str = sprintf('Ephemeris is parsed at %.8fs', obj.dataIndex/obj.sampleFreq);
                         obj.log = [obj.log; string(log_str)];
                         obj.ephe = ephe; %更新星历
-                        obj.state = 2; %改变通道状态
+                        if obj.state==1
+                            obj.state = 2; %改变通道状态
+                        end
                     else %IODC的低8位~=IODE
                         log_str = sprintf('***Ephemeris changes at %.8fs, IODC=%d, IODE=%d', ...
                                            obj.dataIndex/obj.sampleFreq, ephe(3), ephe(4));

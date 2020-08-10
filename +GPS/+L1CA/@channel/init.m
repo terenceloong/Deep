@@ -37,6 +37,8 @@ obj.remCarrPhase = 0;
 obj.remCodePhase = 0;
 obj.carrFreq = obj.carrNco;
 obj.codeFreq = obj.codeNco;
+obj.carrVar = var_rec(200); %200ms平均窗口
+obj.codeVar = var_rec(200);
 
 % 初始化I/Q,鉴频器用到
 obj.I = 1;

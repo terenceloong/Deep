@@ -33,6 +33,7 @@ classdef GL1CA_BB1C_S < handle
         tp             %下次定位的时间,[s,ms,us]
         ns             %指向当前存储行,初值是0,存储之前加1
         storage        %存储接收机输出
+        result         %接收机运行结果
         % 深组合相关变量在深组合初始化时才赋值
         imu            %IMU数据
         navFilter      %导航滤波器
@@ -160,6 +161,9 @@ classdef GL1CA_BB1C_S < handle
             obj.storage.imu     =   NaN(row,6,'single');
             obj.storage.bias    =   NaN(row,6,'single');
             obj.storage.P       =   NaN(row,17,'single');
+            obj.storage.qualGPS = zeros(row,obj.GPS.chN,'uint8'); %信号质量,用于统计可见星数量
+            obj.storage.qualBDS = zeros(row,obj.BDS.chN,'uint8');
+            obj.storage.motion  = zeros(row,1,'uint8'); %运动状态
         end
     end
     
@@ -171,11 +175,13 @@ classdef GL1CA_BB1C_S < handle
         print_all_log(obj)            %打印所有通道日志
         plot_all_trackResult(obj)     %显示所有通道跟踪结果
         interact_constellation(obj)   %画交互星座图
-%         get_result(obj)               %获取接收机运行结果
+        get_result(obj)               %获取接收机运行结果
         imu_input(obj, tp, imu)       %IMU数据输入
         channel_deep(obj)             %通道切换深组合跟踪环路
         
-%         plot_sv_3d(obj)
+        plot_sv_3d(obj)
+        plot_svnum(obj)
+        plot_motionState(obj)
         plot_df(obj)
         plot_pos(obj)
         plot_vel(obj)

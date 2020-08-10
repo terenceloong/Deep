@@ -40,10 +40,13 @@ tb = UTC2BDT(tf, 8); %UTC时间转化为BDT时间,周+秒
 almanac_file_GPS = GPS.almanac.download('~temp\almanac', tg); %下载历书
 almanac_GPS = GPS.almanac.read(almanac_file_GPS); %读历书
 date = sprintf('%4d-%02d-%02d', tf(1),tf(2),tf(3)); %当前日期
-almanac_file_BDS = BDS.almanac.download('~temp\almanac', date); %下载历书
-almanac_BDS = BDS.almanac.read(almanac_file_BDS); %读历书
-index = ismember(almanac_BDS(:,1), [19:30,32:46]);
-almanac_BDS = almanac_BDS(index,:); %只要北斗三号卫星的历书
+almanac_BDS = [];
+if datenum(tf(1),tf(2),tf(3))>=datenum(2020,5,18) %2020年5月18号后才有全的历书
+    almanac_file_BDS = BDS.almanac.download('~temp\almanac', date); %下载历书
+    almanac_BDS = BDS.almanac.read(almanac_file_BDS); %读历书
+    index = ismember(almanac_BDS(:,1), [19:30,32:46]);
+    almanac_BDS = almanac_BDS(index,:); %只要北斗三号卫星的历书
+end
 
 %% 接收机配置
 % 根据实际配置修改.
@@ -99,6 +102,7 @@ for t=1:msToProcess
     nCoV.run(data); %接收机处理数据
 end
 nCoV.clean_storage;
+nCoV.get_result;
 toc
 
 %% 关闭文件,关闭进度条

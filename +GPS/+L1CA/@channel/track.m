@@ -101,9 +101,14 @@ if obj.trackDataHead>obj.buffSize
     obj.trackDataHead = obj.trackDataHead - obj.buffSize;
 end
 
+% 统计鉴相器输出方差
+obj.codeVar.update(codeError);
+obj.carrVar.update(carrError);
+
 % 存储跟踪结果(本次跟踪产生的数据)
 obj.storage.I_Q(n,:) = [I_P, I_E, I_L, Q_P, Q_E, Q_L];
-obj.storage.disc(n,:) = [codeError, carrError, freqError];
+% obj.storage.disc(n,:) = [codeError, carrError, freqError];
+obj.storage.disc(n,:) = [codeError, carrError, freqError, sqrt(obj.codeVar.D), sqrt(obj.carrVar.D)];
 
     %% 频率牵引
 %     function freqPull(freqError)

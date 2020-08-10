@@ -119,9 +119,14 @@ if obj.trackDataHead>obj.buffSize
     obj.trackDataHead = obj.trackDataHead - obj.buffSize;
 end
 
+% 统计鉴相器输出方差
+obj.codeVar.update(codeError/2);
+obj.carrVar.update(carrError);
+
 % 存储跟踪结果(本次跟踪产生的数据)
 obj.storage.I_Q(n,:) = [I_P, I_E, I_L, Q_P, Q_E, Q_L, obj.Id, obj.Ip];
-obj.storage.disc(n,:) = [codeError/2, carrError, freqError]; %码相位误差除以2,换算成主码相位误差
+% obj.storage.disc(n,:) = [codeError/2, carrError, freqError]; %码相位误差除以2,换算成主码相位误差
+obj.storage.disc(n,:) = [codeError/2, carrError, freqError, sqrt(obj.codeVar.D), sqrt(obj.carrVar.D)];
 
     %% 频率牵引
     
