@@ -75,6 +75,7 @@ obj.codeMode = 1;
 obj.quality = 0;
 obj.SQI = sigqual_indicator(20, 20, 200);
 % 一个比特最多20次积分,初始1ms积分时间时一个比特20个点,200ms平均窗口
+obj.lossCnt = 0;
 
 % 初始化伪码时间
 obj.tc0 = NaN;

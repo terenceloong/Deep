@@ -12,6 +12,7 @@ if obj.state==1
         subplot(3,1,k)
         plot(t, obj.storage.vel(:,k))
         grid on
+        set(gca, 'XLim',[0,ceil(obj.Tms/1000)])
     end
 end
 
@@ -24,6 +25,7 @@ if obj.state==2 || obj.state==3
         hold on
         grid on
         plot(t, obj.storage.vel(:,k), 'LineWidth',1)
+        set(gca, 'XLim',[0,ceil(obj.Tms/1000)])
     end
 end
 

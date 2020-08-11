@@ -70,6 +70,7 @@ obj.codeMode = 1;
 % 初始信号质量
 obj.quality = 0;
 obj.SQI = sigqual_indicator(10, 10, 200);
+obj.lossCnt = 0;
 
 % 初始化伪码时间
 obj.tc0 = NaN;

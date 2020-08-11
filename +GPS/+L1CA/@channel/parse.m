@@ -21,12 +21,26 @@ switch obj.msgStage %I,B,W,H,C,E
     case 'W' %等待比特开始
         waitBitStart;
     otherwise %已经完成比特同步
-        if obj.msgCnt==1 %记录比特开始标志
-            obj.storage.bitFlag(obj.ns) = obj.msgStage;
-        end
         obj.SQI.run(obj.I, obj.Q); %评估信号质量
         obj.quality = obj.SQI.quality;
-        obj.storage.quality(obj.ns) = obj.quality;
+        obj.storage.quality(obj.ns) = obj.quality; %记录信号质量
+        if obj.msgCnt==1 %比特刚开始的位置
+            obj.storage.bitFlag(obj.ns) = obj.msgStage; %记录比特开始标志
+            if obj.quality==0 %失锁状态,计数器加1
+                obj.lossCnt = obj.lossCnt + 1;
+            else %非失锁状态,计数器清零
+                obj.lossCnt = 0;
+            end
+            if obj.state~=3 %非深组合状态时,长时间失锁要关闭通道
+                if obj.lossCnt==1000 %失锁1000个比特,20s
+                    obj.lossCnt = 0;
+                    obj.state = 0;
+                    obj.ns = obj.ns + 1; %数据存储跳一个,相当于加一个间断点
+                    log_str = sprintf('***Loss of lock at %.8fs', obj.dataIndex/obj.sampleFreq);
+                    obj.log = [obj.log; string(log_str)];
+                end
+            end
+        end
         %------------------------------------------
         obj.bitBuff(obj.msgCnt) = obj.I; %往比特缓存中存数
         if obj.msgCnt==obj.pointInt %跟踪完一个比特

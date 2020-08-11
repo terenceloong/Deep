@@ -14,6 +14,7 @@ if obj.state==2 || obj.state==3
         hold on
         grid on
         plot(t, obj.storage.bias(:,k), 'LineWidth',1)
+        set(gca, 'XLim',[0,ceil(obj.Tms/1000)])
     end
 end
 

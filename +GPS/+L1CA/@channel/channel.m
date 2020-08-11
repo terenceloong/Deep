@@ -42,6 +42,7 @@ classdef channel < handle
         codeMode        %码跟踪模式
         quality         %信号质量
         SQI             %信号质量指示器
+        lossCnt         %失锁计数器
         tc0             %下一伪码周期的开始时间,ms
         msgStage        %电文解析阶段(字符)
         msgCnt          %电文解析计数器

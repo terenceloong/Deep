@@ -12,6 +12,7 @@ if obj.state==3
         subplot(3,1,k)
         plot(t, obj.storage.bias(:,k+3), 'LineWidth',1)
         grid on
+        set(gca, 'XLim',[0,ceil(obj.Tms/1000)])
     end
 end
 

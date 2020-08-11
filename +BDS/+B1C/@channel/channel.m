@@ -66,6 +66,7 @@ classdef channel < handle
         
         quality         %信号质量
         SQI             %信号质量指示器
+        lossCnt         %失锁计数器
         ns0             %指向上次定位的存储行,深组合时用来获取定位间隔内的鉴相器输出
     end
     

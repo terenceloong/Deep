@@ -18,7 +18,7 @@ data_file = [path, file]; %数据文件完整路径,path最后带\
 
 %% 主机参数
 % 根据实际情况修改.
-msToProcess = 60*1000; %处理总时间
+msToProcess = 100*1000; %处理总时间
 sampleOffset = 0*4e6; %抛弃前多少个采样点
 sampleFreq = 4e6; %接收机采样频率
 blockSize = sampleFreq*0.001; %一个缓存块(1ms)的采样点数
@@ -69,7 +69,7 @@ receiver_conf.GPS.acqFreqMax = 5e3; %最大搜索频率,Hz
 %-------------------------------------------------------------------------%
 receiver_conf.BDS.almanac = almanac_BDS; %历书
 receiver_conf.BDS.eleMask = 10; %高度角阈值
-receiver_conf.BDS.svList = []; %跟踪卫星列表,[19,20,29,35,38,40,44]
+receiver_conf.BDS.svList = []; %跟踪卫星列表,[19,20,29,35,38,40,44] 19,21,22,34,38
 receiver_conf.BDS.acqThreshold = 1.4; %捕获阈值,最高峰与第二大峰的比值
 receiver_conf.BDS.acqFreqMax = 5e3; %最大搜索频率,Hz
 %-------------------------------------------------------------------------%

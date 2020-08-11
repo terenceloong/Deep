@@ -14,6 +14,7 @@ if obj.state==1
             subplot(3,1,k)
             plot(t, obj.storage.satnavGPS(:,k+3))
             grid on
+            set(gca, 'XLim',[0,ceil(obj.Tms/1000)])
         end
     end
     % 画单独北斗解算速度
@@ -23,6 +24,7 @@ if obj.state==1
             subplot(3,1,k)
             plot(t, obj.storage.satnavBDS(:,k+3), 'Color',[0.85,0.325,0.098])
             grid on
+            set(gca, 'XLim',[0,ceil(obj.Tms/1000)])
         end
     end
     % 画GPS和北斗联合解算速度
@@ -32,9 +34,10 @@ if obj.state==1
             subplot(3,1,k)
             plot(t, obj.storage.satnavGPS(:,k+3))
             hold on
+            grid on
             plot(t, obj.storage.satnavBDS(:,k+3))
             plot(t, obj.storage.satnav(:,k+3))
-            grid on
+            set(gca, 'XLim',[0,ceil(obj.Tms/1000)])
         end
     end
 end
@@ -48,6 +51,7 @@ if obj.state==3
         hold on
         grid on
         plot(t, obj.storage.vel(:,k), 'LineWidth',1)
+        set(gca, 'XLim',[0,ceil(obj.Tms/1000)])
     end
 end
 
