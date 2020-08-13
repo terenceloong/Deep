@@ -161,8 +161,12 @@ classdef GL1CA_BB1C_S < handle
             obj.storage.imu     =   NaN(row,6,'single');
             obj.storage.bias    =   NaN(row,6,'single');
             obj.storage.P       =   NaN(row,17,'single');
-            obj.storage.qualGPS = zeros(row,obj.GPS.chN,'uint8'); %信号质量,用于统计可见星数量
-            obj.storage.qualBDS = zeros(row,obj.BDS.chN,'uint8');
+            if obj.GPSflag==1
+                obj.storage.qualGPS = zeros(row,obj.GPS.chN,'uint8'); %信号质量,用于统计可见星数量
+            end
+            if obj.BDSflag==1
+                obj.storage.qualBDS = zeros(row,obj.BDS.chN,'uint8');
+            end
             obj.storage.motion  = zeros(row,1,'uint8'); %运动状态
         end
     end

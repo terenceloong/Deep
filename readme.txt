@@ -160,3 +160,6 @@ G(GPS),R(GLONASS),E(Galileo),C(BDS),J(QZSS),I(IRNSS),参见RINEX 3.03
 <===Version 2.6===>2020.8.11
 1.长时间失锁放弃跟踪
 2.定位之前检验几何精度因子,太大不解算
+
+<===Version 2.7===>2020.8.13
+1.修复一些bug

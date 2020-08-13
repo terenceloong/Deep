@@ -112,14 +112,14 @@ obj.storage.df(m) = obj.deltaFreq;
 obj.storage.satnav(m,:) = satnav([1,2,3,7,8,9,13,14]);
 if obj.GPSflag==1
     obj.storage.satnavGPS(m,:) = satnavGPS([1,2,3,7,8,9,13,14]);
+    obj.storage.qualGPS(m,:) = svGPS(:,9);
 end
 if obj.BDSflag==1
     obj.storage.satnavBDS(m,:) = satnavBDS([1,2,3,7,8,9,13,14]);
+    obj.storage.qualBDS(m,:) = svBDS(:,9);
 end
 obj.storage.pos(m,:) = obj.pos;
 obj.storage.vel(m,:) = obj.vel;
-obj.storage.qualGPS(m,:) = svGPS(:,9);
-obj.storage.qualBDS(m,:) = svBDS(:,9);
 
 % 更新下次定位时间
 obj.tp = timeCarry(obj.tp + [0,obj.dtpos,0]);

@@ -10,7 +10,7 @@ if obj.state==2 || obj.state==3
     figure('Name','ÍÓÂİÁãÆ«')
     for k=1:3
         subplot(3,1,k)
-        plot(obj.storage.imu(:,k))
+        plot(t, obj.storage.imu(:,k))
         hold on
         grid on
         plot(t, obj.storage.bias(:,k), 'LineWidth',1)

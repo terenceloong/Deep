@@ -171,8 +171,9 @@ if obj.GPSflag==1
                 channel.remCodePhase = channel.remCodePhase - dcodePhase;
                 %----载波驱动频率修正
                 dcarrFreq = (rhodot0(k)-satmeas(k,8))/Lca; %相对估计频率的修正量
-                dcarrFreq = dcarrFreq + (channel.carrNco-channel.carrFreq); %相对驱动频率的修正量
-                channel.carrNco = channel.carrNco - dcarrFreq;
+%                 dcarrFreq = dcarrFreq + (channel.carrNco-channel.carrFreq); %相对驱动频率的修正量
+%                 channel.carrNco = channel.carrNco - dcarrFreq;
+                channel.carrNco = channel.carrFreq - dcarrFreq; %上两行的简写
                 %----接收机运动引起的载波频率变化率
                 channel.carrAccR = -acclos0(k)/Lca;
             end
@@ -206,8 +207,9 @@ if obj.BDSflag==1
                 channel.remCodePhase = channel.remCodePhase - dcodePhase;
                 %----载波驱动频率修正
                 dcarrFreq = (rhodot0(k)-satmeas(k,8))/Lca; %相对估计频率的修正量
-                dcarrFreq = dcarrFreq + (channel.carrNco-channel.carrFreq); %相对驱动频率的修正量
-                channel.carrNco = channel.carrNco - dcarrFreq;
+%                 dcarrFreq = dcarrFreq + (channel.carrNco-channel.carrFreq); %相对驱动频率的修正量
+%                 channel.carrNco = channel.carrNco - dcarrFreq;
+                channel.carrNco = channel.carrFreq - dcarrFreq; %上两行的简写
                 %----接收机运动引起的载波频率变化率
                 channel.carrAccR = -acclos0(k)/Lca;
             end
@@ -237,9 +239,11 @@ obj.storage.df(m) = obj.deltaFreq;
 obj.storage.satnav(m,:) = satnav([1,2,3,7,8,9,13,14]);
 if obj.GPSflag==1
     obj.storage.satnavGPS(m,:) = satnavGPS([1,2,3,7,8,9,13,14]);
+    obj.storage.qualGPS(m,:) = svGPS(:,9);
 end
 if obj.BDSflag==1
     obj.storage.satnavBDS(m,:) = satnavBDS([1,2,3,7,8,9,13,14]);
+    obj.storage.qualBDS(m,:) = svBDS(:,9);
 end
 obj.storage.pos(m,:) = obj.pos;
 obj.storage.vel(m,:) = obj.vel;
@@ -251,8 +255,6 @@ obj.storage.P(m,:) = sqrt(diag(P));
 Cnb = quat2dcm(obj.navFilter.quat);
 P_angle = var_phi2angle(P(1:3,1:3), Cnb);
 obj.storage.P(m,1:3) = sqrt(diag(P_angle));
-obj.storage.qualGPS(m,:) = svGPS(:,9);
-obj.storage.qualBDS(m,:) = svBDS(:,9);
 obj.storage.motion(m) = obj.navFilter.motion.state;
 
 % 更新下次定位时间

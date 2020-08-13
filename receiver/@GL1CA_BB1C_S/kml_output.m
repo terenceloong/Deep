@@ -3,12 +3,12 @@ function kml_output(obj)
 
 if obj.GPSflag==1
     kmlwriteline('~temp\trajGPS.kml', obj.storage.satnavGPS(:,1),obj.storage.satnavGPS(:,2), ...
-                 'Color',[65,180,250]/255, 'Width',2);
+                 'Color','b', 'Width',2);
 end
 
 if obj.BDSflag==1
     kmlwriteline('~temp\trajBDS.kml', obj.storage.satnavBDS(:,1),obj.storage.satnavBDS(:,2), ...
-                 'Color',[255,65,65]/255, 'Width',2);
+                 'Color','r', 'Width',2);
 end
 
 if obj.GPSflag==1 && obj.BDSflag==1

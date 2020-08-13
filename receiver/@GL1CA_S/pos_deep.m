@@ -69,8 +69,9 @@ elseif obj.deepMode==2 %修码相位和载波驱动频率
             channel.remCodePhase = channel.remCodePhase - dcodePhase;
             %----载波驱动频率修正
             dcarrFreq = (rhodot0(k)-satmeas(k,8))/Lca; %相对估计频率的修正量
-            dcarrFreq = dcarrFreq + (channel.carrNco-channel.carrFreq); %相对驱动频率的修正量
-            channel.carrNco = channel.carrNco - dcarrFreq;
+%             dcarrFreq = dcarrFreq + (channel.carrNco-channel.carrFreq); %相对驱动频率的修正量
+%             channel.carrNco = channel.carrNco - dcarrFreq;
+            channel.carrNco = channel.carrFreq - dcarrFreq; %上两行的简写
             %----接收机运动引起的载波频率变化率
             channel.carrAccR = -acclos0(k)/Lca;
         end
