@@ -20,6 +20,18 @@ n = size(sv,1); %卫星个数
 G = zeros(n,4); %视线矢量矩阵
 G(:,4) = -1; %最后一列为-1
 
+% 检验几何精度因子
+E = rs - ones(n,1)*rp0;
+Em = vecnorm(E,2,2);
+Eu = E ./ (Em*[1,1,1]);
+G(:,1:3) = Eu;
+D = inv(G'*G);
+Ddiag = diag(D);
+PDOP = sqrt(Ddiag(1)+Ddiag(2)+Ddiag(3));
+if PDOP>10 %几何精度因子大就不算了
+    return
+end
+
 % 计算接收机位置
 x0 = [rp0, 0]'; %初值
 cnt = 0; %迭代计数

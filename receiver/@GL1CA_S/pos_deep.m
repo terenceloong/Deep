@@ -7,6 +7,7 @@ Lco = 299792458/1.023e6; %码长,m
 
 % 获取卫星测量信息
 satmeas = obj.get_satmeas;
+[~, ele] = aziele_xyz(satmeas(:,1:3), obj.pos); %卫星高度角
 
 % 获取通道信息
 chN = obj.chN;
@@ -20,31 +21,48 @@ for k=1:chN
         quality(k) = channel.quality;
         [co, ~] = channel.getDiscOutput;
         codeDisc(k) = sum(co)/length(co)*Lco;
-        R_rho(k) = 4^2;
-        R_rhodot(k) = 0.04^2;
+        R_rho(k) = (sqrt(channel.codeVar.D/length(co))*Lco + 1.2*(1+16*(0.5-ele(k)/180)^3))^2;
+        R_rhodot(k) = channel.carrVar.D*(6.15*Lca)^2;
     end
 end
 sv = [satmeas, quality, R_rho, R_rhodot]; %带信号质量评价的卫星测量信息
 sv(:,7) = sv(:,7) - codeDisc; %用码鉴相器输出修正伪距,本地码超前,伪距偏短,码鉴相器为负,修正是减
 
 % 卫星导航解算
-sv1 = sv(sv(:,9)>=1,1:8); %选信号质量不为0的卫星
-satnav = satnavSolve(sv1, obj.rp);
+% sv1 = sv(sv(:,9)>=1,1:8); %选信号质量不为0的卫星
+% satnav = satnavSolve(sv1, obj.rp);
+sv1 = sv(sv(:,9)>=1,[1:8,10,11]); %选信号质量不为0的卫星
+satnav = satnavSolveWeighted(sv1, obj.rp);
 
 % 导航滤波
 obj.navFilter.run(obj.imu, sv);
 
-% 使用滤波结果计算的理论相对距离和相对速度
-[rho0, rhodot0, rspu] = rho_rhodot_cal_ecef(satmeas(:,1:3), satmeas(:,4:6), ...
-                        obj.navFilter.rp, obj.navFilter.vp);
-
-% 计算接收机运动引起的相对加速度
+% 计算ecef系下加速度
 Cnb = quat2dcm(obj.navFilter.quat);
 Cen = dcmecef2ned(obj.navFilter.pos(1), obj.navFilter.pos(2));
-fb = obj.imu(4:6) - obj.navFilter.bias(4:6); %g
-fn = (fb*Cnb + [0,0,1]) * obj.navFilter.g; %m/s^2
-fe = fn*Cen;
-acclos0 = rspu*fe';
+fb = (obj.imu(4:6) - obj.navFilter.bias(4:6)) * obj.navFilter.g; %惯导加速度,m/s^2
+wb = (obj.imu(1:3) - obj.navFilter.bias(1:3)) /180*pi; %角速度,rad/s
+wdot = obj.navFilter.wdot /180*pi; %角加速度,rad/s/s
+arm = obj.navFilter.arm; %体系下杆臂矢量
+fbt = cross(wdot,arm); %切向加速度,m/s^2
+fbn = cross(wb,cross(wb,arm)); %法向加速度,m/s^2
+fn = (fb+fbt+fbn)*Cnb + [0,0,obj.navFilter.g]; %地理系下加速度
+fe = fn*Cen; %ecef系下加速度
+
+% 计算ecef系下杆臂位置速度
+r_arm = arm*Cnb*Cen;
+v_arm = cross(wb,arm)*Cnb*Cen;
+
+% 惯导位置速度做杆臂修正后得到天线位置速度
+obj.rp = obj.navFilter.rp + r_arm;
+obj.vp = obj.navFilter.vp + v_arm;
+obj.att = obj.navFilter.att;
+obj.pos = ecef2lla(obj.rp);
+obj.vel = obj.vp*Cen';
+
+[rho0, rhodot0, rspu] = rho_rhodot_cal_ecef(satmeas(:,1:3), satmeas(:,4:6), ...
+                        obj.rp, obj.vp); %理论相对距离和相对速度
+acclos0 = rspu*fe'; %计算接收机运动引起的相对加速度
 
 % 通道修正 (伪距短,码相位超前; 伪距率小,载波频率快)
 if obj.deepMode==1 %只修码相位
@@ -80,13 +98,6 @@ end
 
 % 新跟踪的通道切换深组合跟踪环路
 obj.channel_deep;
-
-% 更新接收机位置速度
-obj.pos = obj.navFilter.pos;
-obj.vel = obj.navFilter.vel;
-obj.att = obj.navFilter.att;
-obj.rp = obj.navFilter.rp;
-obj.vp = obj.navFilter.vp;
 
 % 接收机时钟修正
 obj.deltaFreq = obj.deltaFreq + obj.navFilter.dtv;

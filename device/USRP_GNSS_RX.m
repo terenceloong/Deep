@@ -6,8 +6,8 @@ clc
 %% 配置
 exe_path = 'C:\Users\longt\Desktop\gnss_rx\x64\Release'; %可执行文件路径
 data_path = 'C:\Users\longt\Desktop\GNSS data'; %数据存储路径
-sample_time = 10; %采样时间,s
-channel = 2; %通道数量                                                                                       
+sample_time = 300; %采样时间,s
+channel = 2; %通道数量
 gain = 36; %增益,dB
 ref = 1; %是否使用外部时钟
 pps = 0; %是否使用外部PPS,暂时不使用

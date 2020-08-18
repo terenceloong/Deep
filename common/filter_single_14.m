@@ -1,5 +1,5 @@
-classdef filter_single < handle
-% 单天线导航滤波器,位置速度都是惯导的
+classdef filter_single_14 < handle
+% 单天线导航滤波器,状态变量14维
     
     properties
         motion  %运动状态检测
@@ -29,7 +29,7 @@ classdef filter_single < handle
     
     methods
         %% 构造函数
-        function obj = filter_single(para)
+        function obj = filter_single_14(para)
             d2r = pi/180;
             obj.motion = motionDetector_gyro(para.gyro0, para.dt, 0.8);
             obj.pos = para.p0;
@@ -54,18 +54,15 @@ classdef filter_single < handle
                           para.P0_pos  *[obj.dlatdn,obj.dlonde,1], ...
                           para.P0_dtr  *3e8, ...
                           para.P0_dtv  *3e8, ...
-                          para.P0_gyro *[1,1,1]*d2r, ...
-                          para.P0_acc  *[1,1,1]*9.8 ...
+                          para.P0_gyro *[1,1,1]*d2r ...
                          ])^2; %para的P0都是标准差
             obj.Q = diag([para.Q_gyro *[1,1,1]*d2r, ...
                           para.Q_acc  *[1,1,1]*9.8, ...
                           para.Q_acc  *[obj.dlatdn,obj.dlonde,1]*9.8*(obj.T*1), ...
                           para.Q_dtv  *3e8*(obj.T*1), ...
                           para.Q_dtv  *3e8, ...
-                          para.Q_dg   *[1,1,1]*d2r, ...
-                          para.Q_da   *[1,1,1]*9.8 ...
+                          para.Q_dg   *[1,1,1]*d2r ...
                          ])^2 * obj.T^2; %para的Q都是标准差
-%             obj.Q(6,6) = obj.Q(6,6) * 100; %可以让地向速度估计有噪声,地向速度估计的偏置是高度变化引起的
             obj.Rwb = (para.sigma_gyro*d2r)^2;
             obj.arm = para.arm;
             obj.wdot = [0,0,0];
@@ -127,18 +124,17 @@ classdef filter_single < handle
             lon = lon + dp(2)*obj.dlonde*r2d; %deg
             h = h - dp(3);
             %----状态方程
-            A = zeros(17);
+            A = zeros(14);
             A(1:3,12:14) = -Cbn;
             A(4:6,1:3) = [0,-fn(3),fn(2); fn(3),0,-fn(1); -fn(2),fn(1),0];
-            A(4:6,15:17) = Cbn;
             A(7,4) = obj.dlatdn;
             A(8,5) = obj.dlonde;
             A(9,6) = -1;
             A(10,11) = 1;
-            Phi = eye(17) + A*dt;
+            Phi = eye(14) + A*dt;
             %----状态更新
             P1 = Phi*obj.P*Phi' + obj.Q;
-            X = zeros(17,1);
+            X = zeros(14,1);
             %----量测维数
             index1 = find(quality>=1); %伪距量测行号
             index2 = find(quality==2); %伪距率量测行号
@@ -154,15 +150,15 @@ classdef filter_single < handle
                 HB = rspu*Cen'; %各行为地理系下卫星指向接收机的单位矢量
                 Ha = HA(index1,:); %取有效的行
                 Hb = HB(index2,:);
-                H = zeros(n1+n2,17);
+                H = zeros(n1+n2,14);
                 H(1:n1,7:9) = Ha;
                 H(1:n1,10) = -ones(n1,1);
                 H((n1+1):end,4:6) = Hb;
                 H((n1+1):end,11) = -ones(n2,1);
                 %----对测量的伪距伪距率进行杆臂修正-------------------------%
-                rho = rho - HB*Cbn*obj.arm'; %如果天线放在惯导位置应该测得的伪距
+                rho = rho - HB*Cbn*obj.arm';
                 vab = cross(wb,obj.arm); %杆臂引起的速度
-                rhodot = rhodot - HB*Cbn*vab'; %如果天线放在惯导位置应该测得的伪距率
+                rhodot = rhodot - HB*Cbn*vab';
                 %---------------------------------------------------------%
                 Z = [rho0(index1) - rho(index1); ...
                      rhodot0(index2) - rhodot(index2)]; %计算值减测量值
@@ -175,70 +171,46 @@ classdef filter_single < handle
                 %----滤波
                 K = P1*H' / (H*P1*H'+R);
                 X = K*Z;
-                P1 = (eye(17)-K*H)*P1;
+                P1 = (eye(14)-K*H)*P1;
                 obj.P = (P1+P1')/2;
                 %----状态约束
                 Y = [];
                 if obj.motion.state==0 %静止时航向修正量约束为0
-                    Ysub = zeros(1,17);
+                    Ysub = zeros(1,14);
                     Ysub(1,1) = Cnb(1,1)*Cnb(1,3);
                     Ysub(1,2) = Cnb(1,2)*Cnb(1,3);
                     Ysub(1,3) = -(Cnb(1,1)^2+Cnb(1,2)^2);
                     Y = [Y; Ysub];
                 end
 %                 if n1<4 %伪距量测小于4,不修钟差
-%                     Ysub = zeros(1,17);
+%                     Ysub = zeros(1,14);
 %                     Ysub(1,10) = 1;
 %                     Y = [Y; Ysub];
 %                 end
 %                 if n2<4 %伪距率量测小于4,不修钟频差
-%                     Ysub = zeros(1,17);
+%                     Ysub = zeros(1,14);
 %                     Ysub(1,11) = 1;
 %                     Y = [Y; Ysub];
 %                 end
                 if abs(obj.bias(1)+X(12)*r2d)>0.1
-                    Ysub = zeros(1,17);
+                    Ysub = zeros(1,14);
                     Ysub(1,12) = 1;
                     Y = [Y; Ysub];
                 end
                 if abs(obj.bias(2)+X(13)*r2d)>0.1
-                    Ysub = zeros(1,17);
+                    Ysub = zeros(1,14);
                     Ysub(1,13) = 1;
                     Y = [Y; Ysub];
                 end
                 if abs(obj.bias(3)+X(14)*r2d)>0.1
-                    Ysub = zeros(1,17);
+                    Ysub = zeros(1,14);
                     Ysub(1,14) = 1;
-                    Y = [Y; Ysub];
-                end
-                if abs(obj.bias(4)+X(15)/obj.g)>5e-3
-                    Ysub = zeros(1,17);
-                    Ysub(1,15) = 1;
-                    Y = [Y; Ysub];
-                end
-                if abs(obj.bias(5)+X(16)/obj.g)>5e-3
-                    Ysub = zeros(1,17);
-                    Ysub(1,16) = 1;
-                    Y = [Y; Ysub];
-                end
-                if abs(obj.bias(6)+X(17)/obj.g)>5e-3
-                    Ysub = zeros(1,17);
-                    Ysub(1,17) = 1;
                     Y = [Y; Ysub];
                 end
                 if ~isempty(Y)
                     X = X - P1*Y'/(Y*P1*Y')*Y*X;
                 end
             end
-            %----运动到静止时增大姿态失准角,零偏对应的P
-%             if obj.motion.state0==1 && obj.motion.state==0
-%                 obj.P(12,12) = 3e-7; %(0.03/180*pi)^2
-%                 obj.P(13,13) = 3e-7;
-%                 obj.P(14,14) = 3e-7;
-%                 obj.P(15,15) = 1e-4; %(0.01)^2
-%                 obj.P(16,16) = 1e-4;
-%                 obj.P(17,17) = 1e-4;
-%             end
             %----导航修正
             q = quatCorr(q, X(1:3)');
             v = v - X(4:6)';
@@ -257,7 +229,6 @@ classdef filter_single < handle
             obj.dtr = X(10)/299792458; %s
             obj.dtv = X(11)/299792458; %s/s
             obj.bias(1:3) = obj.bias(1:3) + X(12:14)'*r2d; %deg/s
-            obj.bias(4:6) = obj.bias(4:6) + X(15:17)'/obj.g; %g
         end
         
     end %end methods

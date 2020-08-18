@@ -2,6 +2,7 @@ classdef motionDetector_gyro < handle
 % 使用陀螺仪输出做运动状态检测
     
     properties
+        state0  %上次的运动状态
         state   %运动状态,0表示静止,1表示运动
         gyro0   %初始陀螺仪零偏,deg/s
         wmt     %角速度模长阈值,deg/s
@@ -14,6 +15,7 @@ classdef motionDetector_gyro < handle
         % 构造函数
         function obj = motionDetector_gyro(gyro0, dt, wmt)
             % dt:角速度采样时间间隔,s
+            obj.state0 = 0;
             obj.state = 0;
             obj.gyro0 = gyro0;
             obj.wmt = wmt;
@@ -24,6 +26,7 @@ classdef motionDetector_gyro < handle
         
         % 运行函数
         function run(obj, gyro)
+            obj.state0 = obj.state; %记录上次运动状态
             wm = norm(gyro-obj.gyro0); %角速度模长
             if obj.state==0
                 if wm<obj.wmt

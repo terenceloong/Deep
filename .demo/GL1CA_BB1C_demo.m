@@ -5,6 +5,13 @@ clear
 clc
 fclose('all'); %关闭之前打开的所有文件
 
+Ts = 60; %总处理时间,s
+To = 0; %偏移时间,s
+GPSflag = 1;
+BDSflag = 1;
+GPSlist = []; %[10,15,20,24]
+BDSlist = []; %[19,20,29,35,38,40,44] 19,21,22,34,38
+
 %% 选择GNSS数据文件
 valid_prefix = 'B210-'; %文件名有效前缀
 [file, path] = uigetfile('*.dat', '选择GNSS数据文件'); %文件选择对话框
@@ -18,8 +25,8 @@ data_file = [path, file]; %数据文件完整路径,path最后带\
 
 %% 主机参数
 % 根据实际情况修改.
-msToProcess = 60*1000; %处理总时间
-sampleOffset = 0*4e6; %抛弃前多少个采样点
+msToProcess = Ts*1000; %处理总时间
+sampleOffset = To*4e6; %抛弃前多少个采样点
 sampleFreq = 4e6; %接收机采样频率
 blockSize = sampleFreq*0.001; %一个缓存块(1ms)的采样点数
 p0 = [45.730952, 126.624970, 212]; %初始位置,不用特别精确
@@ -57,19 +64,19 @@ receiver_conf.blockNum = 100; %缓存块的数量
 receiver_conf.GPSweek = tg(1); %当前GPS周数
 receiver_conf.BDSweek = tb(1); %当前北斗周数
 receiver_conf.ta = tag; %接收机初始时间,[s,ms,us],使用GPS时间作为时间基准
-receiver_conf.GPSflag = 1; %是否启用GPS
-receiver_conf.BDSflag = 1; %是否启用北斗
+receiver_conf.GPSflag = GPSflag; %是否启用GPS
+receiver_conf.BDSflag = BDSflag; %是否启用北斗
 %-------------------------------------------------------------------------%
 receiver_conf.GPS.almanac = almanac_GPS; %历书
 receiver_conf.GPS.eleMask = 10; %高度角阈值
-receiver_conf.GPS.svList = []; %跟踪卫星列表,[10,15,20,24]
+receiver_conf.GPS.svList = GPSlist; %跟踪卫星列表
 receiver_conf.GPS.acqTime = 2; %捕获所用的数据长度,ms
 receiver_conf.GPS.acqThreshold = 1.4; %捕获阈值,最高峰与第二大峰的比值
 receiver_conf.GPS.acqFreqMax = 5e3; %最大搜索频率,Hz
 %-------------------------------------------------------------------------%
 receiver_conf.BDS.almanac = almanac_BDS; %历书
 receiver_conf.BDS.eleMask = 10; %高度角阈值
-receiver_conf.BDS.svList = []; %跟踪卫星列表,[19,20,29,35,38,40,44] 19,21,22,34,38
+receiver_conf.BDS.svList = BDSlist; %跟踪卫星列表
 receiver_conf.BDS.acqThreshold = 1.4; %捕获阈值,最高峰与第二大峰的比值
 receiver_conf.BDS.acqFreqMax = 5e3; %最大搜索频率,Hz
 %-------------------------------------------------------------------------%

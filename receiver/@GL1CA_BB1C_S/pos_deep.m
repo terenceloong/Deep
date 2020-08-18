@@ -5,71 +5,6 @@ function pos_deep(obj)
 Lca = 299792458/1575.42e6; %载波长,m
 Lco = 299792458/1.023e6; %码长,m
 
-%% 不加权
-% % 获取卫星测量信息 & 获取通道信息 & 单独卫星导航解算
-% if obj.GPSflag==1
-%     satmeasGPS = obj.get_satmeasGPS; %卫星测量信息
-%     %---------------------------------------------------------------------%
-%     chN = obj.GPS.chN;
-%     quality = zeros(chN,1); %信号质量
-%     codeDisc = zeros(chN,1); %定位间隔内码鉴相器输出的平均值,m
-%     R_rho = zeros(chN,1); %伪距测量噪声方差,m^2
-%     R_rhodot = zeros(chN,1); %伪距率测量噪声方差,(m/s)^2
-%     for k=1:chN
-%         channel = obj.GPS.channels(k);
-%         if channel.state==3
-%             quality(k) = channel.quality;
-%             [co, ~] = channel.getDiscOutput;
-%             codeDisc(k) = sum(co)/length(co)*Lco;
-%             R_rho(k) = 4^2;
-%             R_rhodot(k) = 0.04^2;
-%         end
-%     end
-%     svGPS = [satmeasGPS, quality, R_rho, R_rhodot]; %带信号质量评价的卫星测量信息
-%     svGPS(:,7) = svGPS(:,7) - codeDisc; %本地码超前,伪距偏短,码鉴相器为负,修正是减
-%     %---------------------------------------------------------------------%
-%     sv = svGPS(svGPS(:,9)>=1,1:8); %选信号质量不为0的卫星
-%     satnavGPS = satnavSolve(sv, obj.rp);
-% end
-% if obj.BDSflag==1
-%     satmeasBDS = obj.get_satmeasBDS; %卫星测量信息
-%     %---------------------------------------------------------------------%
-%     chN = obj.BDS.chN;
-%     quality = zeros(chN,1); %信号质量
-%     codeDisc = zeros(chN,1); %定位间隔内码鉴相器输出的平均值,m
-%     R_rho = zeros(chN,1); %伪距测量噪声方差,m^2
-%     R_rhodot = zeros(chN,1); %伪距率测量噪声方差,(m/s)^2
-%     for k=1:chN
-%         channel = obj.BDS.channels(k);
-%         if channel.state==3
-%             quality(k) = channel.quality;
-%             [co, ~] = channel.getDiscOutput;
-%             codeDisc(k) = sum(co)/length(co)*Lco;
-%             R_rho(k) = 4^2;
-%             R_rhodot(k) = 0.04^2;
-%         end
-%     end
-%     svBDS = [satmeasBDS, quality, R_rho, R_rhodot]; %带信号质量评价的卫星测量信息
-%     svBDS(:,7) = svBDS(:,7) - codeDisc; %本地码超前,伪距偏短,码鉴相器为负,修正是减
-%     %---------------------------------------------------------------------%
-%     sv = svBDS(svBDS(:,9)>=1,1:8); %选信号质量不为0的卫星
-%     satnavBDS = satnavSolve(sv, obj.rp);
-% end
-% 
-% % 卫星导航解算 & 导航滤波
-% if obj.GPSflag==1 && obj.BDSflag==0
-%     satnav = satnavGPS;
-%     obj.navFilter.run(obj.imu, svGPS);
-% elseif obj.GPSflag==0 && obj.BDSflag==1
-%     satnav = satnavBDS;
-%     obj.navFilter.run(obj.imu, svBDS);
-% elseif obj.GPSflag==1 && obj.BDSflag==1
-%     sv = [svGPS(svGPS(:,9)>=1,1:8); svBDS(svBDS(:,9)>=1,1:8)];
-%     satnav = satnavSolve(sv, obj.rp);
-%     obj.navFilter.run(obj.imu, [svGPS;svBDS]);
-% end
-
-%% 加权
 % 获取卫星测量信息 & 获取通道信息 & 单独卫星导航解算
 if obj.GPSflag==1
     satmeasGPS = obj.get_satmeasGPS; %卫星测量信息
@@ -135,19 +70,34 @@ elseif obj.GPSflag==1 && obj.BDSflag==1
     obj.navFilter.run(obj.imu, [svGPS;svBDS]);
 end
 
-%%
-% 计算加速度在ecef系下的表示
+% 计算ecef系下加速度
 Cnb = quat2dcm(obj.navFilter.quat);
 Cen = dcmecef2ned(obj.navFilter.pos(1), obj.navFilter.pos(2));
-fb = obj.imu(4:6) - obj.navFilter.bias(4:6); %g
-fn = (fb*Cnb + [0,0,1]) * obj.navFilter.g; %m/s^2
-fe = fn*Cen;
+fb = (obj.imu(4:6) - obj.navFilter.bias(4:6)) * obj.navFilter.g; %惯导加速度,m/s^2
+wb = (obj.imu(1:3) - obj.navFilter.bias(1:3)) /180*pi; %角速度,rad/s
+wdot = obj.navFilter.wdot /180*pi; %角加速度,rad/s/s
+arm = obj.navFilter.arm; %体系下杆臂矢量
+fbt = cross(wdot,arm); %切向加速度,m/s^2
+fbn = cross(wb,cross(wb,arm)); %法向加速度,m/s^2
+fn = (fb+fbt+fbn)*Cnb + [0,0,obj.navFilter.g]; %地理系下加速度
+fe = fn*Cen; %ecef系下加速度
+
+% 计算ecef系下杆臂位置速度
+r_arm = arm*Cnb*Cen;
+v_arm = cross(wb,arm)*Cnb*Cen;
+
+% 惯导位置速度做杆臂修正后得到天线位置速度
+obj.rp = obj.navFilter.rp + r_arm;
+obj.vp = obj.navFilter.vp + v_arm;
+obj.att = obj.navFilter.att;
+obj.pos = ecef2lla(obj.rp);
+obj.vel = obj.vp*Cen';
 
 % 通道修正
 if obj.GPSflag==1
     satmeas = satmeasGPS;
     [rho0, rhodot0, rspu] = rho_rhodot_cal_ecef(satmeas(:,1:3), satmeas(:,4:6), ...
-                            obj.navFilter.rp, obj.navFilter.vp); %理论相对距离和相对速度
+                            obj.rp, obj.vp); %理论相对距离和相对速度
     acclos0 = rspu*fe'; %计算接收机运动引起的相对加速度
     if obj.deepMode==1 %只修码相位
         for k=1:obj.GPS.chN
@@ -183,7 +133,7 @@ end
 if obj.BDSflag==1
     satmeas = satmeasBDS;
     [rho0, rhodot0, rspu] = rho_rhodot_cal_ecef(satmeas(:,1:3), satmeas(:,4:6), ...
-                            obj.navFilter.rp, obj.navFilter.vp); %理论相对距离和相对速度
+                            obj.rp, obj.vp); %理论相对距离和相对速度
     acclos0 = rspu*fe'; %计算接收机运动引起的相对加速度
     if obj.deepMode==1 %只修码相位
         for k=1:obj.BDS.chN
@@ -220,13 +170,6 @@ end
 % 新跟踪的通道切换深组合跟踪环路
 obj.channel_deep;
 
-% 更新接收机位置速度
-obj.pos = obj.navFilter.pos;
-obj.vel = obj.navFilter.vel;
-obj.att = obj.navFilter.att;
-obj.rp = obj.navFilter.rp;
-obj.vp = obj.navFilter.vp;
-
 % 接收机时钟修正
 obj.deltaFreq = obj.deltaFreq + obj.navFilter.dtv;
 obj.ta = obj.ta - sec2smu(obj.navFilter.dtr);
@@ -251,7 +194,7 @@ obj.storage.att(m,:) = obj.att;
 obj.storage.imu(m,:) = obj.imu;
 obj.storage.bias(m,:) = obj.navFilter.bias;
 P = obj.navFilter.P;
-obj.storage.P(m,:) = sqrt(diag(P));
+obj.storage.P(m,:) = sqrt(diag(P)); %P(m,1:size(P,1))
 Cnb = quat2dcm(obj.navFilter.quat);
 P_angle = var_phi2angle(P(1:3,1:3), Cnb);
 obj.storage.P(m,1:3) = sqrt(diag(P_angle));
