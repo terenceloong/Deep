@@ -22,9 +22,12 @@ c = uicontextmenu; %创建目录
 f.UIContextMenu = c; %目录加到figure上,在figure空白处右键弹出
 
 % 创建figure目录项(*)
-uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'print_all_log'}, 'Text','Print log');
-uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_all_trackResult'}, 'Text','Plot trackResult');
-uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_sv_3d'}, 'Text','Plot 3D');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'print_all_log'}, 'Text','Print all log');
+% uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_all_trackResult'}, 'Text','Plot all trackResult');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_all_I_Q'}, 'Text','Print all I/Q');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_all_carrNco'}, 'Text','Print all carrNco');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_all_carrAcc'}, 'Text','Print all carrAcc');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_sv_3d'}, 'Text','Plot 3D', 'Separator','on');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'cal_aziele'}, 'Text','Cal aziele', 'Separator','on');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'cal_iono'}, 'Text','Cal iono');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_df'}, 'Text','Plot df', 'Separator','on');
@@ -72,7 +75,7 @@ for k=1:length(PRN) %处理所有高度角大于0的卫星
     objch = obj.channels(obj.svList==PRN(k)); %通道对象
     % 创建目录项(*)
     uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_trackResult'}, 'Text','trackResult');
-    uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_I_Q'}, 'Text','I_Q', 'Separator','on');
+    uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_I_Q'}, 'Text','I/Q', 'Separator','on');
     uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_I_P'}, 'Text','I_P');
     uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_I_P_flag'}, 'Text','I_P(flag)');
     uimenu(c, 'MenuSelectedFcn',{@menuCallback,objch,'plot_codeFreq'}, 'Text','codeFreq', 'Separator','on');

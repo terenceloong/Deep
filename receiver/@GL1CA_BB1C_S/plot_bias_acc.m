@@ -1,6 +1,10 @@
 function plot_bias_acc(obj)
 % 画加速度计零偏输出
 
+if obj.ns==0 %没有数据直接退出
+    return
+end
+
 % 时间轴
 t = obj.storage.ta - obj.storage.ta(1);
 t = t + obj.Tms/1000 - t(end);

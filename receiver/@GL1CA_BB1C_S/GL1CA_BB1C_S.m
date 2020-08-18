@@ -176,12 +176,16 @@ classdef GL1CA_BB1C_S < handle
         clean_storage(obj)            %清理数据存储
         set_ephemeris(obj, filename)  %预设星历
         save_ephemeris(obj, filename) %保存星历
-        print_all_log(obj)            %打印所有通道日志
-        plot_all_trackResult(obj)     %显示所有通道跟踪结果
         interact_constellation(obj)   %画交互星座图
         get_result(obj)               %获取接收机运行结果
         imu_input(obj, tp, imu)       %IMU数据输入
         channel_deep(obj)             %通道切换深组合跟踪环路
+        
+        print_all_log(obj)            %打印所有通道日志
+        plot_all_trackResult(obj)     %显示所有通道跟踪结果
+        plot_all_I_Q(obj)
+        plot_all_carrNco(obj)
+        plot_all_carrAcc(obj)
         
         plot_sv_3d(obj)
         plot_svnum(obj)

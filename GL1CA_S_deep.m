@@ -155,10 +155,5 @@ clearvars -except data_file receiver_conf nCoV tf p0 imu
 %% 画交互星座图
 nCoV.interact_constellation;
 
-%% 其他
-% nCoV.print_all_log; %打印通道日志
-% nCoV.plot_all_trackResult; %显示跟踪结果
-% GPS.visibility('~temp\almanac', tf, 8, p0, 1); %显示当前可见卫星一段时间的轨迹
-
 %% 保存结果
 save('~temp\result.mat')

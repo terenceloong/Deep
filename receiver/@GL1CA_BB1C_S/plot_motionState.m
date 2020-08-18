@@ -1,6 +1,10 @@
 function plot_motionState(obj)
 % 画运动状态
 
+if obj.ns==0 %没有数据直接退出
+    return
+end
+
 % 时间轴
 t = obj.storage.ta - obj.storage.ta(1);
 t = t + obj.Tms/1000 - t(end);
