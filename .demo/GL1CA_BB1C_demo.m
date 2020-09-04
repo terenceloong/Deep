@@ -5,12 +5,12 @@ clear
 clc
 fclose('all'); %关闭之前打开的所有文件
 
-Ts = 60; %总处理时间,s
+Ts = 300; %总处理时间,s
 To = 0; %偏移时间,s
 GPSflag = 1;
 BDSflag = 1;
 GPSlist = []; %[10,15,20,24]
-BDSlist = []; %[19,20,29,35,38,40,44] 19,21,22,34,38
+BDSlist = []; %[19,20,29,35,38,40,44]
 
 %% 选择GNSS数据文件
 valid_prefix = 'B210-'; %文件名有效前缀
@@ -21,7 +21,7 @@ end
 data_file = [path, file]; %数据文件完整路径,path最后带\
 
 % data_file = 'C:\Users\longt\Desktop\B210_20190823_194010_ch1.dat'; %指定文件,用于测试
-% data_file = 'C:\Users\longt\Desktop\GNSS data\B210_20200727_111615_ch1.dat';
+% data_file = 'C:\Users\longt\Desktop\B210_20200727_111615_ch1.dat';
 
 %% 主机参数
 % 根据实际情况修改.

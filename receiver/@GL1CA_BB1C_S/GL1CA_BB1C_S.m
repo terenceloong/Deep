@@ -184,6 +184,7 @@ classdef GL1CA_BB1C_S < handle
         print_all_log(obj)            %打印所有通道日志
         plot_all_trackResult(obj)     %显示所有通道跟踪结果
         plot_all_I_Q(obj)
+        plot_all_I_P(obj)
         plot_all_carrNco(obj)
         plot_all_carrAcc(obj)
         

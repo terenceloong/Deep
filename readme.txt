@@ -173,3 +173,6 @@ G(GPS),R(GLONASS),E(Galileo),C(BDS),J(QZSS),I(IRNSS),参见RINEX 3.03
 
 <===Version 2.9===>2020.8.18
 1.添加画所有通道的图
+
+<===Version 2.10===>2020.9.4
+1.修北斗信号跟踪码相位的bug

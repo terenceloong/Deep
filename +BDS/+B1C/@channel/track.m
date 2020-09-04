@@ -42,7 +42,8 @@ codeE = obj.codePilot(floor(tcode+0.3)); %超前码
 codeL = obj.codePilot(floor(tcode-0.3)); %滞后码
 index = floor(tcode);
 codeP = obj.codePilot(index);     %即时码
-obj.remCodePhase = mod(obj.remCodePhase + obj.codeNco*te, 20460); %剩余码相位,码片
+obj.remCodePhase = obj.remCodePhase + obj.codeNco*te; %剩余码相位,码片
+obj.remCodePhase = mod(obj.remCodePhase+1,20460)-1; %防止剩余码相位略小于20460,导致算trackBlockSize时出现负数
 
 % 原始数据乘载波
 signalI = dataI.*carr_cos + dataQ.*carr_sin; %乘负载波

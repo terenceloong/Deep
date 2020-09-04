@@ -1,33 +1,6 @@
 function pos_normal(obj)
 % 正常定位
 
-%% 不加权
-% % 获取卫星测量信息 & 单独卫星导航解算
-% if obj.GPSflag==1
-%     satmeasGPS = obj.get_satmeasGPS;
-%     sv = satmeasGPS(~isnan(satmeasGPS(:,1)),:); %选星
-%     satnavGPS = satnavSolve(sv, obj.rp);
-% end
-% if obj.BDSflag==1
-%     satmeasBDS = obj.get_satmeasBDS;
-%     sv = satmeasBDS(~isnan(satmeasBDS(:,1)),:); %选星
-%     satnavBDS = satnavSolve(sv, obj.rp);
-% end
-% 
-% % 卫星导航解算
-% if obj.GPSflag==1 && obj.BDSflag==0
-%     satnav = satnavGPS;
-% elseif obj.GPSflag==0 && obj.BDSflag==1
-%     satnav = satnavBDS;
-% elseif obj.GPSflag==1 && obj.BDSflag==1
-%     satmeas = [satmeasGPS; satmeasBDS];
-%     sv = satmeas(~isnan(satmeas(:,1)),:); %选星
-%     satnav = satnavSolve(sv, obj.rp);
-% end
-% dtr = satnav(13); %接收机钟差,s
-% dtv = satnav(14); %接收机钟频差,s/s
-
-%% 加权
 % 波长
 Lca = 299792458/1575.42e6; %载波长,m
 Lco = 299792458/1.023e6; %码长,m
@@ -88,7 +61,6 @@ end
 dtr = satnav(13); %接收机钟差,s
 dtv = satnav(14); %接收机钟频差,s/s
 
-%%
 % 更新接收机位置速度
 if ~isnan(satnav(1))
     obj.pos = satnav(1:3);
