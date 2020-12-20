@@ -21,6 +21,7 @@ classdef filter_single < handle
         P       %P阵
         Q       %Q阵
         Rwb     %陀螺仪输出噪声方差
+        wbDelay %延迟的角速度输出
         arm     %杆臂矢量,体系下IMU指向天线
         wdot    %角加速度,deg/s/s,(积分器的值)
         wdotK   %计算角加速度时用的K
@@ -67,6 +68,7 @@ classdef filter_single < handle
                          ])^2 * obj.T^2; %para的Q都是标准差
 %             obj.Q(6,6) = obj.Q(6,6) * 100; %可以让地向速度估计有噪声,地向速度估计的偏置是高度变化引起的
             obj.Rwb = (para.sigma_gyro*d2r)^2;
+            obj.wbDelay = delayN(3, 20);
             obj.arm = para.arm;
             obj.wdot = [0,0,0];
             [K1, K2] = order2LoopCoefD(8, 0.707, obj.T);
@@ -105,6 +107,9 @@ classdef filter_single < handle
             wdotE = imu(1:3) - obj.wdotX; %误差
             obj.wdot = obj.wdot + obj.wdotK(2)*wdotE; %积分器
             obj.wdotX = obj.wdotX + (obj.wdotK(1)*wdotE+obj.wdot)*obj.T;
+            %----角速度延迟
+            wbd = obj.wbDelay.push(imu(1:3));
+            wbd = (wbd - obj.bias(1:3)) *d2r; %减当前零偏
             %----零偏补偿
             imu = imu - obj.bias;
             wb = imu(1:3) *d2r; %rad
@@ -169,7 +174,7 @@ classdef filter_single < handle
                 R = diag([R_rho(index1);R_rhodot(index2)]);
                 if obj.motion.state==0 %静止时加入角速度量测
                     H(end+(1:3),12:14) = eye(3);
-                    Z = [Z; wb'];
+                    Z = [Z; wbd']; %使用延迟后的角速度,防止机动前几个点的角速度抖动
                     R(end+(1:3),end+(1:3)) = diag([1,1,1]*obj.Rwb);
                 end
                 %----滤波

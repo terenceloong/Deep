@@ -44,7 +44,7 @@ classdef motionDetector_gyro < handle
                 else
                     obj.cnt = obj.cnt+1;
                 end
-                if obj.cnt>=obj.N1 %连续N1个点角速度小于阈值,认为静止
+                if obj.cnt==obj.N1 %连续N1个点角速度小于阈值,认为静止
                     obj.cnt = 0;
                     obj.state = 0;
                 end
