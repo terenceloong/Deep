@@ -88,9 +88,8 @@ classdef GL1CA_S < handle
             channel_config.acqFreqMax = conf.acqFreqMax;
             %----创建通道
             obj.chN = length(obj.svList);
-            obj.channels = GPS.L1CA.channel(obj.svList(1), channel_config);
-            % 先创建一个对象用来确定channel的数据类型,后面才能用索引往下续
-            for k=2:obj.chN
+            obj.channels = GPS.L1CA.channel.empty; %创建类的空矩阵
+            for k=1:obj.chN
                 obj.channels(k) = GPS.L1CA.channel(obj.svList(k), channel_config);
             end
             obj.channels = obj.channels'; %转成列向量

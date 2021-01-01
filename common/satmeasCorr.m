@@ -10,7 +10,7 @@ c = 299792458;
 tt = tt + corr.dtsv + corr.dtrel - corr.dtsagnac - corr.TGD - corr.dtiono;
 rho = tt*c;
 
-df = -doppler + corr.dfsv + corr.dfrel; %doppler为正,相对距离减小,所以取负号
+df = -doppler + corr.dfsv + corr.dfrel - corr.dfsagnac; %doppler为正,相对距离减小,所以取负号
 rhodot = df*c;
 
 rho_rhodot = [rho, rhodot];

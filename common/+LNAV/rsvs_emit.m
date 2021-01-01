@@ -1,8 +1,9 @@
-function [rsvs, corr] = rsvs_emit(ephe, te0, rp, iono, lla)
+function [rsvs, corr] = rsvs_emit(ephe, te0, rp, vp, iono, lla)
 % 计算卫星在信号发射时刻的位置速度,计算伪距伪距率校正量
 % ephe:21参数星历(5+16)
 % te0:信号名义发射时间,[s,ms,us]
 % rp:接收机ecef位置(大致),用于计算Sagnac校正
+% vp:接收机ecef速度,用于计算Sagnac频率差
 % iono:电离层校正参数,NaN表示无效
 % lla:接收机纬经高,与rp对应,deg
 % rsvs:卫星ecef位置速度,[x,y,z,vx,vy,vz]
@@ -12,10 +13,6 @@ function [rsvs, corr] = rsvs_emit(ephe, te0, rp, iono, lla)
 if length(ephe)~=21
     error('Ephemeris error!')
 end
-
-% 地球参数
-w = 7.2921151467e-5;
-c = 299792458;
 
 % 提取星历参数
 toc = ephe(1);
@@ -39,8 +36,11 @@ te = te0(3)/1e6 - dtsv + te0(2)/1e3 + te0(1); %s
 [rsvs, dtrel] = LNAV.rsvs_ephe(ephe0, te);
 
 % 计算Saganc效应校正项
+w_c2 = 8.113572326725195e-22; %w/c^2, w=7.2921151467e-5, c=299792458
 rs = rsvs(1:3);
-dtsagnac = (rs(1)*rp(2)-rs(2)*rp(1))*w/c^2;
+dtsagnac = (rs(1)*rp(2)-rs(2)*rp(1)) * w_c2;
+vs = rsvs(4:6);
+dfsagnac = (vs(1)*rp(2)-vs(2)*rp(1)+rs(1)*vp(2)-rs(2)*vp(1)) * w_c2;
 
 % 计算相对论效应引起的卫星钟频差
 % 最大6ps/s,跟卫星钟频差一个量级
@@ -64,5 +64,6 @@ corr.TGD = TGD; %群延迟,s
 corr.dtiono = dtiono; %电离层延迟,s
 corr.dfsv = dfsv; %卫星钟频差,s/s
 corr.dfrel = dfrel; %相对论钟频差,s/s
+corr.dfsagnac = dfsagnac; %Saganc效应频率差,s/s
 
 end

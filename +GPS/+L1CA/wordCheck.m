@@ -1,4 +1,4 @@
-function status = wordCheck(ndat)
+function [status, parity] = wordCheck(ndat)
 % GPS导航电文每个字的校验
 % ndat为±1向量,不用管锁相环相位模糊造成的电平翻转,32位,前2位为上个字的最后2位
 % 认为1为-1,-1为1

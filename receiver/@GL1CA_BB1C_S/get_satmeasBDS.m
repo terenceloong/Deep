@@ -20,9 +20,9 @@ for k=1:obj.BDS.chN
         te = [floor(channel.tc0/1e3), mod(channel.tc0,1e3), 0] + ...
              [0, floor(codePhase/2046), mod(codePhase/2046,1)*1e3]; %定位点码发射时间(考虑子载波时码频率2.046e6Hz)
         %----计算信号发射时刻卫星位置速度
-%         [satmeas(k,1:6), corr] = CNAV1.rsvs_emit(channel.ephe(5:end), te, obj.rp, obj.BDS.iono, obj.pos);
+        % [satmeas(k,1:6), corr] = CNAV1.rsvs_emit(channel.ephe(5:end), te, obj.rp, obj.vp, obj.BDS.iono, obj.pos);
         %----计算信号发射时刻卫星位置速度加速度
-        [rsvsas, corr] = CNAV1.rsvsas_emit(channel.ephe(5:end), te, obj.rp, obj.BDS.iono, obj.pos);
+        [rsvsas, corr] = CNAV1.rsvsas_emit(channel.ephe(5:end), te, obj.rp, obj.vp, obj.BDS.iono, obj.pos);
         satmeas(k,1:6) = rsvsas(1:6);
         %----计算卫星运动引起的载波频率变化率(短时间近似不变,使用上一时刻的位置计算就行,视线矢量差别不大)
         rhodotdot = rhodotdot_cal(rsvsas, obj.rp);

@@ -43,7 +43,7 @@ iono = [ephemeris.alpha, ephemeris.beta];
 
 % 初始时间
 c = datevec(date,'yyyy-mm-dd'); %时间矢量
-t = UTC2BDT(c, zone); %[week,second]
+t = UTC2GPS(c, zone); %[week,second]
 ts = t(2); %只取秒数
 
 % 计算

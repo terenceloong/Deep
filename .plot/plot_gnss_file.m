@@ -2,7 +2,7 @@ function plot_gnss_file
 % 观察GNSS文件中的数据
 
 % 选择文件
-valid_prefix = 'B210-'; %文件名有效前缀
+valid_prefix = 'B210-SIM-'; %文件名有效前缀
 [file, path] = uigetfile('*.dat', '选择GNSS数据文件'); %文件选择对话框
 if ~ischar(file) || ~contains(valid_prefix, strtok(file,'_'))
     error('File error!')

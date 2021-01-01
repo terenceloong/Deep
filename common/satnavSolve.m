@@ -57,15 +57,18 @@ satnav(4:6) = rp; %ecef位置
 satnav(13) = x(4)/c; %接收机钟差,s
 
 % 计算接收机速度
- E = rs - ones(n,1)*rp;
- Em = vecnorm(E,2,2);
- Eu = E ./ (Em*[1,1,1]);
- G(:,1:3) = Eu;
- S = sum(Eu.*vs,2);
- v = (G'*G)\G'*(S-V);
- Cen = dcmecef2ned(satnav(1), satnav(2));
- satnav(7:9) = Cen*v(1:3); %地理系下速度
- satnav(10:12) = v(1:3); %ecef系下速度
- satnav(14) = v(4)/c; %接收机钟频差,无量纲
+E = rs - ones(n,1)*rp;
+Em = vecnorm(E,2,2);
+Eu = E ./ (Em*[1,1,1]);
+G(:,1:3) = Eu;
+S = sum(Eu.*vs,2); %卫星速度矢量在视线矢量上的投影
+cm = 1 + S/c; %光速修正
+G(:,4) = -cm;
+v = (G'*G)\G'*(S-V.*cm);
+% v = (G'*G)\G'*(S-V);
+Cen = dcmecef2ned(satnav(1), satnav(2));
+satnav(7:9) = Cen*v(1:3); %地理系下速度
+satnav(10:12) = v(1:3); %ecef系下速度
+satnav(14) = v(4)/c; %接收机钟频差,无量纲
 
 end

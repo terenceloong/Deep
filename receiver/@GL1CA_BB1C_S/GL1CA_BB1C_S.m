@@ -93,8 +93,8 @@ classdef GL1CA_BB1C_S < handle
                 channel_config.acqFreqMax = conf.GPS.acqFreqMax;
                 % 创建通道
                 obj.GPS.chN = length(obj.GPS.svList);
-                obj.GPS.channels = GPS.L1CA.channel(obj.GPS.svList(1), channel_config);
-                for k=2:obj.GPS.chN
+                obj.GPS.channels = GPS.L1CA.channel.empty;
+                for k=1:obj.GPS.chN
                     obj.GPS.channels(k) = GPS.L1CA.channel(obj.GPS.svList(k), channel_config);
                 end
                 obj.GPS.channels = obj.GPS.channels'; %转成列向量
@@ -130,8 +130,8 @@ classdef GL1CA_BB1C_S < handle
                 channel_config.acqFreqMax = conf.BDS.acqFreqMax;
                 % 创建通道
                 obj.BDS.chN = length(obj.BDS.svList);
-                obj.BDS.channels = BDS.B1C.channel(obj.BDS.svList(1), channel_config);
-                for k=2:obj.BDS.chN
+                obj.BDS.channels = BDS.B1C.channel.empty;
+                for k=1:obj.BDS.chN
                     obj.BDS.channels(k) = BDS.B1C.channel(obj.BDS.svList(k), channel_config);
                 end
                 obj.BDS.channels = obj.BDS.channels'; %转成列向量

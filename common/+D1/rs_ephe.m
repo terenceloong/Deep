@@ -12,10 +12,10 @@ if paraN~=16
     error('Ephemeris error!')
 end
 
-% GPS文档给出的地球参数(GPS和北斗参数算的位置差挺大,多的十几米)
-miu = 3.986005e14;
-w = 7.2921151467e-5;
-F = -4.442807633e-10;
+% 北斗文档给出的地球参数
+miu = 3.986004418e14;
+w = 7.292115e-5;
+F = -4.442807309e-10;
 
 % 观测历元与参考历元的时间差
 toe = ephe(1,1);
@@ -47,10 +47,22 @@ for k=1:svN
     xp = r*cos(u);
     yp = r*sin(u);
     i = ephe(k,9) + ephe(k,10)*dt + di;
-    Omega = ephe(k,7) + (ephe(k,8)-w)*dt - w*toe;
-    rs(k,1) = xp*cos(Omega) - yp*cos(i)*sin(Omega);
-    rs(k,2) = xp*sin(Omega) + yp*cos(i)*cos(Omega);
-    rs(k,3) = yp*sin(i);
+    if i>0.3 %MEO/IGSO
+        Omega = ephe(k,7) + (ephe(k,8)-w)*dt - w*toe;
+        rs(k,1) = xp*cos(Omega) - yp*cos(i)*sin(Omega);
+        rs(k,2) = xp*sin(Omega) + yp*cos(i)*cos(Omega);
+        rs(k,3) = yp*sin(i);
+    else %GEO
+        Omega = ephe(k,7) + ephe(k,8)*dt - w*toe;
+        rs0 = [xp*cos(Omega) - yp*cos(i)*sin(Omega);
+               xp*sin(Omega) + yp*cos(i)*cos(Omega);
+               yp*sin(i)]; %卫星在自定义坐标系中的坐标
+        psi = -5/180*pi;
+        Rx = [1,0,0; 0,cos(psi),sin(psi); 0,-sin(psi),cos(psi)];
+        psi = w*dt;
+        Rz = [cos(psi),sin(psi),0; -sin(psi),cos(psi),0; 0,0,1];
+        rs(k,:) = Rz*Rx*rs0;
+    end
     dtrel(k) = F*e*sqa*sin_E;
 end
 

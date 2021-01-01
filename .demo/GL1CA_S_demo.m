@@ -5,12 +5,12 @@ clear
 clc
 fclose('all'); %关闭之前打开的所有文件
 
-Ts = 10; %总处理时间,s
+Ts = 60; %总处理时间,s
 To = 0; %偏移时间,s
 svList = []; %[10,15,20,24]
 
 %% 选择GNSS数据文件
-valid_prefix = 'B210-'; %文件名有效前缀
+valid_prefix = 'B210-SIM-'; %文件名有效前缀
 [file, path] = uigetfile('*.dat', '选择GNSS数据文件'); %文件选择对话框
 if ~ischar(file) || ~contains(valid_prefix, strtok(file,'_'))
     error('File error!')

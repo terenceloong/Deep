@@ -41,7 +41,7 @@ ephe = ephe(PRN,:); %删除无数据的行
 
 % 使用星历计算所有卫星方位角高度角
 t = UTC2BDT(c, zone); %[week,second]
-rs = LNAV.rs_ephe(ephe, t(2));
+rs = D1.rs_ephe(ephe, t(2));
 [azi, ele] = aziele_xyz(rs, p);
 
 % 获取高度角大于0的卫星
