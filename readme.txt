@@ -188,3 +188,6 @@ G(GPS),R(GLONASS),E(Galileo),C(BDS),J(QZSS),I(IRNSS),参见RINEX 3.03
 3.添加GPS中频信号仿真
 4.添加Sagnac效应频率差补偿
 5.卫星速度解算时进行光速修正
+
+<===Version 3.1===>2021.1.1
+1.添加载噪比表

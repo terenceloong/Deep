@@ -14,6 +14,14 @@ classdef signalSim < handle
 % 40dB·Hz信号幅值0.07(fs=4e6)
 % 仿真时的信号幅值是以热噪声为参考,当有多个信号时,其他信号也相当于噪声,会使实际的载噪比低于预设值
 % 实际试验时,卫星信号越多越不会出现载噪比特别大的卫星
+% 对于指定积分时间所能跟踪的最弱信号要保证A/sigma=3,对应的载噪比为CN0 = 10*log10(9/(2*T))
+% 1ms积分时间跟踪的最低载噪比为36.5dB·Hz
+% 20ms积分时间跟踪的最低载噪比为23.5dB·Hz
+
+% 载噪比表:第一行时间,第二行载噪比,第三行载噪比变化率
+% 变化必须是线性
+% 第一列的时间必须是0,第一列的变化率一般是0
+% 最后一列的变化率必须是0
 
     properties
         PRN             %卫星编号
@@ -30,15 +38,12 @@ classdef signalSim < handle
     end
     
     methods
-        function obj = signalSim(PRN, conf) %构造函数
+        function obj = signalSim(PRN, sampleFreq) %构造函数
             obj.PRN = PRN;
             obj.CAcode = GPS.L1CA.codeGene(PRN);
             obj.carrFactor = -2*pi*1575.42e6;
-            obj.N0 = 2 / conf.sampleFreq; %sigma=1的复白噪声功率为2
-            obj.cnrMode = conf.cnrMode;
-            if obj.cnrMode==0
-                obj.cnrValue = conf.cnrValue;
-            end
+            obj.N0 = 2 / sampleFreq; %sigma=1的复白噪声功率为2
+            obj.cnrMode = 0; %默认根据高度角计算载噪比
         end
         
         function update_message(obj, t) %更新导航电文
@@ -58,12 +63,13 @@ classdef signalSim < handle
         end
         
         function cnr = get_cnr(obj, t) %获取载噪比
-            if obj.cnrMode==0 %常值
-                cnr = obj.cnrValue;
-            elseif obj.cnrMode==1 %根据高度角计算
+            if obj.cnrMode==0 %根据高度角计算
                 cnr = 35 + 20*sind(obj.ele); %最低35,最高55
+            elseif obj.cnrMode==1 %常值
+                cnr = obj.cnrValue;
             elseif obj.cnrMode==2 %查找载噪比表
-                cnr = t*0 + 50;
+                index = find(obj.cnrTable(1,:)<=t, 1, 'last'); %表的对应列
+                cnr = obj.cnrTable(2,index) + obj.cnrTable(3,index)*(t-obj.cnrTable(1,index));
             end
         end
         

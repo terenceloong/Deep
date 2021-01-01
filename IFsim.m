@@ -17,28 +17,40 @@ gain = 100; %增益
 p0 = [45.7364, 126.70775, 165];
 rp = lla2ecef(p0);
 
+%% 卫星模式
 satMode = 0; %卫星模式,0-根据截至高度角自动计算,1-指定卫星列表
 svList = [3,17,19,28];
 svN = length(svList); %可见卫星数目
 
-%% 信号配置
-signal_conf.cnrMode = 1;
-signal_conf.cnrValue = 45;
-signal_conf.sampleFreq = sampleFreq;
+%% 仿真时间
+startTime_utc = startTime - [0,0,0,zone,0,0]; %仿真开始的UTC时间
+startTime_gps = UTC2GPS(startTime, zone); %仿真开始的GPS时间
+startTime_tow = startTime_gps(2); %周内秒数
 
 %% 创建信号仿真对象
 sats = GPS.L1CA.signalSim.empty; %创建类的空矩阵
 for k=1:32
-    sats(k) = GPS.L1CA.signalSim(k, signal_conf);
+    sats(k) = GPS.L1CA.signalSim(k, sampleFreq);
 end
 sats = sats'; %转化成列向量
 
+%% 设置载噪比模式
+%----所有卫星载噪比设置成常值
+% for k=1:32
+%     sats(k).cnrMode = 1;
+%     sats(k).cnrValue = 48;
+% end
+%----为指定卫星设置载噪比表
+% cnrTable1 = [0, 10, 15;
+%             55, 55, 40;
+%              0, -3,  0];
+% cnrTable1(1,2:end) = cnrTable1(1,2:end) + startTime_tow;
+% sats(17).cnrMode = 2;
+% sats(17).cnrTable = cnrTable1;
+
 %% 获取星历
-startTime_utc = startTime - [0,0,0,zone,0,0]; %仿真开始的UTC时间
 filename = GPS.ephemeris.download('~temp\ephemeris', datestr(startTime_utc,'yyyy-mm-dd'));
 ephe = RINEX.read_N2(filename);
-startTime_gps = UTC2GPS(startTime, zone); %仿真开始的GPS时间
-startTime_tow = startTime_gps(2); %周内秒数
 for k=1:32
     if ~isempty(ephe.sv{k}) && ephe.sv{k}(1).health==0 %保证有星历并且卫星健康
         index = find([ephe.sv{k}.TOW]<=startTime_tow, 1, 'last'); %根据tow找到最近星历所在的行
