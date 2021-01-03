@@ -191,3 +191,7 @@ G(GPS),R(GLONASS),E(Galileo),C(BDS),J(QZSS),I(IRNSS),参见RINEX 3.03
 
 <===Version 3.1===>2021.1.1
 1.添加载噪比表
+
+<===Version 3.2===>2021.1.3
+1.添加轨迹发生器
+2.GPS中频信号仿真可以使用生成的轨迹

@@ -14,13 +14,25 @@ clockError = 4e-3; %接收机钟频差,正数表示钟快,ppm
 sampleFreq = 4e6; %采样频率,Hz
 gain = 100; %增益
 
-p0 = [45.7364, 126.70775, 165];
-rp = lla2ecef(p0);
+%% 轨迹模式
+trajMode = 0; %轨迹模式,0-静止,1-动态
+if trajMode==0
+    p0 = [45.7364, 126.70775, 165];
+    rp = lla2ecef(p0);
+    traj = ones(runTime*1000/step+1,1) * rp; %生成每个时刻的位置
+else
+    load('~temp\traj.mat') %加载轨迹
+    if dt*1000~=step %轨迹的步长必须与仿真步长相等
+        error('Step mismatch!')
+    end
+end
 
 %% 卫星模式
 satMode = 0; %卫星模式,0-根据截至高度角自动计算,1-指定卫星列表
-svList = [3,17,19,28];
-svN = length(svList); %可见卫星数目
+if satMode==0
+    svList = [3,17,19,28];
+    svN = length(svList); %可见卫星数目
+end
 
 %% 仿真时间
 startTime_utc = startTime - [0,0,0,zone,0,0]; %仿真开始的UTC时间
@@ -84,6 +96,7 @@ for k=1:loopN
     if mod(tn0,1)==0
         waitbar((tn0+1)/runTime, f, [sprintf('%d',tn0+1),waitbar_str]); %更新进度条
         %----更新所有卫星高度角
+        rp = traj(k,1:3); %上次位置
         tr0_real = timeCarry(sec2smu(tn0 * clockErrorFactor)); 
         tr0_real(1) = tr0_real(1) + startTime_tow; %上次真实时间
         for PRN=1:32
@@ -108,6 +121,7 @@ for k=1:loopN
     
     % 生成可见卫星的信号
     tn = k * step / 1000; %当前接收机钟运行时间
+    rp = traj(k+1,1:3); %当前位置
     tr = timeCarry(sec2smu(tn));
     tr(1) = tr(1) + startTime_tow; %当前接收机钟时间
     tr_real = timeCarry(sec2smu(tn * clockErrorFactor));
