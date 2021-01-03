@@ -31,12 +31,15 @@ vel_ned  = zeros(N,3); %地理系速度
 pos_lla  = zeros(N,3); %纬经高
 pos_ecef = zeros(N,3); %ecef位置
 angle    = zeros(N,3); %姿态角
-acc      = zeros(N-1,3); %加速度
-omega    = zeros(N-1,3); %角速度
+acc      = zeros(N,3); %加速度
+omega    = zeros(N,3); %角速度
 
 %% 计算每个时刻的状态
 index = ones(1,6); %时间区间索引
 cmd = zeros(2,6); %第一行为值,第二行为导数
+d2r = pi/180;
+r2d = 180/pi;
+w = 7.292115e-5; %地球自转角速度
 for k=1:N
     t = (k-1)*dt; %当前时间
     %----更新索引,提取值
@@ -57,34 +60,57 @@ for k=1:N
             cmd(2,m) = diffFun(t);
         end
     end
-    %----计算
+    %----计算速度
 	vh = cmd(1,1); %水平速度
     vy = cmd(1,2); %速度方向
-    v = [vh*cosd(vy), vh*sind(vy), -cmd(1,3)]; %北东地速度
-    if k>1 %第一次是初值
-        lat = p(1);
-        h = p(3);
-        [Rm, Rn] = earthCurveRadius(lat);
+    cos_vy = cosd(vy);
+    sin_vy = sind(vy);
+    v = [vh*cos_vy, vh*sin_vy, -cmd(1,3)]; %北东地速度
+    %----计算曲率半径
+    lat = p(1);
+    lon = p(2);
+    h = p(3);
+    [Rm, Rn] = earthCurveRadius(lat);
+    %----计算位置(第一次不用算)
+    if k>1
         dp = (v0+v)/2*dt;
-        p(1) = p(1) + dp(1)/(Rm+h) /pi*180;
-        p(2) = p(2) + dp(2)*secd(lat)/(Rn+h) /pi*180;
-        p(3) = p(3) - dp(3);
+        lat = lat + dp(1)/(Rm+h)*r2d;
+        lon = lon + dp(2)*secd(lat)/(Rn+h)*r2d;
+        h = h - dp(3);
+        p = [lat, lon, h];
     end
-    v0 = v; %记录上次的速度
+    %----计算角速度,加速度
+    psi = cmd(1,4)*d2r;
+    theta = cmd(1,5)*d2r;
+    gamma = cmd(1,6)*d2r;
+    Cbn = angle2dcm(psi, theta, gamma)';
+    vh_dot = cmd(2,1);
+    vy_dot = cmd(2,2)*d2r;
+    v_dot = [vh_dot*cos_vy-vh*sin_vy*vy_dot, ...
+             vh_dot*sin_vy+vh*cos_vy*vy_dot, ...
+             -cmd(2,3)]; %速度变化率
+    a_dot = cmd(2,4:6)*d2r; %姿态角变化率
+    g = gravitywgs84(h, lat); %重力加速度
+    wnbb = a_dot * [-sin(theta), sin(gamma)*cos(theta), cos(gamma)*cos(theta);
+                    0, cos(gamma), -sin(gamma); 1, 0, 0];
+    wien = [w*cosd(lat), 0, -w*sind(lat)];
+    wenn = [v(2)/(Rn+h), -v(1)/(Rm+h), -v(2)/(Rn+h)*tand(lat)];
+    fn = v_dot - [0,0,g] + cross(2*wien+wenn,v);
+    fb = fn*Cbn;
+    wibb = (wien+wenn)*Cbn + wnbb;
+    %----记录上次的速度
+    v0 = v;
     %----存储
     vel_ned(k,:) = v;
     pos_lla(k,:) = p;
     pos_ecef(k,:) = lla2ecef(p);
     angle(k,:) = cmd(1,4:6);
-    if k>1
-%         acc(k-1,:) = fb;
-%         omega(k-1,:) = wb;
-    end
+    acc(k,:) = fb; %m/s^2
+    omega(k,:) = wibb*r2d; %deg/s
 end
 
 %% 保存轨迹
-traj = [pos_ecef, pos_lla, vel_ned, angle, ...
-        [[NaN,NaN,NaN];omega], [[NaN,NaN,NaN];acc]];
+traj = [pos_ecef, pos_lla, vel_ned, angle, omega, acc];
 save('~temp\traj.mat', 'traj', 'dt');
 
 %% 画图
