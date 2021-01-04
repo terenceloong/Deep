@@ -83,7 +83,8 @@ for k=1:N
     psi = cmd(1,4)*d2r;
     theta = cmd(1,5)*d2r;
     gamma = cmd(1,6)*d2r;
-    Cbn = angle2dcm(psi, theta, gamma)';
+    Cnb = angle2dcm(psi, theta, gamma);
+    Cbn = Cnb';
     vh_dot = cmd(2,1);
     vy_dot = cmd(2,2)*d2r;
     v_dot = [vh_dot*cos_vy-vh*sin_vy*vy_dot, ...
@@ -104,13 +105,14 @@ for k=1:N
     vel_ned(k,:) = v;
     pos_lla(k,:) = p;
     pos_ecef(k,:) = lla2ecef(p);
-    angle(k,:) = cmd(1,4:6);
+    [r1,r2,r3] = dcm2angle(Cnb);
+    angle(k,:) = [r1,r2,r3]*r2d;
     acc(k,:) = fb; %m/s^2
     omega(k,:) = wibb*r2d; %deg/s
 end
 
 %% ±£´æ¹ì¼£
-traj = [pos_ecef, pos_lla, vel_ned, angle, omega, acc];
+traj = [pos_ecef, angle, pos_lla, vel_ned, omega, acc];
 save('~temp\traj.mat', 'traj', 'dt');
 
 %% »­Í¼

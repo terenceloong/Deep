@@ -19,7 +19,7 @@ trajMode = 0; %轨迹模式,0-静止,1-动态
 if trajMode==0
     p0 = [45.7364, 126.70775, 165];
     rp = lla2ecef(p0);
-    traj = ones(runTime*1000/step+1,1) * rp; %生成每个时刻的位置
+    traj = ones(runTime*1000/step+1,1) * [rp,0,0,0]; %生成每个时刻的位置姿态,姿态默认都是0
 else
     load('~temp\traj.mat') %加载轨迹
     if dt*1000~=step %轨迹的步长必须与仿真步长相等
@@ -122,6 +122,7 @@ for k=1:loopN
     % 生成可见卫星的信号
     tn = k * step / 1000; %当前接收机钟运行时间
     rp = traj(k+1,1:3); %当前位置
+    att = traj(k+1,4:6); %当前姿态,deg
     tr = timeCarry(sec2smu(tn));
     tr(1) = tr(1) + startTime_tow; %当前接收机钟时间
     tr_real = timeCarry(sec2smu(tn * clockErrorFactor));
@@ -131,7 +132,7 @@ for k=1:loopN
     for m=1:svN
         PRN = svList(m); %卫星号
         te = LNAV.transmit_time(sats(PRN).ephe(5:25), tr_real, rp); %计算发射时间
-        [sigI, sigQ] = sats(PRN).gene_signal(te0(PRN,:), te, tr0, tr, sampleN); %生成信号
+        [sigI, sigQ] = sats(PRN).gene_signal(te0(PRN,:), te, tr0, tr, sampleN, att); %生成信号
         comSigI = comSigI + sigI;
         comSigQ = comSigQ + sigQ;
         te0(PRN,:) = te; %记录发射时间

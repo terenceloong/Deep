@@ -35,6 +35,7 @@ classdef signalSim < handle
         cnrTable        %载噪比表
         ele             %高度角
         azi             %方位角
+        rpsu_n          %地理系下接收机指向卫星的视线单位矢量
     end
     
     methods
@@ -56,6 +57,9 @@ classdef signalSim < handle
             if ~isempty(obj.ephe) %可能有些卫星没星历
                 rs = LNAV.rs_ephe(obj.ephe(10:25), t); %卫星ecef位置
                 [obj.azi, obj.ele] = aziele_xyz(rs, lla); %计算方位角高度角
+                obj.rpsu_n = [cosd(obj.ele)*cosd(obj.azi);
+                              cosd(obj.ele)*sind(obj.azi);
+                             -sind(obj.ele)];
             else %没星历的卫星高度角置-100度
                 obj.azi = 0;
                 obj.ele = -100;
@@ -73,15 +77,31 @@ classdef signalSim < handle
             end
         end
         
-        function [sigI, sigQ] = gene_signal(obj, te0, te, tr0, tr, sampleN) %生成信号
+        function coef = att_effect(obj, att) %姿态引起的信号遮挡
+            att = att/180*pi;
+            Cnb = angle2dcm(att(1), att(2), att(3));
+            rpsu_b = Cnb * obj.rpsu_n; %体系下接收机指向卫星的视线单位矢量
+            ele_b = asind(-rpsu_b(3)); %体系下的高度角
+            if ele_b>=0
+                coef = 1;
+            elseif -10<ele_b && ele_b<0
+                coef = 0.1*(ele_b+10);
+            else
+                coef = 0;
+            end
+        end
+        
+        function [sigI, sigQ] = gene_signal(obj, te0, te, tr0, tr, sampleN, att) %生成信号
             % te0:上次发射时间,te:当前发射时间(卫星钟,用来算码相位)
             % tr0:上次接收时间,tr:当前接收时间(接收机钟,用来算载波相位,载波相位与伪距直接相关)
             % sampleN:采样点数
+            % att:地理系姿态角,deg
             samples = (1:sampleN) / sampleN;
             SMU2S = [1;1e-3;1e-6]; %[s,ms,us]到s
             %----信号幅值
             CN0 = obj.get_cnr(tr*SMU2S); %信号载噪比
             amp = sqrt(10^(CN0/10) * obj.N0); %信号幅值
+            amp = amp * obj.att_effect(att); %考虑姿态的影响
             %----生成码
             te0_us = te0(3)/1e3; %上次发射时间的微秒部分,单位:ms
             dte_us = (te-te0) * [1e3;1;1e-3]; %发射时间增量,单位:ms

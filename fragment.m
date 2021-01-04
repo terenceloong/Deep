@@ -28,6 +28,18 @@ almanac = BDS.almanac.read(filename);
 filename = GPS.ephemeris.download('~temp\ephemeris', '2020-02-22');
 ephe = RINEX.read_N2(filename);
 %%
+%  提取指定时间所有GPS卫星的星历
+tow = 378780;
+ephe0 = NaN(32,30);
+for k=1:32
+    if ~isempty(ephe.sv{k}) && ephe.sv{k}(1).health==0 %保证有星历并且卫星健康
+        index = find([ephe.sv{k}.TOW]<=tow, 1, 'last'); %根据tow找到最近星历所在的行
+        ephe_cell = struct2cell(ephe.sv{k}(index)); %星历结构体转化成元胞数组
+        ephe0(k,:) = [ephe_cell{:}]; %元胞数组转化成矩阵
+    end
+end
+iono = [ephe.alpha, ephe.beta];
+%%
 %  下载BDS星历并读取
 filename = BDS.ephemeris.download('~temp\ephemeris', '2020-02-22');
 ephe = RINEX.read_B303(filename);
