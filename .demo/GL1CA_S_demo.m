@@ -8,6 +8,7 @@ fclose('all'); %关闭之前打开的所有文件
 Ts = 60; %总处理时间,s
 To = 0; %偏移时间,s
 svList = []; %[10,15,20,24]
+p0 = [45.730952, 126.624970, 212]; %大致的初始位置
 
 %% 选择GNSS数据文件
 valid_prefix = 'B210-SIM-'; %文件名有效前缀
@@ -25,7 +26,6 @@ msToProcess = Ts*1000; %处理总时间
 sampleOffset = To*4e6; %抛弃前多少个采样点
 sampleFreq = 4e6; %接收机采样频率
 blockSize = sampleFreq*0.001; %一个缓存块(1ms)的采样点数
-p0 = [45.730952, 126.624970, 212]; %初始位置,不用特别精确
 
 %% 获取接收机初始时间
 tf = sscanf(data_file((end-22):(end-8)), '%4d%02d%02d_%02d%02d%02d')'; %数据文件开始时间(日期时间向量)
@@ -43,7 +43,7 @@ almanac = GPS.almanac.read(almanac_file); %读历书
 receiver_conf.Tms = msToProcess; %接收机总运行时间,ms
 receiver_conf.sampleFreq = sampleFreq; %采样频率,Hz
 receiver_conf.blockSize = blockSize; %一个缓存块(1ms)的采样点数
-receiver_conf.blockNum = 40; %缓存块的数量
+receiver_conf.blockNum = 50; %缓存块的数量
 receiver_conf.week = tg(1); %当前GPS周数
 receiver_conf.ta = ta; %接收机初始时间,[s,ms,us]
 receiver_conf.p0 = p0; %初始位置,纬经高
@@ -97,16 +97,10 @@ close(f);
 nCoV.save_ephemeris(ephemeris_file);
 
 %% 清除变量
-clearvars -except data_file receiver_conf nCoV almanac_path tf p0
+clearvars -except data_file receiver_conf nCoV tf p0
 
 %% 画交互星座图
 nCoV.interact_constellation;
-
-%% 其他
-
-% nCoV.print_all_log; %打印通道日志
-% nCoV.plot_all_trackResult; %显示跟踪结果
-% GPS.visibility('~temp\almanac', tf, 8, p0, 1); %显示当前可见卫星一段时间的轨迹
 
 %% 保存结果
 save('~temp\result.mat')

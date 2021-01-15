@@ -5,9 +5,24 @@ clear
 clc
 fclose('all'); %关闭之前打开的所有文件
 
+Ts = 180; %总处理时间,s
+To = 0; %偏移时间,s
+svList = [];
+p0 = [45.730952, 126.624970, 212]; %大致的初始位置
+psi0 = 191; %初始航向,deg
+arm = [0.32,0,0]; %杆臂,IMU指向天线
+
 %% 选择IMU数据文件
-imu = IMU_read(0);
+% imu = IMU_read(0);
+% imu(:,2:4) = movmean(imu(:,2:4),5,1); %预滤波
+% imu(:,5:7) = movmean(imu(:,5:7),4,1);
+% gyro0 = mean(imu(1:200,2:4)); %计算初始陀螺零偏
+% imu(:,2:4) = imu(:,2:4) - ones(size(imu,1),1)*gyro0;
+
+imu = SBG_imu_read(0);
+imu(:,5:7) = imu(:,5:7) / 9.806370601248435;
 gyro0 = mean(imu(1:200,2:4)); %计算初始陀螺零偏
+imu(:,2:4) = imu(:,2:4) - ones(size(imu,1),1)*gyro0;
 
 %% 选择GNSS数据文件
 valid_prefix = 'B210-'; %文件名有效前缀
@@ -19,11 +34,10 @@ data_file = [path, file]; %数据文件完整路径,path最后带\
 
 %% 主机参数
 % 根据实际情况修改.
-msToProcess = 60*1000; %处理总时间
-sampleOffset = 0*4e6; %抛弃前多少个采样点
+msToProcess = Ts*1000; %处理总时间
+sampleOffset = To*4e6; %抛弃前多少个采样点
 sampleFreq = 4e6; %接收机采样频率
 blockSize = sampleFreq*0.001; %一个缓存块(1ms)的采样点数
-p0 = [45.730952, 126.624970, 212]; %初始位置,不用特别精确
 
 %% 获取接收机初始时间
 tf = sscanf(data_file((end-22):(end-8)), '%4d%02d%02d_%02d%02d%02d')'; %数据文件开始时间(日期时间向量)
@@ -41,13 +55,13 @@ almanac = GPS.almanac.read(almanac_file); %读历书
 receiver_conf.Tms = msToProcess; %接收机总运行时间,ms
 receiver_conf.sampleFreq = sampleFreq; %采样频率,Hz
 receiver_conf.blockSize = blockSize; %一个缓存块(1ms)的采样点数
-receiver_conf.blockNum = 40; %缓存块的数量
+receiver_conf.blockNum = 50; %缓存块的数量
 receiver_conf.week = tg(1); %当前GPS周数
 receiver_conf.ta = ta; %接收机初始时间,[s,ms,us]
 receiver_conf.p0 = p0; %初始位置,纬经高
 receiver_conf.almanac = almanac; %历书
 receiver_conf.eleMask = 10; %高度角阈值
-receiver_conf.svList = []; %跟踪卫星列表[10,15,20,24]
+receiver_conf.svList = svList; %跟踪卫星列表
 receiver_conf.acqTime = 2; %捕获所用的数据长度,ms
 receiver_conf.acqThreshold = 1.4; %捕获阈值,最高峰与第二大峰的比值
 receiver_conf.acqFreqMax = 5e3; %最大搜索频率,Hz
@@ -55,23 +69,24 @@ receiver_conf.dtpos = 10; %定位时间间隔,ms
 
 %% 导航滤波器参数
 para.dt = 0.01; %s,根据IMU采样周期设置
-para.gyro0 = gyro0; %deg/s
+para.gyro0 = gyro0*0; %deg/s
 para.p0 = [0,0,0];
 para.v0 = [0,0,0];
-para.a0 = [0,0,0]; %deg
+para.a0 = [psi0,0,0]; %deg
 para.P0_att = 1; %deg
 para.P0_vel = 1; %m/s
-para.P0_pos = 5; %m
-para.P0_dtr = 2e-8; %s
+para.P0_pos = 15; %m
+para.P0_dtr = 5e-8; %s
 para.P0_dtv = 3e-9; %s/s
 para.P0_gyro = 0.2; %deg/s
 para.P0_acc = 2e-3; %g
-para.Q_gyro = 0.15; %deg/s
+para.Q_gyro = 0.2; %deg/s
 para.Q_acc = 2e-3; %g
 para.Q_dtv = 0.01e-9; %1/s
 para.Q_dg = 0.01; %deg/s/s
 para.Q_da = 0.1e-3; %g/s
-para.sigma_gyro = 0.15; %deg/s
+para.sigma_gyro = 0.03; %deg/s
+para.arm = arm; %m
 
 %% 创建接收机对象
 nCoV = GL1CA_S(receiver_conf);
@@ -132,16 +147,10 @@ close(f);
 nCoV.save_ephemeris(ephemeris_file);
 
 %% 清除变量
-clearvars -except data_file receiver_conf nCoV almanac_path tf p0 imu
+clearvars -except data_file receiver_conf nCoV tf p0 imu
 
 %% 画交互星座图
 nCoV.interact_constellation;
-
-%% 其他
-
-% nCoV.print_all_log; %打印通道日志
-% nCoV.plot_all_trackResult; %显示跟踪结果
-% GPS.visibility('~temp\almanac', tf, 8, p0, 1); %显示当前可见卫星一段时间的轨迹
 
 %% 保存结果
 save('~temp\result.mat')

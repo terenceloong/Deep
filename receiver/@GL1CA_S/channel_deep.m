@@ -7,7 +7,7 @@ if obj.deepMode==1
         if channel.state==2
             channel.state = 3;
             channel.codeMode = 2; %更换码环
-            channel.markCurrStorage;
+            channel.codeDiscBuffPtr = 0; %清码鉴相器输出缓存
         end
     end
 elseif obj.deepMode==2
@@ -17,9 +17,7 @@ elseif obj.deepMode==2
             channel.state = 3;
             channel.codeMode = 2; %更换码环
             channel.carrMode = 3; %更换载波环
-            channel.markCurrStorage;
-%             [K1, K2] = order2LoopCoefD(15, 0.707, channel.timeIntS);
-%             channel.PLL2 = [K1, K2];
+            channel.codeDiscBuffPtr = 0; %清码鉴相器输出缓存
         end
     end
 end

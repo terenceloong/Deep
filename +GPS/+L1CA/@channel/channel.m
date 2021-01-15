@@ -7,7 +7,6 @@ classdef channel < handle
         sampleFreq      %标称采样频率,Hz
         buffSize        %数据缓存总采样点数
         PRN             %卫星编号
-        CAcode          %一个周期的C/A码
         state           %通道状态
         acqN            %捕获采样点数
         acqThreshold    %捕获阈值,最高峰与第二大峰的比值
@@ -15,10 +14,9 @@ classdef channel < handle
         acqM            %搜索频率个数
         CODE            %C/A码的FFT
         code            %本地码发生器用的C/A码
-        timeIntMs       %积分时间,ms (1,2,4,5,10,20)
-        timeIntS        %积分时间,s
-        codeInt         %积分时间内码片个数
-        pointInt        %一个比特有多少个积分点,一个比特20ms
+        coherentCnt     %相干积分计数,每1ms加1
+        coherentN       %相干积分次数
+        coherentTime    %相干积分时间,s
         trackDataTail   %跟踪开始点在数据缓存中的位置
         trackBlockSize  %跟踪数据段采样点个数
         trackDataHead   %跟踪结束点在数据缓存中的位置
@@ -31,31 +29,34 @@ classdef channel < handle
         remCodePhase    %跟踪开始点的码相位
         carrFreq        %测量的载波频率
         codeFreq        %测量的码频率
-        carrVar         %载波鉴相器方差计算
-        codeVar         %码鉴相器方差计算
-        I               %I路积分值
-        Q               %Q路积分值
+        I_Q             %当前6路相干积分I/Q值
+        I0              %上次I_P积分值,用于鉴频器和比特同步
+        Q0              %上次Q_P积分值
         FLLp            %频率牵引锁频环
         PLL2            %二阶锁相环
         DLL2            %二阶延迟锁定环
         carrMode        %载波跟踪模式
         codeMode        %码跟踪模式
-        quality         %信号质量
-        SQI             %信号质量指示器
-        lossCnt         %失锁计数器
+        codeDiscBuff    %码鉴相器输出缓存(深组合时用到)
+        codeDiscBuffPtr %码鉴相器输出缓存指针
+        varCoef         %噪声方差计算系数,[伪距,伪距率,码鉴相器]
+        varValue        %噪声方差值
         tc0             %下一伪码周期的开始时间,ms
-        msgStage        %电文解析阶段(字符)
-        msgCnt          %电文解析计数器
-        I0              %上次I路积分值(用于比特同步)
+        CNR             %载噪比计算模块
+        CN0             %载噪比值,20ms一更新
+        lossCnt         %失锁计数器
+        trackCnt        %跟踪计数器,每1ms加1
+        IpBuff          %1个比特内的20个I路积分值
+        QpBuff          %1个比特内的20个Q路积分值
+        bitSyncFlag     %比特同步标志
         bitSyncTable    %比特同步统计表
-        bitBuff         %比特缓存
+        msgStage        %电文解析阶段(字符)
         frameBuff       %帧缓存
         frameBuffPtr    %帧缓存指针
         ephe            %星历
         iono            %电离层校正参数
         log             %日志
         ns              %指向当前存储行,初值是0,刚开始运行track时加1
-        ns0             %指向上次定位的存储行,深组合时用来获取定位间隔内的鉴相器输出
         storage         %存储跟踪结果
     end
     
@@ -68,7 +69,6 @@ classdef channel < handle
             obj.sampleFreq = conf.sampleFreq;
             obj.buffSize = conf.buffSize;
             obj.PRN = PRN;
-            obj.CAcode = GPS.L1CA.codeGene(PRN);
             %----设置通道状态
             obj.state = 0;
             %----设置捕获参数
@@ -77,13 +77,15 @@ classdef channel < handle
             obj.acqFreq = -conf.acqFreqMax:(obj.sampleFreq/obj.acqN/2):conf.acqFreqMax;
             obj.acqM = length(obj.acqFreq);
             index = mod(floor((0:obj.acqN-1)*1.023e6/obj.sampleFreq),1023) + 1; %C/A码采样的索引
-            obj.CODE = fft(obj.CAcode(index));
-            %---申请星历空间
+            CAcode = GPS.L1CA.codeGene(PRN);
+            obj.CODE = fft(CAcode(index));
+            %----本地码发生器用的C/A码
+            obj.code = [CAcode(end),CAcode,CAcode(1)]'; %列向量,方便用矩阵乘法代替累加求和;前后各补一个数,方便取超前滞后码
+            %----申请星历空间
             obj.ephe = NaN(1,25);
             obj.iono = NaN(1,8);
             %----申请数据存储空间
             obj.ns = 0;
-            obj.ns0 = 0;
             row = obj.Tms; %存储空间行数
             obj.storage.dataIndex    =   NaN(row,1,'double'); %使用预设NaN存数据,方便通道断开时数据显示有中断
             obj.storage.remCodePhase =   NaN(row,1,'single');
@@ -93,9 +95,9 @@ classdef channel < handle
             obj.storage.carrNco      =   NaN(row,1,'double');
             obj.storage.carrAcc      =   NaN(row,1,'single');
             obj.storage.I_Q          = zeros(row,6,'int32');
-            obj.storage.disc         =   NaN(row,5,'single');
-            obj.storage.bitFlag      = zeros(row,1,'uint8'); %导航电文比特开始标志
-            obj.storage.quality      = zeros(row,1,'uint8');
+            obj.storage.disc         =   NaN(row,3,'single');
+            obj.storage.CN0          =   NaN(row,1,'single');
+            obj.storage.bitFlag      = zeros(row,1,'uint8'); %比特边界标志
         end
     end
     
@@ -104,11 +106,11 @@ classdef channel < handle
         init(obj, acqResult, n)                    %初始化跟踪参数
         track(obj, dataI, dataQ, deltaFreq)        %跟踪卫星信号
         ionoflag = parse(obj)                      %解析导航电文
+        set_coherentTime(obj, Tms)                 %设置相干积分时间
+        adjust_coherentTime(obj, policy)           %调整相干积分时间
         clean_storage(obj)                         %清理数据存储
         print_log(obj)                             %打印通道日志
-        markCurrStorage(obj)                       %标记当前存储行(深组合)
-        [codeDisc, carrDisc] = getDiscOutput(obj)  %获取定位间隔内鉴相器输出(深组合)
-        
+        %----画图函数
         plot_trackResult(obj)
         plot_I_Q(obj)
         plot_I_P(obj)

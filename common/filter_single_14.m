@@ -21,6 +21,7 @@ classdef filter_single_14 < handle
         P       %P阵
         Q       %Q阵
         Rwb     %陀螺仪输出噪声方差
+        wbDelay %延迟的角速度输出
         arm     %杆臂矢量,体系下IMU指向天线
         wdot    %角加速度,deg/s/s,(积分器的值)
         wdotK   %计算角加速度时用的K
@@ -64,6 +65,7 @@ classdef filter_single_14 < handle
                           para.Q_dg   *[1,1,1]*d2r ...
                          ])^2 * obj.T^2; %para的Q都是标准差
             obj.Rwb = (para.sigma_gyro*d2r)^2;
+            obj.wbDelay = delayN(3, 20);
             obj.arm = para.arm;
             obj.wdot = [0,0,0];
             [K1, K2] = order2LoopCoefD(8, 0.707, obj.T);
@@ -72,16 +74,15 @@ classdef filter_single_14 < handle
         end
         
         %% 运行函数
-        function run(obj, imu, sv)
-            %----提取卫星测量
-            % 每行一颗卫星,不一定每行都有效,具体用哪个靠信号质量判断
+        function run(obj, imu, sv, indexP, indexV)
+            % indexP,indexV索引都是逻辑值
+            %----提取卫星测量(每行一颗卫星)
             rs = sv(:,1:3);     %卫星ecef位置
             vs = sv(:,4:6);     %卫星ecef速度
             rho = sv(:,7);      %测量的伪距
             rhodot = sv(:,8);   %测量的伪距率
-            quality = sv(:,9);  %信号质量
-            R_rho = sv(:,10);   %伪距噪声方差
-            R_rhodot= sv(:,11); %伪距率噪声方差
+            R_rho = sv(:,9);    %伪距噪声方差
+            R_rhodot= sv(:,10); %伪距率噪声方差
             %----换简短的变量名
             d2r = pi/180;
             r2d = 180/pi;
@@ -92,16 +93,19 @@ classdef filter_single_14 < handle
             lon = obj.pos(2); %deg
             h = obj.pos(3);
             %----更新地球参数(位置变化小可以不做)
-%             [obj.Rm, obj.Rn] = earthCurveRadius(lat);
-%             obj.g = gravitywgs84(h, lat);
-%             obj.dlatdn = 1/(obj.Rm+h);
-%             obj.dlonde = secd(lat)/(obj.Rn+h);
+            [obj.Rm, obj.Rn] = earthCurveRadius(lat);
+            obj.g = gravitywgs84(h, lat);
+            obj.dlatdn = 1/(obj.Rm+h);
+            obj.dlonde = secd(lat)/(obj.Rn+h);
             %----运动状态检测
             obj.motion.run(imu(1:3)); %deg/s
             %----计算角加速度
             wdotE = imu(1:3) - obj.wdotX; %误差
             obj.wdot = obj.wdot + obj.wdotK(2)*wdotE; %积分器
             obj.wdotX = obj.wdotX + (obj.wdotK(1)*wdotE+obj.wdot)*obj.T;
+            %----角速度延迟
+            wbd = obj.wbDelay.push(imu(1:3));
+            wbd = (wbd - obj.bias(1:3)) *d2r; %减当前零偏
             %----零偏补偿
             imu = imu - obj.bias;
             wb = imu(1:3) *d2r; %rad
@@ -136,10 +140,8 @@ classdef filter_single_14 < handle
             P1 = Phi*obj.P*Phi' + obj.Q;
             X = zeros(14,1);
             %----量测维数
-            index1 = find(quality>=1); %伪距量测行号
-            index2 = find(quality==2); %伪距率量测行号
-            n1 = length(index1); %伪距量测个数
-            n2 = length(index2); %伪距率量测个数
+            n1 = sum(indexP); %伪距量测个数
+            n2 = sum(indexV); %伪距率量测个数
             %----量测更新
             if n1>0 %有卫星量测
                 %----根据当前导航结果计算理论相对距离和相对速度
@@ -148,8 +150,8 @@ classdef filter_single_14 < handle
                 F = jacobi_lla2ecef(lat, lon, h, obj.Rn);
                 HA = rspu*F;
                 HB = rspu*Cen'; %各行为地理系下卫星指向接收机的单位矢量
-                Ha = HA(index1,:); %取有效的行
-                Hb = HB(index2,:);
+                Ha = HA(indexP,:); %取有效的行
+                Hb = HB(indexV,:);
                 H = zeros(n1+n2,14);
                 H(1:n1,7:9) = Ha;
                 H(1:n1,10) = -ones(n1,1);
@@ -160,13 +162,14 @@ classdef filter_single_14 < handle
                 vab = cross(wb,obj.arm); %杆臂引起的速度
                 rhodot = rhodot - HB*Cbn*vab';
                 %---------------------------------------------------------%
-                Z = [rho0(index1) - rho(index1); ...
-                     rhodot0(index2) - rhodot(index2)]; %计算值减测量值
-                R = diag([R_rho(index1);R_rhodot(index2)]);
+                Z = [rho0(indexP) - rho(indexP); ...
+                     rhodot0(indexV) - rhodot(indexV)]; %计算值减测量值
                 if obj.motion.state==0 %静止时加入角速度量测
                     H(end+(1:3),12:14) = eye(3);
-                    Z = [Z; wb'];
-                    R(end+(1:3),end+(1:3)) = diag([1,1,1]*obj.Rwb);
+                    Z = [Z; wbd']; %使用延迟后的角速度,防止机动前几个点的角速度抖动
+                    R = diag([R_rho(indexP);R_rhodot(indexV);[1;1;1]*obj.Rwb]);
+                else %运动时将伪距率的量测噪声放大
+                    R = diag([R_rho(indexP);R_rhodot(indexV)*4]);
                 end
                 %----滤波
                 K = P1*H' / (H*P1*H'+R);

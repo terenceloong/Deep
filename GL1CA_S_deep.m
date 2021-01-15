@@ -7,8 +7,9 @@ fclose('all'); %关闭之前打开的所有文件
 
 Ts = 180; %总处理时间,s
 To = 0; %偏移时间,s
-psi0 = 191; %初始航向,deg
 svList = [];
+p0 = [45.730952, 126.624970, 212]; %大致的初始位置
+psi0 = 191; %初始航向,deg
 arm = [0.32,0,0]; %杆臂,IMU指向天线
 
 %% 选择IMU数据文件
@@ -37,7 +38,6 @@ msToProcess = Ts*1000; %处理总时间
 sampleOffset = To*4e6; %抛弃前多少个采样点
 sampleFreq = 4e6; %接收机采样频率
 blockSize = sampleFreq*0.001; %一个缓存块(1ms)的采样点数
-p0 = [45.730952, 126.624970, 212]; %初始位置,不用特别精确
 
 %% 获取接收机初始时间
 tf = sscanf(data_file((end-22):(end-8)), '%4d%02d%02d_%02d%02d%02d')'; %数据文件开始时间(日期时间向量)
@@ -55,16 +55,16 @@ almanac = GPS.almanac.read(almanac_file); %读历书
 receiver_conf.Tms = msToProcess; %接收机总运行时间,ms
 receiver_conf.sampleFreq = sampleFreq; %采样频率,Hz
 receiver_conf.blockSize = blockSize; %一个缓存块(1ms)的采样点数
-receiver_conf.blockNum = 100; %缓存块的数量
+receiver_conf.blockNum = 50; %缓存块的数量
 receiver_conf.week = tg(1); %当前GPS周数
 receiver_conf.ta = ta; %接收机初始时间,[s,ms,us]
+receiver_conf.p0 = p0; %初始位置,纬经高
 receiver_conf.almanac = almanac; %历书
 receiver_conf.eleMask = 10; %高度角阈值
 receiver_conf.svList = svList; %跟踪卫星列表
 receiver_conf.acqTime = 2; %捕获所用的数据长度,ms
 receiver_conf.acqThreshold = 1.4; %捕获阈值,最高峰与第二大峰的比值
 receiver_conf.acqFreqMax = 5e3; %最大搜索频率,Hz
-receiver_conf.p0 = p0; %初始位置,纬经高
 receiver_conf.dtpos = 10; %定位时间间隔,ms
 
 %% 导航滤波器参数

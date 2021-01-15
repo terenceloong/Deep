@@ -2,40 +2,45 @@ function pos_deep(obj)
 % 深组合定位
 
 % 波长
-Lca = 299792458/1575.42e6; %载波长,m
-Lco = 299792458/1.023e6; %码长,m
+Lca = 0.190293672798365; %载波长,m (299792458/1575.42e6)
+Lco = 293.0522561094819; %码长,m (299792458/1.023e6)
 
 % 获取卫星测量信息
 satmeas = obj.get_satmeas;
+
+% 高度角引起的误差
 [~, ele] = aziele_xyz(satmeas(:,1:3), obj.pos); %卫星高度角
+eleError = 5*(1-1./(1+exp(-((ele-30)/5))));
 
 % 获取通道信息
 chN = obj.chN;
-quality = zeros(chN,1); %信号质量
+CN0 = zeros(chN,1); %载噪比
 codeDisc = zeros(chN,1); %定位间隔内码鉴相器输出的平均值,m
 R_rho = zeros(chN,1); %伪距测量噪声方差,m^2
 R_rhodot = zeros(chN,1); %伪距率测量噪声方差,(m/s)^2
 for k=1:chN
     channel = obj.channels(k);
     if channel.state==3
-        quality(k) = channel.quality;
-        [co, ~] = channel.getDiscOutput;
-        codeDisc(k) = sum(co)/length(co)*Lco;
-        R_rho(k) = (sqrt(channel.codeVar.D/length(co))*Lco + 1.2*(1+16*(0.5-ele(k)/180)^3))^2;
-        R_rhodot(k) = channel.carrVar.D*(6.15*Lca)^2;
+        n = channel.codeDiscBuffPtr; %码鉴相器缓存内数据个数
+        if n>0 %定位间隔内码鉴相器有输出
+            CN0(k) = channel.CN0;
+            codeDisc(k) = sum(channel.codeDiscBuff(1:n))/n * Lco;
+            R_rho(k) = (sqrt(channel.varValue(3)/n)+eleError(k))^2;
+            R_rhodot(k) = channel.varValue(2);
+        end
     end
 end
-sv = [satmeas, quality, R_rho, R_rhodot]; %带信号质量评价的卫星测量信息
+sv = [satmeas, R_rho, R_rhodot];
 sv(:,7) = sv(:,7) - codeDisc; %用码鉴相器输出修正伪距,本地码超前,伪距偏短,码鉴相器为负,修正是减
 
 % 卫星导航解算
-% sv1 = sv(sv(:,9)>=1,1:8); %选信号质量不为0的卫星
-% satnav = satnavSolve(sv1, obj.rp);
-sv1 = sv(sv(:,9)>=1,[1:8,10,11]); %选信号质量不为0的卫星
-satnav = satnavSolveWeighted(sv1, obj.rp);
+svIndex = CN0>=37; %选星
+satnav = satnavSolveWeighted(sv(svIndex,:), obj.rp);
 
 % 导航滤波
-obj.navFilter.run(obj.imu, sv);
+indexP = CN0>=33; %使用伪距的索引
+indexV = CN0>=37; %使用伪距率的索引(更改阈值时,载波跟踪处的阈值也要改)
+obj.navFilter.run(obj.imu, sv, indexP, indexV);
 
 % 计算ecef系下加速度
 Cnb = quat2dcm(obj.navFilter.quat);
@@ -69,7 +74,7 @@ if obj.deepMode==1 %只修码相位
     for k=1:chN
         channel = obj.channels(k);
         if channel.state==3
-            channel.markCurrStorage;
+            channel.codeDiscBuffPtr = 0;
             %----码相位修正
             dcodePhase = (rho0(k)-satmeas(k,7))/Lco; %码相位修正量
             channel.remCodePhase = channel.remCodePhase - dcodePhase;
@@ -81,15 +86,13 @@ elseif obj.deepMode==2 %修码相位和载波驱动频率
     for k=1:chN
         channel = obj.channels(k);
         if channel.state==3
-            channel.markCurrStorage;
+            channel.codeDiscBuffPtr = 0;
             %----码相位修正
             dcodePhase = (rho0(k)-satmeas(k,7))/Lco; %码相位修正量
             channel.remCodePhase = channel.remCodePhase - dcodePhase;
             %----载波驱动频率修正
             dcarrFreq = (rhodot0(k)-satmeas(k,8))/Lca; %相对估计频率的修正量
-%             dcarrFreq = dcarrFreq + (channel.carrNco-channel.carrFreq); %相对驱动频率的修正量
-%             channel.carrNco = channel.carrNco - dcarrFreq;
-            channel.carrNco = channel.carrFreq - dcarrFreq; %上两行的简写
+            channel.carrNco = channel.carrFreq - dcarrFreq;
             %----接收机运动引起的载波频率变化率
             channel.carrAccR = -acclos0(k)/Lca;
         end
@@ -110,6 +113,7 @@ obj.storage.ta(m) = obj.tp * [1;1e-3;1e-6]; %定位时间,s
 obj.storage.df(m) = obj.deltaFreq;
 obj.storage.satmeas(:,:,m) = satmeas;
 obj.storage.satnav(m,:) = satnav([1,2,3,7,8,9,13,14]);
+obj.storage.svsel(m,:) = svIndex;
 obj.storage.pos(m,:) = obj.pos;
 obj.storage.vel(m,:) = obj.vel;
 obj.storage.att(m,:) = obj.att;
@@ -120,9 +124,8 @@ obj.storage.P(m,1:size(P,1)) = sqrt(diag(P));
 Cnb = quat2dcm(obj.navFilter.quat);
 P_angle = var_phi2angle(P(1:3,1:3), Cnb);
 obj.storage.P(m,1:3) = sqrt(diag(P_angle));
-obj.storage.quality(m,:) = quality;
 
 % 更新下次定位时间
 obj.tp(1) = NaN;
-    
+
 end

@@ -10,21 +10,14 @@ obj.log = [obj.log; string(log_str)];
 % 激活通道
 obj.state = 1;
 
-% 本地码发生器用的C/A码
-% 列向量,方便后面用矩阵乘法代替累加求和
-% 前后各补一个数,方便取超前滞后码
-% 当积分时间改变时,code要变成对应的长度
-obj.code = [obj.CAcode(end),obj.CAcode,obj.CAcode(1)]';
-
 % 设置积分时间,开始是1ms
-obj.timeIntMs = 1;
-obj.timeIntS = 0.001;
-obj.codeInt = 1023;
-obj.pointInt = 20;
+obj.coherentCnt = 0;
+obj.coherentN = 1;
+obj.coherentTime = 0.001;
 
 % 确定数据缓存数据段
 obj.trackDataTail = obj.sampleFreq*0.001 - acqResult(1) + 2;
-obj.trackBlockSize = obj.sampleFreq*0.001; %初始是1ms积分时间
+obj.trackBlockSize = obj.sampleFreq*0.001; %1ms的采样点数
 obj.trackDataHead = obj.trackDataTail + obj.trackBlockSize - 1;
 obj.dataIndex = obj.trackDataTail + n;
 
@@ -37,55 +30,59 @@ obj.remCarrPhase = 0;
 obj.remCodePhase = 0;
 obj.carrFreq = obj.carrNco;
 obj.codeFreq = obj.codeNco;
-obj.carrVar = var_rec(200); %200ms平均窗口
-obj.codeVar = var_rec(200);
 
-% 初始化I/Q,鉴频器用到
-obj.I = 1;
-obj.Q = 1;
+% 相干积分I/Q值
+obj.I_Q = ones(1,6); %非零值,否则鉴频器输出有错误值
+obj.I0 = 0;
+obj.Q0 = 0;
 
 % 初始化FLLp
-% K = 40 * obj.timeIntS;
-% Int = obj.carrNco; %积分器
-% cnt = 0; %计数器
-% obj.FLLp = [K, Int, cnt];
-K = 40 * obj.timeIntS;
+K = 40 * 0.001;
 cnt = 0; %计数器
 obj.FLLp = [K, cnt];
 
 % 初始化PLL2
-% [K1, K2] = order2LoopCoefD(25, 0.707, obj.timeIntS);
-% Int = 0; %积分器
-% obj.PLL2 = [K1, K2, Int];
-[K1, K2] = order2LoopCoefD(25, 0.707, obj.timeIntS);
-obj.PLL2 = [K1, K2];
+[K1, K2] = order2LoopCoefD(25, 0.707, 0.001);
+obj.PLL2 = [K1, K2, 25];
 
 % 初始化DLL2
-% [K1, K2] = order2LoopCoefD(2, 0.707, obj.timeIntS);
-% Int = obj.codeNco; %积分器
-% obj.DLL2 = [K1, K2, Int];
-[K1, K2] = order2LoopCoefD(2, 0.707, obj.timeIntS);
-obj.DLL2 = [K1, K2];
+[K1, K2] = order2LoopCoefD(2, 0.707, 0.001);
+obj.DLL2 = [K1, K2, 2];
 
 % 初始化跟踪模式
 obj.carrMode = 1;
 obj.codeMode = 1;
 
-% 初始信号质量
-obj.quality = 0;
-obj.SQI = sigqual_indicator(20, 20, 200);
-% 一个比特最多20次积分,初始1ms积分时间时一个比特20个点,200ms平均窗口
-obj.lossCnt = 0;
+% 初始化码鉴相器输出缓存
+obj.codeDiscBuff = zeros(1,200);
+obj.codeDiscBuffPtr = 0;
+
+% 初始化噪声方差
+% 所有噪声的方差都与1/10^(CN0/10)成正比
+% 静止时是比较小的系数,动起来系数可以放大
+obj.varCoef = zeros(1,3);
+obj.varCoef(1) = (0.264*obj.DLL2(3)) * 9e4;
+obj.varCoef(2) = (0.32*obj.PLL2(3))^3 * 0.0363;
+obj.varCoef(3) = 9e4 / 0.008;
+obj.varValue = zeros(1,3);
 
 % 初始化伪码时间
 obj.tc0 = NaN;
 
+% 初始化载噪比计算
+obj.CNR = CNR_NWPR(20, 20); %400ms
+obj.CN0 = 0;
+obj.lossCnt = 0;
+
+% 初始化比特累积控制
+obj.trackCnt = 0;
+obj.IpBuff = zeros(1,20);
+obj.QpBuff = zeros(1,20);
+obj.bitSyncFlag = 0;
+obj.bitSyncTable = zeros(1,20);
+
 % 初始化电文解析参数
 obj.msgStage = 'I';
-obj.msgCnt = 0;
-obj.I0 = 0;
-obj.bitSyncTable = zeros(1,20); %一个比特持续20ms
-obj.bitBuff = zeros(1,20); %最多用20个
 obj.frameBuff = zeros(1,1502); %一帧数据1500比特
 obj.frameBuffPtr = 0;
 

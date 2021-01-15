@@ -5,8 +5,8 @@ function pos_init(obj)
 satmeas = obj.get_satmeas;
 
 % 卫星导航解算
-sv = satmeas(~isnan(satmeas(:,1)),:); %选星
-satnav = satnavSolve(sv, obj.rp);
+svIndex = ~isnan(satmeas(:,1)); %选星
+satnav = satnavSolve(satmeas(svIndex,:), obj.rp);
 dtr = satnav(13); %接收机钟差,s
 
 % 更新接收机位置速度

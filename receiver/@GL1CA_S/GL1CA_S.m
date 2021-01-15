@@ -111,13 +111,13 @@ classdef GL1CA_S < handle
             obj.storage.df      = zeros(row,1,'single');
             obj.storage.satmeas = zeros(obj.chN,8,row,'double');
             obj.storage.satnav  = zeros(row,8,'double');
+            obj.storage.svsel   = zeros(row,obj.chN,'uint8');
             obj.storage.pos     = zeros(row,3,'double');
             obj.storage.vel     = zeros(row,3,'single');
             obj.storage.att     =   NaN(row,3,'single');
             obj.storage.imu     =   NaN(row,6,'single');
             obj.storage.bias    =   NaN(row,6,'single');
             obj.storage.P       =   NaN(row,17,'single');
-            obj.storage.quality = zeros(row,obj.chN,'uint8'); %这为啥要存一下?
         end
     end
     
@@ -135,6 +135,7 @@ classdef GL1CA_S < handle
         plot_all_trackResult(obj)     %显示所有通道跟踪结果
         plot_all_I_Q(obj)
         plot_all_I_P(obj)
+        plot_all_CN0(obj)
         plot_all_carrNco(obj)
         plot_all_carrAcc(obj)
         

@@ -32,6 +32,6 @@ title(ax4, '载波频率')
 plot(ax3, t, obj.storage.carrFreq-carrAccInt)
 set(ax3, 'XLim',[0,ceil(obj.Tms/1000)])
 title(ax3, '积分误差')
-% 积分误差最好是一条平的直线
+% 积分误差最好是一条平的直线,如果斜着漂是时钟漂移
 
 end

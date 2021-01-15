@@ -29,7 +29,7 @@ end
 
 %% 卫星模式
 satMode = 0; %卫星模式,0-根据截至高度角自动计算,1-指定卫星列表
-if satMode==0
+if satMode==1
     svList = [3,17,19,28];
     svN = length(svList); %可见卫星数目
 end
@@ -53,9 +53,9 @@ sats = sats'; %转化成列向量
 %     sats(k).cnrValue = 48;
 % end
 %----为指定卫星设置载噪比表
-% cnrTable1 = [0, 10, 15;
-%             55, 55, 40;
-%              0, -3,  0];
+% cnrTable1 = [0, 10, 15, 25, 30;
+%             55, 55, 35, 35, 25;
+%              0, -4,  0, -2,  0];
 % cnrTable1(1,2:end) = cnrTable1(1,2:end) + startTime_tow;
 % sats(17).cnrMode = 2;
 % sats(17).cnrTable = cnrTable1;

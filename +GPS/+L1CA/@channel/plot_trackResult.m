@@ -30,6 +30,12 @@ plot(ax1, obj.storage.I_Q(1001:end,1), obj.storage.I_Q(1001:end,4), ...
 plot(ax2, t, double(obj.storage.I_Q(:,1))) %横纵坐标数据类型要一样
 set(ax2, 'XLim',[0,ceil(obj.Tms/1000)])
 
+% 载噪比
+index = find(isnan(obj.storage.dataIndex) | obj.storage.bitFlag~=0); %有效数据的索引
+plot(ax3, t(index), obj.storage.CN0(index), 'LineWidth',1)
+set(ax3, 'XLim',[0,ceil(obj.Tms/1000)])
+set(ax3, 'YLim',[0,60])
+
 % 载波频率
 plot(ax4, t, obj.storage.carrFreq, 'LineWidth',0.5)
 set(ax4, 'XLim',[0,ceil(obj.Tms/1000)])

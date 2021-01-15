@@ -1,5 +1,5 @@
 function plot_I_P_flag(obj)
-% 画I_P图,带比特开始标志
+% 画I_P图,带比特边界标志
 
 PRN_str = ['GPS ',sprintf('%d',obj.PRN)];
 figure('Position', screenBlock(1000,300,0.5,0.5), 'Name',PRN_str);

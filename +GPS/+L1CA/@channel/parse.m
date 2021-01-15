@@ -1,17 +1,14 @@
 function ionoflag = parse(obj)
-% 解析导航电文
+% 解析导航电文,每1ms执行一次
 % 从捕获到进入比特同步要500ms(200ms锁频,300ms锁相环稳定)
 % 比特同步过程要2s(100bits),开始寻找帧头要多一点时间,因为等待比特边界到达
 % 比特同步后开始寻找帧头,接收一个完整子帧才能校验帧头,至少6s,最多12s
 % 验证帧头后就可以确定码发射时间
 % 6s一个子帧,30s解析星历一次
 % 比特同步后可以增加积分时间
-% 增加积分时间需要在刚跟踪完一个比特时做,同时更新信号质量评估器参数
-% 比特同步后才开始评估信号质量,之前都是失锁
+% 增加积分时间需要在刚跟踪完一个比特时做
 
 ionoflag = 0; %如果当前解析的星历帧有电离层参数,该标志位置1
-
-obj.msgCnt = obj.msgCnt + 1; %计数加1
 
 switch obj.msgStage %I,B,W,H,C,E
     case 'I' %空闲
@@ -21,32 +18,9 @@ switch obj.msgStage %I,B,W,H,C,E
     case 'W' %等待比特开始
         waitBitStart;
     otherwise %已经完成比特同步
-        obj.SQI.run(obj.I, obj.Q); %评估信号质量
-        obj.quality = obj.SQI.quality;
-        obj.storage.quality(obj.ns) = obj.quality; %记录信号质量
-        if obj.msgCnt==1 %比特刚开始的位置
-            obj.storage.bitFlag(obj.ns) = obj.msgStage; %记录比特开始标志
-            if obj.quality==0 %失锁状态,计数器加1
-                obj.lossCnt = obj.lossCnt + 1;
-            else %非失锁状态,计数器清零
-                obj.lossCnt = 0;
-            end
-            if obj.state~=3 %非深组合状态时,长时间失锁要关闭通道
-                if obj.lossCnt==1000 %失锁1000个比特,20s
-                    obj.lossCnt = 0;
-                    obj.state = 0;
-                    obj.ns = obj.ns + 1; %数据存储跳一个,相当于加一个间断点
-                    log_str = sprintf('***Loss of lock at %.8fs', obj.dataIndex/obj.sampleFreq);
-                    obj.log = [obj.log; string(log_str)];
-                end
-            end
-        end
-        %------------------------------------------
-        obj.bitBuff(obj.msgCnt) = obj.I; %往比特缓存中存数
-        if obj.msgCnt==obj.pointInt %跟踪完一个比特
-            obj.msgCnt = 0; %计数器清零
+        if obj.trackCnt==0 %跟踪完一个比特
+            bit = ((sum(obj.IpBuff)>0) - 0.5) * 2; %一个比特,±1
             obj.frameBuffPtr = obj.frameBuffPtr + 1; %帧缓存指针加1
-            bit = (double(sum(obj.bitBuff(1:obj.pointInt))>0) - 0.5) * 2; %一个比特,±1
             obj.frameBuff(obj.frameBuffPtr) = bit; %往比特缓存里存
             switch obj.msgStage %以下都在处理frameBuff中的内容
                 case 'H' %寻找帧头
@@ -62,11 +36,11 @@ end
     %% 等待锁相环稳定
     function waitPLLstable
         if obj.carrMode~=2 %非锁相环模式跳过
-            obj.msgCnt = 0;
+            obj.trackCnt = 0;
             return
         end
-        if obj.msgCnt==300 %到时间了就认为已经稳定
-            obj.msgCnt = 0; %计数器清零
+        if obj.trackCnt==300 %到时间了就认为已经稳定
+            obj.trackCnt = 0; %计数器清零
             obj.msgStage = 'B'; %进入比特同步阶段
             log_str = sprintf('Start bit synchronization at %.8fs', obj.dataIndex/obj.sampleFreq);
             obj.log = [obj.log; string(log_str)];
@@ -75,18 +49,16 @@ end
 
     %% 比特同步
     function bitSync
-        if obj.I0*obj.I<0 %发现电平翻转
-            index = mod(obj.msgCnt-1,20) + 1;
+        if obj.I0*obj.I_Q(1)<0 %发现电平翻转
+            index = mod(obj.trackCnt-1,20) + 1;
             obj.bitSyncTable(index) = obj.bitSyncTable(index) + 1; %统计表中的对应位加1
         end
-        obj.I0 = obj.I;
-        if obj.msgCnt==2000 %2s后检验统计表,此时有100个比特
-            obj.I0 = 0; %I0后来就不用了,给它复位
+        if obj.trackCnt==2000 %2s后检验统计表,此时有100个比特
             if max(obj.bitSyncTable)>10 && (sum(obj.bitSyncTable)-max(obj.bitSyncTable))<=2
                 % 比特同步成功,确定电平翻转位置(电平翻转大都发生在一个点上)
-                [~,obj.msgCnt] = max(obj.bitSyncTable); %将计数值设为同步表最大值的索引
+                [~,obj.trackCnt] = max(obj.bitSyncTable); %将计数值设为同步表最大值的索引
                 obj.bitSyncTable = zeros(1,20); %比特同步统计表清零
-                obj.msgCnt = -obj.msgCnt + 1; %如果索引为1,下个积分值就为比特开始处
+                obj.trackCnt = -obj.trackCnt + 1; %如果索引为1,下个积分值就为比特开始处
                 obj.msgStage = 'W'; %等待比特开始
                 waitBitStart;
             else
@@ -101,7 +73,9 @@ end
 
     %% 等待比特开始
     function waitBitStart
-        if obj.msgCnt==0
+        if obj.trackCnt==0
+            obj.bitSyncFlag = 1; %设置比特同步完成标志位
+%             obj.set_coherentTime(20); %改变相干积分时间
             obj.msgStage = 'H'; %进入寻找帧头阶段
             log_str = sprintf('Start find head at %.8fs', obj.dataIndex/obj.sampleFreq);
             obj.log = [obj.log; string(log_str)];
