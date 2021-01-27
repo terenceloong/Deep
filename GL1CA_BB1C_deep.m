@@ -177,4 +177,4 @@ clearvars -except data_file receiver_conf nCoV tf p0 imu
 nCoV.interact_constellation;
 
 %% ±£´æ½á¹û
-save('~temp\result.mat')
+save('~temp\result\result\result.mat')

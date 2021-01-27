@@ -54,7 +54,7 @@ if obj.GPSflag==1
     end
     
     % 挑选高度角大于0的卫星
-    index = find(obj.GPS.aziele(:,3)>0); %高度角大于0的卫星索引
+    index = obj.GPS.aziele(:,3)>0; %高度角大于0的卫星索引
     PRN = obj.GPS.aziele(index,1);
     azi = obj.GPS.aziele(index,2)/180*pi; %方位角转成弧度
     ele = obj.GPS.aziele(index,3); %高度角,deg
@@ -113,7 +113,7 @@ if obj.BDSflag==1
     end
     
     % 挑选高度角大于0的卫星
-    index = find(obj.BDS.aziele(:,3)>0); %高度角大于0的卫星索引
+    index = obj.BDS.aziele(:,3)>0; %高度角大于0的卫星索引
     PRN = obj.BDS.aziele(index,1);
     azi = obj.BDS.aziele(index,2)/180*pi; %方位角转成弧度
     ele = obj.BDS.aziele(index,3); %高度角,deg

@@ -1,13 +1,25 @@
 % 轨迹发生器
 
-clear
+clearvars -except trajGene_conf trajGene_GUIflag
 clc
 
-%% 轨迹参数
-traj1; %选择轨迹函数
-p = [45.7364, 126.70775, 165]; %初始位置
-Ts = 60; %轨迹时间
-dt = 0.005; %轨迹步长
+%% 轨迹发生器配置预设值
+% 使用GUI时外部会生成trajGene_conf,并将trajGene_GUIflag置1
+if ~exist('trajGene_GUIflag','var') || trajGene_GUIflag~=1
+    trajGene_conf.trajfile = 'traj004'; %轨迹文件
+    trajGene_conf.p0 = [45.7364, 126.70775, 165]; %初始位置
+    trajGene_conf.Ts = 120; %轨迹时间
+    trajGene_conf.dt = 0.005; %轨迹步长
+end
+if exist('trajGene_GUIflag','var')
+    trajGene_GUIflag = 0; %立即将GUI标志清零
+end
+
+%% 参数
+eval(trajGene_conf.trajfile) %运行轨迹文件
+p0 = trajGene_conf.p0; %初始位置
+Ts = trajGene_conf.Ts; %轨迹时间
+dt = trajGene_conf.dt; %轨迹步长
 
 %% 检查轨迹是否正确
 trajFun_check(VhFun, 'VhFun')
@@ -40,6 +52,7 @@ cmd = zeros(2,6); %第一行为值,第二行为导数
 d2r = pi/180;
 r2d = 180/pi;
 w = 7.292115e-5; %地球自转角速度
+p = p0; %每次计算的位置
 for k=1:N
     t = (k-1)*dt; %当前时间
     %----更新索引,提取值
@@ -113,37 +126,10 @@ end
 
 %% 保存轨迹
 traj = [pos_ecef, angle, pos_lla, vel_ned, omega, acc];
-save('~temp\traj.mat', 'traj', 'dt');
+save(['~temp\traj\',trajGene_conf.trajfile,'.mat'], 'traj','trajTable','trajGene_conf');
+
+%% 清除变量
+clearvars -except traj trajTable trajGene_conf
 
 %% 画图
-t = (0:N-1)*dt;
-figure %----位置
-subplot(3,1,1)
-plot(t, pos_lla(:,1), 'LineWidth',1)
-grid on
-subplot(3,1,2)
-plot(t, pos_lla(:,2), 'LineWidth',1)
-grid on
-subplot(3,1,3)
-plot(t, pos_lla(:,3), 'LineWidth',1)
-grid on
-figure %----速度
-subplot(3,1,1)
-plot(t, vel_ned(:,1), 'LineWidth',1)
-grid on
-subplot(3,1,2)
-plot(t, vel_ned(:,2), 'LineWidth',1)
-grid on
-subplot(3,1,3)
-plot(t, vel_ned(:,3), 'LineWidth',1)
-grid on
-figure %----姿态
-subplot(3,1,1)
-plot(t, angle(:,1), 'LineWidth',1)
-grid on
-subplot(3,1,2)
-plot(t, angle(:,2), 'LineWidth',1)
-grid on
-subplot(3,1,3)
-plot(t, angle(:,3), 'LineWidth',1)
-grid on
+trajGene_plot;

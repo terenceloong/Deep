@@ -68,7 +68,7 @@ GPS.visibility('~temp\almanac', c, 8, p, 1);
 
 %% kml输出
 %  纬度经度写入kml文件
-kmlwriteline('~temp\traj.kml', nCoV.storage.pos(:,1),nCoV.storage.pos(:,2), 'Color','r', 'Width',2);
+kmlwriteline('~temp\kml\traj.kml', nCoV.storage.pos(:,1),nCoV.storage.pos(:,2), 'Color','r', 'Width',2);
 
 %% 电离层
 %  计算一天中的电离层校正值

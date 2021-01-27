@@ -34,7 +34,7 @@ obj.navFilter.run(obj.imu, sv, svIndex, svIndex);
 Cnb = quat2dcm(obj.navFilter.quat);
 Cen = dcmecef2ned(obj.navFilter.pos(1), obj.navFilter.pos(2));
 arm = obj.navFilter.arm; %体系下杆臂矢量
-wb = (obj.imu(1:3) - obj.navFilter.bias(1:3)) /180*pi; %角速度,rad/s
+wb = obj.imu(1:3) - obj.navFilter.bias(1:3); %角速度,rad/s
 r_arm = arm*Cnb*Cen;
 v_arm = cross(wb,arm)*Cnb*Cen;
 
@@ -44,6 +44,7 @@ obj.vp = obj.navFilter.vp + v_arm;
 obj.att = obj.navFilter.att;
 obj.pos = ecef2lla(obj.rp);
 obj.vel = obj.vp*Cen';
+obj.geogInfo = geogInfo_cal(obj.pos, obj.vel);
 
 % 接收机时钟修正
 obj.deltaFreq = obj.deltaFreq + obj.navFilter.dtv;
@@ -67,6 +68,7 @@ obj.storage.P(m,1:size(P,1)) = sqrt(diag(P));
 Cnb = quat2dcm(obj.navFilter.quat);
 P_angle = var_phi2angle(P(1:3,1:3), Cnb);
 obj.storage.P(m,1:3) = sqrt(diag(P_angle));
+obj.storage.motion(m) = obj.navFilter.motion.state;
 
 % 更新下次定位时间
 obj.tp(1) = NaN;

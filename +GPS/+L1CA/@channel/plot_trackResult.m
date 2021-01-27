@@ -31,7 +31,7 @@ plot(ax2, t, double(obj.storage.I_Q(:,1))) %横纵坐标数据类型要一样
 set(ax2, 'XLim',[0,ceil(obj.Tms/1000)])
 
 % 载噪比
-index = find(isnan(obj.storage.dataIndex) | obj.storage.bitFlag~=0); %有效数据的索引
+index = isnan(obj.storage.dataIndex) | obj.storage.bitFlag~=0; %有效数据的索引
 plot(ax3, t(index), obj.storage.CN0(index), 'LineWidth',1)
 set(ax3, 'XLim',[0,ceil(obj.Tms/1000)])
 set(ax3, 'YLim',[0,60])

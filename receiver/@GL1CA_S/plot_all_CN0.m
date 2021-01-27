@@ -21,8 +21,8 @@ grid on
 
 for k=1:obj.chN
     channel = obj.channels(k);
-    if sum(~isnan(channel.storage.CN0))>0 %只画有载噪比数据的通道
-        index = find(isnan(channel.storage.dataIndex) | channel.storage.bitFlag~=0);
+    if any(~isnan(channel.storage.CN0)) %只画有载噪比数据的通道
+        index = isnan(channel.storage.dataIndex) | channel.storage.bitFlag~=0;
         t = channel.storage.dataIndex(index) / channel.sampleFreq;
         plot(t, channel.storage.CN0(index), 'LineWidth',1, ...
              'DisplayName',['PRN ',num2str(channel.PRN)])

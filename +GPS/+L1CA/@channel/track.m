@@ -64,6 +64,14 @@ else
 end
 obj.coherentCnt = obj.coherentCnt + 1;
 
+% 更新码和载波的频率(用载波加速度驱动,用来适应长积分时间的情况)
+dCarrFreq = (obj.carrAccS+obj.carrAccR) * 0.001; %载波频率增量
+obj.carrFreq = obj.carrFreq + dCarrFreq;
+obj.carrNco = obj.carrNco + dCarrFreq;
+dCodeFreq = dCarrFreq / 1540; %码频率增量
+obj.codeFreq = obj.codeFreq + dCodeFreq;
+obj.codeNco = obj.codeNco + dCodeFreq;
+
 % 相干积分时间到了
 if obj.coherentCnt==obj.coherentN
     obj.coherentCnt = 0; %清计数
@@ -186,8 +194,7 @@ obj.storage.CN0(n) = obj.CN0;
         % 如果不加前馈,测的载波频率偏大,大约0.01Hz~0.02Hz
         % 验证加前馈的效果看载波鉴相器均值,加完前馈均值会更接近0
         % PLL2 = [K1, K2, Bn]
-        carrAcc = obj.carrAccS + obj.carrAccR; %载波加速度前馈
-        obj.carrFreq = obj.carrFreq + obj.PLL2(2)*carrError + carrAcc*obj.coherentTime; %积分器是载波频率估计值
+        obj.carrFreq = obj.carrFreq + obj.PLL2(2)*carrError; %积分器是载波频率估计值
         %----调频调相
 %         obj.carrNco = obj.carrFreq + obj.PLL2(1)*carrError;
         %----直接调相
@@ -201,9 +208,6 @@ obj.storage.CN0(n) = obj.CN0;
         % 估计频率靠二阶环路估计,驱动频率靠外部更新
         % 参见程序track_sim.m
         dt = obj.coherentTime; %时间间隔
-        fi = (obj.carrAccS+obj.carrAccR) * dt; %载波加速度引起的频率增量
-        obj.carrFreq = obj.carrFreq + fi;
-        obj.carrNco = obj.carrNco + fi;
         df = obj.carrNco - obj.carrFreq;
         dp = -carrError - df*dt;
         obj.remCarrPhase = obj.remCarrPhase - df*dt - obj.PLL2(1)*dt*dp; %alpha=K1*dt

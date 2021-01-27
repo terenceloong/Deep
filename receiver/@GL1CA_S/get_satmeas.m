@@ -34,11 +34,13 @@ for k=1:obj.chN
         [rsvsas, corr] = LNAV.rsvsas_emit(channel.ephe(5:end), te, obj.rp, obj.vp, obj.iono, obj.pos);
         satmeas(k,1:6) = rsvsas(1:6);
         %----计算卫星运动引起的载波频率变化率(短时间近似不变,使用上一时刻的位置计算就行,视线矢量差别不大)
-        rhodotdot = rhodotdot_cal(rsvsas, obj.rp);
+        rhodotdot = rhodotdot_cal(rsvsas, obj.rp, obj.vp, obj.geogInfo);
         channel.carrAccS = -rhodotdot / lamda; %设置跟踪通道载波频率变化率,Hz/s
         %----计算伪距伪距率
         tt = (obj.tp-te) * [1;1e-3;1e-6]; %信号传播时间,s
-        doppler = channel.carrFreq/fL1 + obj.deltaFreq; %归一化,接收机钟快使多普勒变小(发生在下变频)
+        carrAcc = channel.carrAccS + channel.carrAccR; %载波加速度(在大加速度时需考虑定位点与跟踪点时间间隔内的多普勒变化)
+        dCarrFreq = carrAcc * (dt-0.5e-3); %跟踪点测的载波频率实际上是下个1ms积分时间中间时刻的载波频率
+        doppler = (channel.carrFreq+dCarrFreq)/fL1 + obj.deltaFreq; %归一化,接收机钟快使多普勒变小(发生在下变频)
         satmeas(k,7:8) = satmeasCorr(tt, doppler, corr);
     end
 end

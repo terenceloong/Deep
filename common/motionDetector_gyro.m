@@ -28,7 +28,7 @@ classdef motionDetector_gyro < handle
         function run(obj, gyro)
             obj.state0 = obj.state; %记录上次运动状态
             wm = norm(gyro-obj.gyro0); %角速度模长
-            if obj.state==0
+            if obj.state==0 %静止状态
                 if wm<obj.wmt
                     obj.cnt = 0;
                 else
@@ -38,7 +38,7 @@ classdef motionDetector_gyro < handle
                     obj.cnt = 0;
                     obj.state = 1;
                 end
-            else
+            else %运动状态
                 if wm>obj.wmt
                     obj.cnt = 0;
                 else

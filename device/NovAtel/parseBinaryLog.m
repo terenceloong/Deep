@@ -76,7 +76,7 @@ Header = table(Header(:,1),Header(:,2),Header(:,3),Header(:,4),Header(:,5),...
                 'idleTime','timeStatus','GPSweek','GPSms','recStatus'});
 
 y = streamIndex(2:end,1) - streamIndex(1:end-1,2); %当前帧头减前一帧帧尾应该为1
-if ~isempty(find(y~=1,1))
+if any(y~=1)
     disp('data lost!')
 end
 messageID = unique(Header.msgID); %总共有多少种消息

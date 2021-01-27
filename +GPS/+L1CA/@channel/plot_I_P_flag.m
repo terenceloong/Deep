@@ -10,17 +10,17 @@ set(gca, 'XLim',[0,ceil(obj.Tms/1000)])
 hold on
 
 % 标记寻找帧头阶段(粉色),该阶段的结尾一定是[1,0,0,0,1,0,1,1]
-index = find(obj.storage.bitFlag=='H');
+index = obj.storage.bitFlag=='H';
 t = obj.storage.dataIndex(index)/obj.sampleFreq;
 plot(t, double(obj.storage.I_Q(index,1)), 'LineStyle','none', 'Marker','.', 'Color','m')
 
 % 标记校验帧头阶段(蓝色),该阶段的结尾一定是[1,0,0,0,1,0,1,1]
-index = find(obj.storage.bitFlag=='C');
+index = obj.storage.bitFlag=='C';
 t = obj.storage.dataIndex(index)/obj.sampleFreq;
 plot(t, double(obj.storage.I_Q(index,1)), 'LineStyle','none', 'Marker','.', 'Color','b')
 
 % 标记解析星历阶段(红色)
-index = find(obj.storage.bitFlag=='E');
+index = obj.storage.bitFlag=='E';
 t = obj.storage.dataIndex(index)/obj.sampleFreq;
 plot(t, double(obj.storage.I_Q(index,1)), 'LineStyle','none', 'Marker','.', 'Color','r')
 

@@ -8,7 +8,7 @@ if isempty(obj.almanac)
 end
 
 % 挑选高度角大于0的卫星
-index = find(obj.aziele(:,3)>0); %高度角大于0的卫星索引
+index = obj.aziele(:,3)>0; %高度角大于0的卫星索引
 PRN = obj.aziele(index,1);
 azi = obj.aziele(index,2)/180*pi; %方位角转成弧度
 ele = obj.aziele(index,3); %高度角,deg
@@ -30,6 +30,7 @@ uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_all_CN0'}, 'Text','Print al
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_all_carrNco'}, 'Text','Print all carrNco');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_all_carrAcc'}, 'Text','Print all carrAcc');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_sv_3d'}, 'Text','Plot 3D', 'Separator','on');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_motionState'}, 'Text','Plot motionState');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'cal_aziele'}, 'Text','Cal aziele', 'Separator','on');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'cal_iono'}, 'Text','Cal iono');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_df'}, 'Text','Plot df', 'Separator','on');

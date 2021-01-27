@@ -27,7 +27,9 @@ classdef signalSim < handle
         PRN             %卫星编号
         CAcode          %一个周期的C/A码
         carrFactor      %载波因子
-        ephe            %星历          
+        Tseq            %采样序列
+        T2seq           %采样的平方序列
+        ephe            %星历
         message         %导航电文
         N0              %热噪声功率谱密度
         cnrMode         %载噪比模式
@@ -39,10 +41,14 @@ classdef signalSim < handle
     end
     
     methods
-        function obj = signalSim(PRN, sampleFreq) %构造函数
+        function obj = signalSim(PRN, sampleFreq, sampleN) %构造函数
+            % sampleFreq:采样频率
+            % sampleN:一次算多少个点
             obj.PRN = PRN;
             obj.CAcode = GPS.L1CA.codeGene(PRN);
             obj.carrFactor = -2*pi*1575.42e6;
+            obj.Tseq = (1:sampleN) / sampleN;
+            obj.T2seq = obj.Tseq.^2;
             obj.N0 = 2 / sampleFreq; %sigma=1的复白噪声功率为2
             obj.cnrMode = 0; %默认根据高度角计算载噪比
         end
@@ -91,21 +97,30 @@ classdef signalSim < handle
             end
         end
         
-        function [sigI, sigQ] = gene_signal(obj, te0, te, tr0, tr, sampleN, att) %生成信号
-            % te0:上次发射时间,te:当前发射时间(卫星钟,用来算码相位)
-            % tr0:上次接收时间,tr:当前接收时间(接收机钟,用来算载波相位,载波相位与伪距直接相关)
-            % sampleN:采样点数
+        function [sigI, sigQ] = gene_signal(obj, te012, tr012, att) %生成信号
+            % te012:三个发射时间(卫星钟,用来算码相位),[s,ms,us],每行一个时间
+            % tr012:三个接收时间(接收机钟,用来算载波相位,载波相位与伪距直接相关)
             % att:地理系姿态角,deg
-            samples = (1:sampleN) / sampleN;
             SMU2S = [1;1e-3;1e-6]; %[s,ms,us]到s
+            SMU2MS = [1e3;1;1e-3]; %[s,ms,us]到ms
+            %----提取时间
+            te0 = te012(1,:);
+            te1 = te012(2,:);
+            te2 = te012(3,:);
+            tr0 = tr012(1,:);
+            tr1 = tr012(2,:);
+            tr2 = tr012(3,:);
             %----信号幅值
-            CN0 = obj.get_cnr(tr*SMU2S); %信号载噪比
+            CN0 = obj.get_cnr(tr0*SMU2S); %信号载噪比
             amp = sqrt(10^(CN0/10) * obj.N0); %信号幅值
             amp = amp * obj.att_effect(att); %考虑姿态的影响
             %----生成码
             te0_us = te0(3)/1e3; %上次发射时间的微秒部分,单位:ms
-            dte_us = (te-te0) * [1e3;1;1e-3]; %发射时间增量,单位:ms
-            te_us_vector = te0_us + dte_us*samples; %发射时间微秒部分矢量,单位:ms
+            dte1_us = (te1-te0)*SMU2MS; %发射时间增量1,单位:ms
+            dte2_us = (te2-te0)*SMU2MS; %发射时间增量2,单位:ms
+            a = 2*dte2_us - 4*dte1_us; %二次项系数
+            b = 4*dte1_us - dte2_us; %一次项系数
+            te_us_vector = te0_us + b*obj.Tseq + a*obj.T2seq; %发射时间微秒部分矢量,单位:ms
             codePhase = floor(mod(te_us_vector,1)*1023) + 1; %码相位(每1ms对应1023个码片)
             sigCode = obj.CAcode(codePhase) * amp;
             %----生成导航电文
@@ -116,12 +131,17 @@ classdef signalSim < handle
             sigNav = obj.message(bitIndex);
             sigCode = sigCode .* sigNav;
             if bitIndex(end)>=1503 %更新导航电文
-                obj.update_message(te(1));
+                obj.update_message(te2(1));
             end
             %----生成载波
-            tt0 = (tr0 - te0) * SMU2S; %上次传输时间
-            tt = (tr - te) * SMU2S; %当前传输时间
-            tt_vec = tt0 + (tt-tt0)*samples; %传输时间矢量
+            tt0 = (tr0-te0)*SMU2S; %上次传输时间
+            tt1 = (tr1-te1)*SMU2S; %中间传输时间
+            tt2 = (tr2-te2)*SMU2S; %当前传输时间
+            dtt1 = tt1-tt0; %传输时间增量1
+            dtt2 = tt2-tt0; %传输时间增量2
+            a = 2*dtt2 - 4*dtt1; %二次项系数
+            b = 4*dtt1 - dtt2; %一次项系数
+            tt_vec = tt0 + b*obj.Tseq + a*obj.T2seq; %传输时间矢量
             carrPhase = tt_vec * obj.carrFactor; %载波相位
             carrPhase = carrPhase - floor(carrPhase(1)/2/pi)*2*pi; %将2pi的整数倍剔除,加速三角函数计算
             carrCos = cos(carrPhase);

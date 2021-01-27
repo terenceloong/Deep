@@ -2,8 +2,10 @@ function pos_deep(obj)
 % 深组合定位
 
 % 波长
-Lca = 0.190293672798365; %载波长,m (299792458/1575.42e6)
+Lca = 0.190293672798365; %载波波长,m (299792458/1575.42e6)
 Lco = 293.0522561094819; %码长,m (299792458/1.023e6)
+Fca = 1575.42e6; %载波频率
+Fco = 1.023e6; %码频率
 
 % 获取卫星测量信息
 satmeas = obj.get_satmeas;
@@ -45,13 +47,14 @@ obj.navFilter.run(obj.imu, sv, indexP, indexV);
 % 计算ecef系下加速度
 Cnb = quat2dcm(obj.navFilter.quat);
 Cen = dcmecef2ned(obj.navFilter.pos(1), obj.navFilter.pos(2));
-fb = (obj.imu(4:6) - obj.navFilter.bias(4:6)) * obj.navFilter.g; %惯导加速度,m/s^2
-wb = (obj.imu(1:3) - obj.navFilter.bias(1:3)) /180*pi; %角速度,rad/s
-wdot = obj.navFilter.wdot /180*pi; %角加速度,rad/s/s
+fb = obj.imu(4:6) - obj.navFilter.bias(4:6); %惯导加速度,m/s^2
+wb = obj.imu(1:3) - obj.navFilter.bias(1:3); %角速度,rad/s
+wdot = obj.navFilter.wdot; %角加速度,rad/s^2
 arm = obj.navFilter.arm; %体系下杆臂矢量
 fbt = cross(wdot,arm); %切向加速度,m/s^2
 fbn = cross(wb,cross(wb,arm)); %法向加速度,m/s^2
-fn = (fb+fbt+fbn)*Cnb + [0,0,obj.navFilter.g]; %地理系下加速度
+fh = cross(2*obj.geogInfo.wien+obj.geogInfo.wenn, obj.vel); %有害加速度
+fn = (fb+fbt+fbn)*Cnb + [0,0,obj.geogInfo.g] - fh; %地理系下加速度(刨除有害加速度)
 fe = fn*Cen; %ecef系下加速度
 
 % 计算ecef系下杆臂位置速度
@@ -64,6 +67,7 @@ obj.vp = obj.navFilter.vp + v_arm;
 obj.att = obj.navFilter.att;
 obj.pos = ecef2lla(obj.rp);
 obj.vel = obj.vp*Cen';
+obj.geogInfo = geogInfo_cal(obj.pos, obj.vel);
 
 [rho0, rhodot0, rspu] = rho_rhodot_cal_ecef(satmeas(:,1:3), satmeas(:,4:6), ...
                         obj.rp, obj.vp); %理论相对距离和相对速度
@@ -75,8 +79,8 @@ if obj.deepMode==1 %只修码相位
         channel = obj.channels(k);
         if channel.state==3
             channel.codeDiscBuffPtr = 0;
-            %----码相位修正
-            dcodePhase = (rho0(k)-satmeas(k,7))/Lco; %码相位修正量
+            %----码相位修正(satmeas中的伪距是带钟差的,需要补回来,才能得到修正量)
+            dcodePhase = (rho0(k)-satmeas(k,7))/Lco + obj.navFilter.dtr*Fco; %码相位修正量
             channel.remCodePhase = channel.remCodePhase - dcodePhase;
             %----接收机运动引起的载波频率变化率
             channel.carrAccR = -acclos0(k)/Lca;
@@ -87,11 +91,11 @@ elseif obj.deepMode==2 %修码相位和载波驱动频率
         channel = obj.channels(k);
         if channel.state==3
             channel.codeDiscBuffPtr = 0;
-            %----码相位修正
-            dcodePhase = (rho0(k)-satmeas(k,7))/Lco; %码相位修正量
+            %----码相位修正(satmeas中的伪距是带钟差的,需要补回来,才能得到修正量)
+            dcodePhase = (rho0(k)-satmeas(k,7))/Lco + obj.navFilter.dtr*Fco; %码相位修正量
             channel.remCodePhase = channel.remCodePhase - dcodePhase;
-            %----载波驱动频率修正
-            dcarrFreq = (rhodot0(k)-satmeas(k,8))/Lca; %相对估计频率的修正量
+            %----载波驱动频率修正(satmeas中的伪距率是带钟频差的,需要补回来,才能得到修正量)
+            dcarrFreq = (rhodot0(k)-satmeas(k,8))/Lca + obj.navFilter.dtv*Fca; %相对估计频率的修正量
             channel.carrNco = channel.carrFreq - dcarrFreq;
             %----接收机运动引起的载波频率变化率
             channel.carrAccR = -acclos0(k)/Lca;
@@ -124,6 +128,7 @@ obj.storage.P(m,1:size(P,1)) = sqrt(diag(P));
 Cnb = quat2dcm(obj.navFilter.quat);
 P_angle = var_phi2angle(P(1:3,1:3), Cnb);
 obj.storage.P(m,1:3) = sqrt(diag(P_angle));
+obj.storage.motion(m) = obj.navFilter.motion.state;
 
 % 更新下次定位时间
 obj.tp(1) = NaN;

@@ -65,12 +65,12 @@ ftpobj = ftp('gssc.esa.int'); %连接ftp服务器
 cd(ftpobj, ftppath); %进入文件夹
 filelist = dir(ftpobj); %提取文件列表
 filelist = {filelist.name}'; %只要文件名,存成元胞数组列向量
-if ~isempty(find(strcmp(filelist,ftpfile)==1,1)) %检查是否存在文件
+if any(strcmp(filelist,ftpfile)) %检查是否存在文件
     mget(ftpobj, ftpfile, filepath); %下载文件,指定存储文件夹
     close(ftpobj); %关闭连接
 else
     ftpfile = [ftpfile(1:end-1),'gz']; %试以gz结尾的文件
-    if ~isempty(find(strcmp(filelist,ftpfile)==1,1))
+    if any(strcmp(filelist,ftpfile)) %检查是否存在文件
         mget(ftpobj, ftpfile, filepath); %下载文件,指定存储文件夹
         close(ftpobj); %关闭连接
         Zfile = [filepath,'\',ftpfile]; %本地压缩文件名

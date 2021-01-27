@@ -39,6 +39,7 @@ if ~isnan(satnav(1))
     obj.rp  = satnav(4:6);
     obj.vel = satnav(7:9);
     obj.vp  = satnav(10:12);
+    obj.geogInfo = geogInfo_cal(obj.pos, obj.vel);
 end
 
 % 接收机时钟修正

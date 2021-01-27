@@ -3,7 +3,7 @@ function q = quatCorr(q, X)
 % X为姿态失准角矢量,行向量
 
 phi = norm(X);
-if phi>1e-6
+if phi>1e-12
     qc = [cos(phi/2), X/phi*sin(phi/2)];
     q = quatmultiply(qc, q);
 end

@@ -29,6 +29,7 @@ classdef GL1CA_S < handle
         vel            %接收机速度,北东地
         vp             %接收机速度,ecef
         att            %姿态,deg
+        geogInfo       %地理信息
         iono           %电离层校正参数
         dtpos          %定位时间间隔,ms
         tp             %下次定位的时间,[s,ms,us]
@@ -100,6 +101,7 @@ classdef GL1CA_S < handle
             obj.vel = [0,0,0];
             obj.vp = [0,0,0];
             obj.att = [0,0,0];
+            obj.geogInfo = geogInfo_cal(obj.pos, obj.vel);
             obj.iono = NaN(1,8);
             %----设置定位控制参数
             obj.dtpos = conf.dtpos;
@@ -118,6 +120,7 @@ classdef GL1CA_S < handle
             obj.storage.imu     =   NaN(row,6,'single');
             obj.storage.bias    =   NaN(row,6,'single');
             obj.storage.P       =   NaN(row,17,'single');
+            obj.storage.motion  = zeros(row,1,'uint8'); %运动状态
         end
     end
     
@@ -140,6 +143,7 @@ classdef GL1CA_S < handle
         plot_all_carrAcc(obj)
         
         plot_sv_3d(obj)
+        plot_motionState(obj)
         [azi, ele] = cal_aziele(obj)
         cal_iono(obj)
         plot_df(obj)
