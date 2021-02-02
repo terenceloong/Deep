@@ -12,7 +12,7 @@ classdef filter_single < handle
         dtr        %钟差,s
         dtv        %钟频差,s/s
         geogInfo   %地理信息
-        imu0       %上次的IMU输出(用来算相邻采样点的平均值)
+        imu0       %上次的IMU输出(零偏补偿后)
         bias       %零偏,[gyro,acc],[rad/s,m/s^2]
         T          %更新周期
         P          %P阵
@@ -106,39 +106,49 @@ classdef filter_single < handle
             wbd = wbd - obj.bias(1:3); %减当前零偏
             %----零偏补偿
             imu = imu - obj.bias;
-            %----算平均值
-            if norm(obj.imu0(1:3)-imu(1:3))>(17.5*dt) %角速度突变时不取平均(1000deg/s^2)
-                wb = imu(1:3); %rad/s
+            %----上次的IMU值
+            if norm(obj.imu0(1:3)-imu(1:3))>(17.5*dt) %角速度突变(1000deg/s^2)
+                wb0 = imu(1:3);
             else
-                wb = (imu(1:3)+obj.imu0(1:3))/2; %rad/s
+                wb0 = obj.imu0(1:3);
             end
-            if obj.accJump.state==1 && obj.accJump.cnt==0 %加速度刚突变时不取平均
-                fb = imu(4:6); %m/s^2
+            if obj.accJump.state==1 && obj.accJump.cnt==0 %加速度突变
+                fb0 = imu(4:6);
             else
-                fb = (imu(4:6)+obj.imu0(4:6))/2; %m/s^2
+                fb0 = obj.imu0(4:6);
             end
+            %----当前的IMU值
+            wb1 = imu(1:3);
+            fb1 = imu(4:6);
             %----姿态解算
-            Cnb = quat2dcm(q);
-%             winn = obj.geogInfo.wien + obj.geogInfo.wenn;
-            wb = wb - (Cnb*obj.geogInfo.wenn')'; %刨除地理系旋转,没刨地球自转
-            Omega = [  0,    wb(1),  wb(2),  wb(3);
-                    -wb(1),    0,   -wb(3),  wb(2);
-                    -wb(2),  wb(3),    0,   -wb(1);
-                    -wb(3), -wb(2),  wb(1),    0 ];
-            q = q + 0.5*q*Omega*dt;
-            q = q / norm(q);
-            Cnb = quat2dcm(q);
+            Cnb = quat2dcm(q); %上次的姿态阵
             Cbn = Cnb';
+%             winn = obj.geogInfo.wien + obj.geogInfo.wenn;
+%             winb = winn * Cbn;
+%             wb0 = wb0 - winb;
+%             wb1 = wb1 - winb;
+            wenb = obj.geogInfo.wenn * Cbn;
+            wb0 = wb0 - wenb; %刨除地理系旋转,没刨地球自转
+            wb1 = wb1 - wenb;
+            q = RK2(@fun_dq, q, dt, wb0, wb1);
+            q = q / norm(q);
             %----速度解算
             winn2 = 2*obj.geogInfo.wien + obj.geogInfo.wenn;
-            fn = fb*Cnb;
-            v = v0 + (fn-cross(winn2,v0)+[0,0,obj.geogInfo.g])*dt;
+            fb = (fb0+fb1)/2;
+            wb = (wb0+wb1)/2;
+            dv = fb*dt; %速度增量
+            dtheta = wb*dt; %角度增量
+            dvc = 0.5*cross(dtheta,dv); %速度增量补偿量
+            v = v0 + (dv+dvc)*Cnb + ([0,0,obj.geogInfo.g]-cross(winn2,v0))*dt;
             %----位置解算
             dp = (v0+v)/2*dt; %位置增量
             lat = lat + dp(1)*obj.geogInfo.dlatdn*r2d; %deg
             lon = lon + dp(2)*obj.geogInfo.dlonde*r2d; %deg
             h = h - dp(3);
             %----状态方程
+            Cnb = quat2dcm(q);
+            Cbn = Cnb';
+            fn = fb1*Cnb;
             A = zeros(17);
 %             A(1:3,1:3) = [0,winn(3),-winn(2); -winn(3),0,winn(1); winn(2),-winn(1),0];
             A(1:3,12:14) = -Cbn;
@@ -175,7 +185,7 @@ classdef filter_single < handle
                 H((n1+1):end,11) = -cm(indexV);
                 %----对测量的伪距伪距率进行杆臂修正-------------------------%
                 rho = rho - HB*Cbn*obj.arm'; %如果天线放在惯导位置应该测得的伪距
-                vab = cross(wb,obj.arm); %杆臂引起的速度
+                vab = cross(wb1,obj.arm); %杆臂引起的速度
                 rhodot = rhodot - HB*Cbn*vab'; %如果天线放在惯导位置应该测得的伪距率
                 %---------------------------------------------------------%
                 Z = [rho0(indexP) - rho(indexP); ...

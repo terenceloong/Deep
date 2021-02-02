@@ -14,6 +14,7 @@ classdef channel < handle
         acqM            %搜索频率个数
         CODE            %C/A码的FFT
         code            %本地码发生器用的C/A码
+        Tseq            %本地信号发生器使用的时间序列
         coherentCnt     %相干积分计数,每1ms加1
         coherentN       %相干积分次数
         coherentTime    %相干积分时间,s
@@ -81,6 +82,8 @@ classdef channel < handle
             obj.CODE = fft(CAcode(index));
             %----本地码发生器用的C/A码
             obj.code = [CAcode(end),CAcode,CAcode(1)]'; %列向量,方便用矩阵乘法代替累加求和;前后各补一个数,方便取超前滞后码
+            %----本地信号发生器使用的时间序列
+            obj.Tseq = (0:conf.sampleFreq*0.001+4)/conf.sampleFreq; %多给几个点
             %----申请星历空间
             obj.ephe = NaN(1,25);
             obj.iono = NaN(1,8);

@@ -1,7 +1,6 @@
-function track(obj, dataI, dataQ, deltaFreq)
+function track(obj, dataI, dataQ)
 % 跟踪卫星信号,每1ms执行一次
 % dataI,dataQ:原始数据,行向量
-% deltaFreq:接收机时钟频率误差,无量纲,钟快为正
 
 pi2 = 2*pi;
 
@@ -19,13 +18,9 @@ obj.storage.carrAcc(n)      = obj.carrAccS + obj.carrAccR;
 % 指向下次更新的开始点
 obj.dataIndex = obj.dataIndex + obj.trackBlockSize;
 
-% 校正采样频率
-fs = obj.sampleFreq * (1+deltaFreq);
-
 % 时间序列
-dts = 1/fs; %采样时间间隔
-t = (0:obj.trackBlockSize-1) * dts;
-te = obj.trackBlockSize * dts;
+t = obj.Tseq(1:obj.trackBlockSize);
+te = obj.Tseq(obj.trackBlockSize+1);
 
 % 本地载波
 theta = (obj.remCarrPhase + obj.carrNco*t) * pi2;
@@ -120,7 +115,7 @@ if obj.coherentCnt==obj.coherentN
         case 1 %延迟锁定环
             order2DLL(codeError);
         case 2 %码开环
-            openDLL(deltaFreq);
+            openDLL;
     end
 end
 
@@ -132,7 +127,7 @@ obj.trackDataTail = obj.trackDataHead + 1;
 if obj.trackDataTail>obj.buffSize
     obj.trackDataTail = 1;
 end
-obj.trackBlockSize = ceil((1023-obj.remCodePhase)/obj.codeNco*fs);
+obj.trackBlockSize = ceil((1023-obj.remCodePhase)/obj.codeNco*obj.sampleFreq);
 obj.trackDataHead = obj.trackDataTail + obj.trackBlockSize - 1;
 if obj.trackDataHead>obj.buffSize
     obj.trackDataHead = obj.trackDataHead - obj.buffSize;
@@ -229,13 +224,10 @@ obj.storage.CN0(n) = obj.CN0;
     end
 
     %% 码开环
-    function openDLL(deltaFreq)
+    function openDLL
         % 码频率由载波频率直接驱动
-        % 直接测的载波频率包含接收机钟频差
-        % 接收机钟快,测的载波频率偏小,需要加上,得到实际的载波频率
-        % 接收的码频率不受接收机钟频差的影响,因为钟频差主要影响下变频,对调制信号没有影响
-        carrFreq = obj.carrFreq + deltaFreq*1575.42e6;
-        obj.codeNco = 1.023e6 + carrFreq/1540;
+        % 即便有钟频差也不用管,关系不变
+        obj.codeNco = 1.023e6 + obj.carrFreq/1540;
         obj.codeFreq = obj.codeNco;
     end
 

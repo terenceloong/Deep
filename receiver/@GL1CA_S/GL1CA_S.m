@@ -119,8 +119,9 @@ classdef GL1CA_S < handle
             obj.storage.att     =   NaN(row,3,'single');
             obj.storage.imu     =   NaN(row,6,'single');
             obj.storage.bias    =   NaN(row,6,'single');
-            obj.storage.P       =   NaN(row,17,'single');
+            obj.storage.P       =   NaN(row,20,'single');
             obj.storage.motion  = zeros(row,1,'uint8'); %ÔË¶¯×´Ì¬
+            obj.storage.others  =   NaN(row,7,'single');
         end
     end
     

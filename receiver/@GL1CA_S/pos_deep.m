@@ -1,11 +1,11 @@
 function pos_deep(obj)
 % 深组合定位
 
-% 波长
-Lca = 0.190293672798365; %载波波长,m (299792458/1575.42e6)
-Lco = 293.0522561094819; %码长,m (299792458/1.023e6)
+% 频率和波长
 Fca = 1575.42e6; %载波频率
 Fco = 1.023e6; %码频率
+Lca = 0.190293672798365; %载波波长,m (299792458/1575.42e6)
+Lco = 293.0522561094819; %码长,m (299792458/1.023e6)
 
 % 获取卫星测量信息
 satmeas = obj.get_satmeas;
@@ -74,16 +74,19 @@ obj.geogInfo = geogInfo_cal(obj.pos, obj.vel);
 acclos0 = rspu*fe'; %计算接收机运动引起的相对加速度
 
 % 通道修正 (伪距短,码相位超前; 伪距率小,载波频率快)
+Cdf = 1 + obj.deltaFreq; %跟踪频率到真实频率的系数
+dtr = obj.navFilter.dtr; %钟差
+dtv = obj.navFilter.dtv; %钟频差
 if obj.deepMode==1 %只修码相位
     for k=1:chN
         channel = obj.channels(k);
         if channel.state==3
             channel.codeDiscBuffPtr = 0;
             %----码相位修正(satmeas中的伪距是带钟差的,需要补回来,才能得到修正量)
-            dcodePhase = (rho0(k)-satmeas(k,7))/Lco + obj.navFilter.dtr*Fco; %码相位修正量
+            dcodePhase = (rho0(k)-satmeas(k,7))/Lco + dtr*Fco; %码相位修正量
             channel.remCodePhase = channel.remCodePhase - dcodePhase;
             %----接收机运动引起的载波频率变化率
-            channel.carrAccR = -acclos0(k)/Lca;
+            channel.carrAccR = -acclos0(k)/Lca / Cdf;
         end
     end
 elseif obj.deepMode==2 %修码相位和载波驱动频率
@@ -92,13 +95,13 @@ elseif obj.deepMode==2 %修码相位和载波驱动频率
         if channel.state==3
             channel.codeDiscBuffPtr = 0;
             %----码相位修正(satmeas中的伪距是带钟差的,需要补回来,才能得到修正量)
-            dcodePhase = (rho0(k)-satmeas(k,7))/Lco + obj.navFilter.dtr*Fco; %码相位修正量
+            dcodePhase = (rho0(k)-satmeas(k,7))/Lco + dtr*Fco; %码相位修正量
             channel.remCodePhase = channel.remCodePhase - dcodePhase;
             %----载波驱动频率修正(satmeas中的伪距率是带钟频差的,需要补回来,才能得到修正量)
-            dcarrFreq = (rhodot0(k)-satmeas(k,8))/Lca + obj.navFilter.dtv*Fca; %相对估计频率的修正量
-            channel.carrNco = channel.carrFreq - dcarrFreq;
+            dcarrFreq = (rhodot0(k)-satmeas(k,8))/Lca + dtv*Fca; %相对估计频率的修正量
+            channel.carrNco = channel.carrFreq - dcarrFreq/Cdf;
             %----接收机运动引起的载波频率变化率
-            channel.carrAccR = -acclos0(k)/Lca;
+            channel.carrAccR = -acclos0(k)/Lca / Cdf;
         end
     end
 end
@@ -129,6 +132,9 @@ Cnb = quat2dcm(obj.navFilter.quat);
 P_angle = var_phi2angle(P(1:3,1:3), Cnb);
 obj.storage.P(m,1:3) = sqrt(diag(P_angle));
 obj.storage.motion(m) = obj.navFilter.motion.state;
+obj.storage.others(m,1:3) = obj.navFilter.arm;
+obj.storage.others(m,4:6) = obj.navFilter.wdot;
+% obj.storage.others(m,7) = obj.navFilter.delay;
 
 % 更新下次定位时间
 obj.tp(1) = NaN;
