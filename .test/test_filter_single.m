@@ -11,9 +11,9 @@ n = T / dt;    %仿真点数
 t = (1:n)'*dt; %时间序列,列向量
 
 %% 惯性器件指标
-sigma_gyro = 0.15; %deg/s
-sigma_acc = 1.5e-3; %g
-bias_gyro = [0.2, 0, 0.6] *1; %deg/s
+sigma_gyro = 0.1; %deg/s
+sigma_acc = 1e-3; %g
+bias_gyro = [0.2, -0.2, 0.6] *1; %deg/s
 bias_acc = [0, 0, 2]*1e-3 *1; %g
 
 %% 接收机指标
@@ -44,13 +44,13 @@ rho = 20000000; %卫星到接收机的距离,m
 %% 仿真惯性器件输出
 d2r = pi/180;
 Cnb = angle2dcm(a0(1)*d2r, a0(2)*d2r, a0(3)*d2r);
-acc = (Cnb*[0;0;-1])'; %真实加速度,g
+acc = (Cnb*[0;0;-gravitywgs84(p0(3),p0(1))])'; %真实加速度,m/s^2
 imu = zeros(n,6);
-imu(:,1:3) = ones(n,1)*bias_gyro + ...
-             randn(n,3)*sigma_gyro;
+imu(:,1:3) = ones(n,1)*bias_gyro*d2r + ...
+             randn(n,3)*sigma_gyro*d2r; %rad/s
 imu(:,4:6) = ones(n,1)*acc + ...
-             ones(n,1)*bias_acc + ...
-             randn(n,3)*sigma_acc; 
+             ones(n,1)*bias_acc*9.8 + ...
+             randn(n,3)*sigma_acc*9.8; %m/s^2
 
 %% 计算卫星位置速度
 svN = size(sv_info,1); %卫星个数
@@ -99,11 +99,11 @@ para.Q_dtv = 0.01e-9; %1/s
 para.Q_dg = 0.01; %deg/s/s
 para.Q_da = 0.1e-3; %g/s
 para.sigma_gyro = sigma_gyro; %deg/s
+para.arm = [0,0,0];
 NF = filter_single(para);
 
 %% 开始仿真
-sv_9_11 = [ones(svN,1)*2, ...
-           ones(svN,1)*sigma_rho^2, ...
+sv_9_10 = [ones(svN,1)*sigma_rho^2, ...
            ones(svN,1)*sigma_rhodot^2];
 for k=1:n
     % 生成卫星量测
@@ -116,7 +116,7 @@ for k=1:n
     satnav = satnavSolve(sv, rp);
     
     % 导航滤波
-    NF.run(imu(k,:), [sv,sv_9_11]);
+    NF.run(imu(k,:), [sv,sv_9_10], true(svN,1), true(svN,1));
     dtv = dtv - NF.dtv;
     dtr = dtr - NF.dtr;
     
@@ -142,7 +142,7 @@ for k=1:2
     hold on
     grid on
     axis manual
-    plot(t, output.filter(:,k), 'LineWidth',2)
+    plot(t, output.filter(:,k), 'LineWidth',1)
     plot(t, p0(k)+output.P(:,k+6)*r2d*3, 'Color','y', 'LineStyle','--')
     plot(t, p0(k)-output.P(:,k+6)*r2d*3, 'Color','y', 'LineStyle','--')
     set(gca, 'xlim', [0,t(end)])
@@ -152,7 +152,7 @@ plot(t, output.satnav(:,3))
 hold on
 grid on
 axis manual
-plot(t, output.filter(:,3), 'LineWidth',2)
+plot(t, output.filter(:,3), 'LineWidth',1)
 plot(t, p0(3)+output.P(:,9)*3, 'Color','y', 'LineStyle','--')
 plot(t, p0(3)-output.P(:,9)*3, 'Color','y', 'LineStyle','--')
 set(gca, 'xlim', [0,t(end)])
@@ -165,7 +165,7 @@ for k=1:3
     hold on
     grid on
     axis manual
-    plot(t, output.filter(:,k+3), 'LineWidth',2)
+    plot(t, output.filter(:,k+3), 'LineWidth',1)
     plot(t,  output.P(:,k+3)*3, 'Color','y', 'LineStyle','--')
     plot(t, -output.P(:,k+3)*3, 'Color','y', 'LineStyle','--')
     set(gca, 'xlim', [0,t(end)])
@@ -176,7 +176,7 @@ r2d = 180/pi;
 figure('Name','姿态')
 for k=1:3
     subplot(3,1,k)
-    plot(t, output.filter(:,k+6), 'LineWidth',2)
+    plot(t, output.filter(:,k+6), 'LineWidth',1)
     hold on
     grid on
     axis manual
@@ -187,24 +187,24 @@ end
 
 %% 画陀螺仪零偏输出
 r2d = 180/pi;
-figure('Name','陀螺零偏')
+figure('Name','陀螺零偏(deg/s)')
 for k=1:3
     subplot(3,1,k)
-    plot(t, imu(:,k))
+    plot(t, imu(:,k)*r2d)
     hold on
     grid on
     axis manual
-    plot(t, output.bias(:,k), 'LineWidth',2)
+    plot(t, output.bias(:,k)*r2d, 'LineWidth',1)
     plot(t, bias_gyro(k)+output.P(:,k+11)*r2d*3, 'Color','y', 'LineStyle','--')
     plot(t, bias_gyro(k)-output.P(:,k+11)*r2d*3, 'Color','y', 'LineStyle','--')
     set(gca, 'xlim', [0,t(end)])
 end
 
 %% 画加速度计零偏输出
-figure('Name','加计零偏')
+figure('Name','加计零偏(g)')
 for k=1:3
     subplot(3,1,k)
-    plot(t, output.bias(:,k+3), 'LineWidth',2)
+    plot(t, output.bias(:,k+3)/9.8, 'LineWidth',1)
     hold on
     grid on
     axis manual

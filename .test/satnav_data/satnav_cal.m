@@ -1,33 +1,45 @@
-% ç»™å®šä¸€ç»„ä¼ªè·å’Œå¤šæ™®å‹’æµ‹é‡å€¼,è¿›è¡Œå«æ˜Ÿå¯¼èˆªè§£ç®—
-% ephe0:æ‰€æœ‰å«æ˜Ÿæ˜Ÿå†,æ¯è¡Œä¸€é¢—å«æ˜Ÿ,5~25åˆ—ä¸ºæœ‰æ•ˆæ˜Ÿå†æ•°æ®
-% iono:8ä¸ªç”µç¦»å±‚å‚æ•°
-% time:æ¥æ”¶æœºæ—¶é—´,[s,ms,us]
-% rho:ä¼ªè·åºåˆ—,32åˆ—,æ¯åˆ—ä¸€é¢—å«æ˜Ÿ,æ— æ•°æ®çš„ä¸ºNaN
-% rhodot:å¤šæ™®å‹’åºåˆ—(ä¸ä¼ªè·å˜åŒ–ç‡ç›¸å),32åˆ—,æ¯åˆ—ä¸€é¢—å«æ˜Ÿ,æ— æ•°æ®çš„ä¸ºNaN
+% ¸ø¶¨Ò»×éÎ±¾àºÍ¶àÆÕÀÕ²âÁ¿Öµ,½øĞĞÎÀĞÇµ¼º½½âËã
+% ephe0:ËùÓĞÎÀĞÇĞÇÀú,Ã¿ĞĞÒ»¿ÅÎÀĞÇ,5~25ÁĞÎªÓĞĞ§ĞÇÀúÊı¾İ
+% iono:8¸öµçÀë²ã²ÎÊı
+% time:½ÓÊÕ»úÊ±¼ä,[s,ms,us]
+% rho:Î±¾àĞòÁĞ,32ÁĞ,Ã¿ÁĞÒ»¿ÅÎÀĞÇ,ÎŞÊı¾İµÄÎªNaN
+% rhodot:¶àÆÕÀÕĞòÁĞ(ÓëÎ±¾à±ä»¯ÂÊÏà·´),32ÁĞ,Ã¿ÁĞÒ»¿ÅÎÀĞÇ,ÎŞÊı¾İµÄÎªNaN
 
 c = 299792458;
 f0 = 1575.42e6;
-lla = [38.04643, 114.43583, 63]; %å¤§è‡´ä½ç½®
+lla = [38.04643, 114.43583, 63]; %´óÖÂÎ»ÖÃ
 rp = lla2ecef(lla);
 vp = [0,0,0];
-% iono = NaN(1,8);
+iono = NaN(1,8);
 
-satnav = zeros(N,14); %å¯¼èˆªç»“æœ
+satnav = zeros(N,14); %µ¼º½½á¹û
+
+% p0 = [38.04647, 114.43595, 81];
+% rp0 = lla2ecef(p0);
+% rho0 = NaN(N,32);
+% rhodot0 = NaN(N,32);
 
 for k=1:N
-    tr = time(k,:); %æ¥æ”¶æ—¶é—´
+    tr = time(k,:); %½ÓÊÕÊ±¼ä
     svList = find(~isnan(rho(k,:)));
+    svList(svList==11) = []; %11ºÅÎÀĞÇÃ»ÓĞĞÇÀú
     svN = length(svList);
     sv = zeros(svN,8);
     for m=1:svN
         PRN = svList(m);
-        tt = rho(k,PRN) / c; %ä¼ è¾“æ—¶é—´
-        doppler = rhodot(k,PRN) / f0; %å½’ä¸€åŒ–å¤šæ™®å‹’
-        te0 = timeCarry(tr-sec2smu(tt)); %å‘å°„æ—¶é—´,[s,ms,us]
+        tt = rho(k,PRN) / c; %´«ÊäÊ±¼ä
+        doppler = rhodot(k,PRN) / f0; %¹éÒ»»¯¶àÆÕÀÕ
+        te0 = timeCarry(tr-sec2smu(tt)); %·¢ÉäÊ±¼ä,[s,ms,us]
         [rsvs, corr] = LNAV.rsvs_emit(ephe0(PRN,5:25), te0, rp, vp, iono, lla);
         rho_rhodot = satmeasCorr(tt, doppler, corr);
         sv(m,1:6) = rsvs;
         sv(m,7:8) = rho_rhodot;
     end
-    satnav(k,:) = satnavSolve(sv, rp); %å«æ˜Ÿå¯¼èˆªè§£ç®—
+    satnav(k,:) = satnavSolve(sv, rp); %ÎÀĞÇµ¼º½½âËã
+    
+%     [rho0(k,svList), rhodot0(k,svList), ~] = rho_rhodot_cal_ecef(sv(:,1:3), sv(:,4:6), rp0, [0,0,0]);
 end
+
+% rhodot0 = -rhodot0/c*f0;
+% drho = rho - rho0;
+% drhodot = rhodot - rhodot0;

@@ -201,7 +201,6 @@ classdef filter_single < handle
                 K = P1*H' / (H*P1*H'+R);
                 X = K*Z;
                 P1 = (eye(17)-K*H)*P1;
-                obj.P = (P1+P1')/2;
                 %----状态约束
                 Y = [];
                 if obj.motion.state==0 %静止时航向修正量约束为0
@@ -255,6 +254,8 @@ classdef filter_single < handle
                     X = X - P1*Y'/(Y*P1*Y')*Y*X;
                 end
             end
+            %----更新P阵
+            obj.P = (P1+P1')/2;
             %----导航修正
             q = quatCorr(q, X(1:3)');
             v = v - X(4:6)';
