@@ -23,7 +23,13 @@ end
 if obj.state==2 || obj.state==3
     for k=1:3
         subplot(3,1,k)
-        plot(t, obj.storage.vel(:,k), 'LineWidth',1)
+        plot(t, obj.storage.vel(:,k), 'LineWidth',0.5)
+    end
+    figure('Name','ÀŸ∂»ŒÛ≤Ó')
+    for k=1:3
+        subplot(3,1,k)
+        plot(t, obj.storage.satnav(:,k+3)-obj.storage.vel(:,k))
+        grid on
     end
 end
 

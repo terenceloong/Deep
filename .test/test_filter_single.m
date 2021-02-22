@@ -117,8 +117,10 @@ for k=1:n
     
     % µ¼º½ÂË²¨
     NF.run(imu(k,:), [sv,sv_9_10], true(svN,1), true(svN,1));
-    dtv = dtv - NF.dtv;
-    dtr = dtr - NF.dtr;
+    dtv = dtv - NF.dtv; %ÐÞÖÓÆµ²î
+    NF.dtv = 0;
+    dtr = dtr - NF.dtr; %ÐÞÖÓ²î
+    NF.dtr = 0;
     
     % ´æ´¢½á¹û
     output.satnav(k,:) = satnav([1,2,3,7,8,9,13,14]);

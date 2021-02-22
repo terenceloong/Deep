@@ -1,5 +1,5 @@
-classdef filter_single < handle
-% 单天线导航滤波器,位置速度都是惯导的
+classdef filter_single_11 < handle
+% 单天线导航滤波器,状态变量中无陀螺加计零偏
     
     properties
         firstFlag  %首次运行标志
@@ -17,8 +17,8 @@ classdef filter_single < handle
         T          %更新周期
         P          %P阵
         Q          %Q阵
-        Rwb        %陀螺仪输出噪声方差
         wbDelay    %延迟的角速度输出
+        wbMean     %角速度的均值
         arm        %杆臂矢量,体系下IMU指向天线
         wdotCal    %角加速度计算模块
         wdot       %角加速度值,rad/s^2
@@ -28,7 +28,7 @@ classdef filter_single < handle
     
     methods
         %% 构造函数
-        function obj = filter_single(para)
+        function obj = filter_single_11(para)
             d2r = pi/180;
             g0 = 9.8; %重力加速度近似值
             c = 3e8; %光速近似值
@@ -50,20 +50,16 @@ classdef filter_single < handle
                           para.P0_vel  *[1,1,1], ...
                           para.P0_pos  *[obj.geogInfo.dlatdn,obj.geogInfo.dlonde,1], ...
                           para.P0_dtr  *c, ...
-                          para.P0_dtv  *c, ...
-                          para.P0_gyro *[1,1,1]*d2r, ...
-                          para.P0_acc  *[1,1,1]*g0 ...
+                          para.P0_dtv  *c ...
                          ])^2; %para的P0都是标准差
             obj.Q = diag([para.Q_gyro *[1,1,1]*d2r, ...
                           para.Q_acc  *[1,1,1]*g0, ...
                           para.Q_acc  *[obj.geogInfo.dlatdn,obj.geogInfo.dlonde,1]*g0*(obj.T*1), ...
                           para.Q_dtv  *c*(obj.T*1), ...
-                          para.Q_dtv  *c, ...
-                          para.Q_dg   *[1,1,1]*d2r, ...
-                          para.Q_da   *[1,1,1]*g0 ...
+                          para.Q_dtv  *c ...
                          ])^2 * obj.T^2; %para的Q都是标准差
-            obj.Rwb = (para.sigma_gyro*d2r)^2;
             obj.wbDelay = delayN(20, 3);
+            obj.wbMean = [mean_rec(2/obj.T), mean_rec(2/obj.T), mean_rec(2/obj.T)];
             obj.arm = para.arm;
             obj.wdotCal = omegadot_cal(obj.T, 3);
             obj.wdot = [0,0,0];
@@ -103,7 +99,16 @@ classdef filter_single < handle
             obj.wdot = obj.wdotCal.run(imu(1:3)); %rad/s
             %----角速度延迟
             wbd = obj.wbDelay.push(imu(1:3));
-            wbd = wbd - obj.bias(1:3); %减当前零偏
+            %----角速度平均值
+            obj.wbMean(1).update(wbd(1));
+            obj.wbMean(2).update(wbd(2));
+            obj.wbMean(3).update(wbd(3));
+            %----获取陀螺仪零偏
+            if obj.motion.state==0 %静止时取角速度的平均值
+                obj.bias(1) = obj.wbMean(1).E;
+                obj.bias(2) = obj.wbMean(2).E;
+                obj.bias(3) = obj.wbMean(3).E;
+            end
             %----零偏补偿
             imu = imu - obj.bias;
             %----上次的IMU值
@@ -151,20 +156,18 @@ classdef filter_single < handle
             Cnb = quat2dcm(q);
             Cbn = Cnb';
             fn = fb1*Cnb;
-            A = zeros(17);
+            A = zeros(11);
 %             A(1:3,1:3) = [0,winn(3),-winn(2); -winn(3),0,winn(1); winn(2),-winn(1),0];
-            A(1:3,12:14) = -Cbn;
             A(4:6,1:3) = [0,-fn(3),fn(2); fn(3),0,-fn(1); -fn(2),fn(1),0];
 %             A(4:6,4:6) = [0,winn2(3),-winn2(2); -winn2(3),0,winn2(1); winn2(2),-winn2(1),0];
-            A(4:6,15:17) = Cbn;
             A(7,4) = obj.geogInfo.dlatdn;
             A(8,5) = obj.geogInfo.dlonde;
             A(9,6) = -1;
             A(10,11) = 1;
-            Phi = eye(17) + A*dt + (A*dt)^2/2;
+            Phi = eye(11) + A*dt + (A*dt)^2/2;
             %----状态更新
             P1 = Phi*obj.P*Phi' + obj.Q;
-            X = zeros(17,1);
+            X = zeros(11,1);
             %----量测维数
             n1 = sum(indexP); %伪距量测个数
             n2 = sum(indexV); %伪距率量测个数
@@ -180,7 +183,7 @@ classdef filter_single < handle
                 HB = rspu*Cen'; %各行为地理系下卫星指向接收机的单位矢量
                 Ha = HA(indexP,:); %取有效的行
                 Hb = HB(indexV,:);
-                H = zeros(n1+n2,17);
+                H = zeros(n1+n2,11);
                 H(1:n1,7:9) = Ha;
                 H(1:n1,10) = -ones(n1,1);
                 H((n1+1):end,4:6) = Hb;
@@ -195,64 +198,32 @@ classdef filter_single < handle
                 %---------------------------------------------------------%
                 Z = [rho0(indexP) - rho(indexP); ...
                      rhodot0(indexV) - rhodot(indexV).*cm(indexV)]; %计算值减测量值
-                if obj.motion.state==0 %静止时加入角速度量测
-                    H(end+(1:3),12:14) = eye(3);
-                    Z = [Z; wbd']; %使用延迟后的角速度,防止机动前几个点的角速度抖动
-                    R = diag([R_rho(indexP);R_rhodot(indexV);[1;1;1]*obj.Rwb]);
+                if obj.motion.state==0
+                    R = diag([R_rho(indexP);R_rhodot(indexV)]);
                 else %运动时将伪距率的量测噪声放大
                     R = diag([R_rho(indexP);R_rhodot(indexV)*1]);
                 end
                 %----滤波
                 K = P1*H' / (H*P1*H'+R);
                 X = K*Z;
-                P1 = (eye(17)-K*H)*P1;
+                P1 = (eye(11)-K*H)*P1;
                 %----状态约束
                 Y = [];
                 if obj.motion.state==0 %静止时航向修正量约束为0
-                    Ysub = zeros(1,17);
+                    Ysub = zeros(1,11);
                     Ysub(1,1) = Cnb(1,1)*Cnb(1,3);
                     Ysub(1,2) = Cnb(1,2)*Cnb(1,3);
                     Ysub(1,3) = -(Cnb(1,1)^2+Cnb(1,2)^2);
                     Y = [Y; Ysub];
                 end
 %                 if n1<4 %伪距量测小于4,不修钟差
-%                     Ysub = zeros(1,17);
+%                     Ysub = zeros(1,11);
 %                     Ysub(1,10) = 1;
 %                     Y = [Y; Ysub];
 %                 end
 %                 if n2<4 %伪距率量测小于4,不修钟频差
-%                     Ysub = zeros(1,17);
+%                     Ysub = zeros(1,11);
 %                     Ysub(1,11) = 1;
-%                     Y = [Y; Ysub];
-%                 end
-%                 if abs(obj.bias(1)+X(12))*r2d>0.1
-%                     Ysub = zeros(1,17);
-%                     Ysub(1,12) = 1;
-%                     Y = [Y; Ysub];
-%                 end
-%                 if abs(obj.bias(2)+X(13))*r2d>0.1
-%                     Ysub = zeros(1,17);
-%                     Ysub(1,13) = 1;
-%                     Y = [Y; Ysub];
-%                 end
-%                 if abs(obj.bias(3)+X(14))*r2d>0.1
-%                     Ysub = zeros(1,17);
-%                     Ysub(1,14) = 1;
-%                     Y = [Y; Ysub];
-%                 end
-%                 if abs(obj.bias(4)+X(15))>0.05
-%                     Ysub = zeros(1,17);
-%                     Ysub(1,15) = 1;
-%                     Y = [Y; Ysub];
-%                 end
-%                 if abs(obj.bias(5)+X(16))>0.05
-%                     Ysub = zeros(1,17);
-%                     Ysub(1,16) = 1;
-%                     Y = [Y; Ysub];
-%                 end
-%                 if abs(obj.bias(6)+X(17))>0.05
-%                     Ysub = zeros(1,17);
-%                     Ysub(1,17) = 1;
 %                     Y = [Y; Ysub];
 %                 end
                 if ~isempty(Y)
@@ -278,8 +249,6 @@ classdef filter_single < handle
             obj.quat = q;
             obj.dtr = obj.dtr + X(10)/c; %s
             obj.dtv = obj.dtv + X(11)/c; %s/s
-            obj.bias(1:3) = obj.bias(1:3) + X(12:14)'; %rad/s
-            obj.bias(4:6) = obj.bias(4:6) + X(15:17)'; %m/s^2
             obj.geogInfo = geogInfo_cal(obj.pos, obj.vel); %更新地理信息
             obj.imu0 = imu; %保存IMU数据
         end

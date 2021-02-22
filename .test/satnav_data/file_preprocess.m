@@ -6,7 +6,12 @@ clc
 % fileID = fopen('ReceivedTofile-COM11-2020_12_31_17-12-35.DAT'); %只有伪距伪距率,多普勒反
 % fileID = fopen('ReceivedTofile-COM11-2021_2_2_17-46-38.DAT'); %带卫星解算,多普勒反
 % fileID = fopen('C:\Users\longt\Desktop\sscom\ReceivedTofile-COM11-2021_2_3_9-20-49.DAT');
-fileID = fopen('C:\Users\longt\Desktop\sscom\ReceivedTofile-COM11-2021_2_9_17-32-55.DAT'); %调试导航滤波器,多普勒正
+% fileID = fopen('C:\Users\longt\Desktop\sscom\ReceivedTofile-COM11-2021_2_9_17-32-55.DAT'); %调试导航滤波器,多普勒正
+% fileID = fopen('C:\Users\longt\Desktop\sscom\ReceivedTofile-COM11-2021_2_19_10-22-38.DAT');
+% fileID = fopen('C:\Users\longt\Desktop\sscom\ReceivedTofile-COM11-2021_2_19_10-39-48.DAT');ReceivedTofile-COM11-2021_2_19_11-53-02
+% fileID = fopen('C:\Users\longt\Desktop\sscom\ReceivedTofile-COM11-2021_2_19_11-53-02.DAT');
+% fileID = fopen('C:\Users\longt\Desktop\sscom\ReceivedTofile-COM11-2021_2_20_10-00-44.DAT');
+fileID = fopen('C:\Users\longt\Desktop\sscom\ReceivedTofile-COM11-2021_2_20_11-22-59.DAT'); %矢量,好
 
 % 统计数据行数
 N = 0;
@@ -22,6 +27,7 @@ fseek(fileID, 0, 'bof'); %移到文件开头
 time = zeros(N,3);
 rho = NaN(N,32);
 rhodot = NaN(N,32);
+codeFreq = NaN(N,32);
 
 % 在线解算结果
 pos = NaN(N,3);
@@ -50,6 +56,11 @@ while ~feof(fileID)
         rho(k,data(2)) = data(4);
 %         rhodot(k,data(2)) = -data(5); %多普勒反
         rhodot(k,data(2)) = data(5); %多普勒正
+        %------------------------------------------------------------------
+%         data = sscanf(tline, 'm:%d %d %f %f %f %d %f %f')';
+%         rho(k,data(2)) = data(4);
+%         rhodot(k,data(2)) = data(5); %多普勒正
+%         codeFreq(k,data(2)) = data(8);
     end
     %----在线卫星导航解算结果
     if strcmp(tline(1:4),'POS:')

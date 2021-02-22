@@ -111,16 +111,18 @@ obj.channel_deep;
 
 % 接收机时钟修正
 obj.deltaFreq = obj.deltaFreq + obj.navFilter.dtv;
+obj.navFilter.dtv = 0;
 obj.ta = obj.ta - sec2smu(obj.navFilter.dtr);
+obj.navFilter.dtr = 0;
 
 % 数据存储
 obj.ns = obj.ns+1; %指向当前存储行
 m = obj.ns;
 obj.storage.ta(m) = obj.tp * [1;1e-3;1e-6]; %定位时间,s
 obj.storage.df(m) = obj.deltaFreq;
-obj.storage.satmeas(:,:,m) = satmeas;
+obj.storage.satmeas(:,:,m) = sv;
 obj.storage.satnav(m,:) = satnav([1,2,3,7,8,9,13,14]);
-obj.storage.svsel(m,:) = svIndex;
+obj.storage.svsel(m,:) = indexP + indexV;
 obj.storage.pos(m,:) = obj.pos;
 obj.storage.vel(m,:) = obj.vel;
 obj.storage.att(m,:) = obj.att;
@@ -135,6 +137,9 @@ obj.storage.motion(m) = obj.navFilter.motion.state;
 obj.storage.others(m,1:3) = obj.navFilter.arm;
 obj.storage.others(m,4:6) = obj.navFilter.wdot;
 % obj.storage.others(m,7) = obj.navFilter.delay;
+obj.storage.others(m,8) = obj.navFilter.dtr;
+obj.storage.others(m,9) = obj.navFilter.dtv;
+obj.storage.others(m,10:12) = fn;
 
 % 更新下次定位时间
 obj.tp(1) = NaN;

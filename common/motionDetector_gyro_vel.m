@@ -27,9 +27,9 @@ classdef motionDetector_gyro_vel < handle
             obj.wCnt = 0;
             obj.vCnt = 0;
             obj.wN0 = 3;
-            obj.wN1 = 2/dt; %2s内的点数
+            obj.wN1 = 2.5/dt; %2s内的点数
             obj.vN0 = 3;
-            obj.vN1 = 2/dt; %2s内的点数
+            obj.vN1 = 2.5/dt; %2s内的点数
         end
         
         % 运行函数

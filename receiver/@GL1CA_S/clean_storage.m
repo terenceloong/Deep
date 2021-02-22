@@ -21,10 +21,11 @@ end
 
 % 整理卫星测量信息,元胞数组,每个通道一个矩阵
 n = size(obj.storage.satmeas,3); %存储元素个数
+m = size(obj.storage.satmeas,2); %列数
 if n>0
     satmeas = cell(obj.chN,1);
     for k=1:obj.chN
-        satmeas{k} = reshape(obj.storage.satmeas(k,:,:),8,n)';
+        satmeas{k} = reshape(obj.storage.satmeas(k,:,:),m,n)';
     end
     obj.storage.satmeas = satmeas;
 end

@@ -111,7 +111,7 @@ classdef GL1CA_S < handle
             row = floor(obj.Tms/obj.dtpos); %存储空间行数
             obj.storage.ta      = zeros(row,1,'double');
             obj.storage.df      = zeros(row,1,'single');
-            obj.storage.satmeas = zeros(obj.chN,8,row,'double');
+            obj.storage.satmeas = zeros(obj.chN,10,row,'double');
             obj.storage.satnav  = zeros(row,8,'double');
             obj.storage.svsel   = zeros(row,obj.chN,'uint8');
             obj.storage.pos     = zeros(row,3,'double');
@@ -121,7 +121,7 @@ classdef GL1CA_S < handle
             obj.storage.bias    =   NaN(row,6,'single');
             obj.storage.P       =   NaN(row,20,'single');
             obj.storage.motion  = zeros(row,1,'uint8'); %运动状态
-            obj.storage.others  =   NaN(row,7,'single');
+            obj.storage.others  =   NaN(row,12,'single');
         end
     end
     
