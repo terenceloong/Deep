@@ -7,24 +7,22 @@ fclose('all'); %关闭之前打开的所有文件
 
 Ts = 180; %总处理时间,s
 To = 0; %偏移时间,s
-psi0 = 191; %初始航向,deg
 GPSflag = 1;
 BDSflag = 1;
 GPSlist = [];
 BDSlist = [];
+p0 = [45.730952, 126.624970, 212]; %大致的初始位置
+psi0 = 191; %初始航向,deg
 arm = [0.32,0,0]; %杆臂,IMU指向天线
 
 %% 选择IMU数据文件
-% imu = IMU_read(0);
-% imu(:,2:4) = movmean(imu(:,2:4),5,1); %预滤波
-% imu(:,5:7) = movmean(imu(:,5:7),4,1);
-% gyro0 = mean(imu(1:200,2:4)); %计算初始陀螺零偏
-% imu(:,2:4) = imu(:,2:4) - ones(size(imu,1),1)*gyro0;
-
-imu = SBG_imu_read(0);
-imu(:,5:7) = imu(:,5:7) / 9.806370601248435;
+[file, path] = uigetfile('*.dat;*.txt', '选择IMU数据文件'); %文件选择对话框
+if ~ischar(file)
+    error('File error!')
+end
+imu = IMU_read([path,file]); %读IMU数据文件
+imuN = size(imu,1); %IMU数据行数
 gyro0 = mean(imu(1:200,2:4)); %计算初始陀螺零偏
-imu(:,2:4) = imu(:,2:4) - ones(size(imu,1),1)*gyro0;
 
 %% 选择GNSS数据文件
 valid_prefix = 'B210-'; %文件名有效前缀
@@ -40,7 +38,6 @@ msToProcess = Ts*1000; %处理总时间
 sampleOffset = To*4e6; %抛弃前多少个采样点
 sampleFreq = 4e6; %接收机采样频率
 blockSize = sampleFreq*0.001; %一个缓存块(1ms)的采样点数
-p0 = [45.730952, 126.624970, 212]; %初始位置,不用特别精确
 
 %% 获取接收机初始时间
 tf = sscanf(data_file((end-22):(end-8)), '%4d%02d%02d_%02d%02d%02d')'; %数据文件开始时间(日期时间向量)
@@ -71,7 +68,7 @@ end
 receiver_conf.Tms = msToProcess; %接收机总运行时间,ms
 receiver_conf.sampleFreq = sampleFreq; %采样频率,Hz
 receiver_conf.blockSize = blockSize; %一个缓存块(1ms)的采样点数
-receiver_conf.blockNum = 100; %缓存块的数量
+receiver_conf.blockNum = 50; %缓存块的数量
 receiver_conf.GPSweek = tg(1); %当前GPS周数
 receiver_conf.BDSweek = tb(1); %当前北斗周数
 receiver_conf.ta = tag; %接收机初始时间,[s,ms,us],使用GPS时间作为时间基准
@@ -96,7 +93,6 @@ receiver_conf.dtpos = 10; %定位时间间隔,ms
 
 %% 导航滤波器参数
 para.dt = 0.01; %s,根据IMU采样周期设置
-para.gyro0 = gyro0*0; %deg/s
 para.p0 = [0,0,0];
 para.v0 = [0,0,0];
 para.a0 = [psi0,0,0]; %deg
@@ -114,6 +110,7 @@ para.Q_dg = 0.01; %deg/s/s
 para.Q_da = 0.1e-3; %g/s
 para.sigma_gyro = 0.03; %deg/s
 para.arm = arm; %m
+para.gyro0 = gyro0; %deg/s
 
 %% 创建接收机对象
 nCoV = GL1CA_BB1C_S(receiver_conf);
@@ -143,6 +140,9 @@ for t=1:msToProcess
     if nCoV.state==3 %深组合时,进行一次定位后为其设置下次定位时间和IMU数据
         if isnan(nCoV.tp(1)) %定位后tp会变成NaN
             ki = ki+1; %IMU索引加1
+            if ki>imuN %IMU数据超范围
+                break
+            end
             nCoV.imu_input(imu(ki,1), imu(ki,2:7)); %输入IMU数据
         end
     elseif nCoV.state==1 %当接收机初始化完成后进入深组合
@@ -177,4 +177,4 @@ clearvars -except data_file receiver_conf nCoV tf p0 imu
 nCoV.interact_constellation;
 
 %% 保存结果
-save('~temp\result\result\result.mat')
+save('~temp\result\result.mat')

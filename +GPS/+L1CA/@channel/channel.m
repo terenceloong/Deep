@@ -1,7 +1,7 @@
 classdef channel < handle
 % GPS L1 C/A信号跟踪通道
 % state:通道状态, 0-未激活, 1-已激活但没有星历, 2-可以进行伪距伪距率测量, 3-深组合
-    
+
     properties
         Tms             %总运行时间,ms,用来确定画图的横坐标
         sampleFreq      %标称采样频率,Hz
@@ -83,7 +83,7 @@ classdef channel < handle
             %----本地码发生器用的C/A码
             obj.code = [CAcode(end),CAcode,CAcode(1)]'; %列向量,方便用矩阵乘法代替累加求和;前后各补一个数,方便取超前滞后码
             %----本地信号发生器使用的时间序列
-            obj.Tseq = (0:conf.sampleFreq*0.001+4)/conf.sampleFreq; %多给几个点
+            obj.Tseq = (0:obj.sampleFreq*0.001+4)/obj.sampleFreq; %多给几个点
             %----申请星历空间
             obj.ephe = NaN(1,25);
             obj.iono = NaN(1,8);
@@ -107,7 +107,7 @@ classdef channel < handle
     methods (Access = public)
         acqResult = acq(obj, dataI, dataQ)         %捕获卫星信号
         init(obj, acqResult, n)                    %初始化跟踪参数
-        track(obj, dataI, dataQ, deltaFreq)        %跟踪卫星信号
+        track(obj, dataI, dataQ)                   %跟踪卫星信号
         ionoflag = parse(obj)                      %解析导航电文
         set_coherentTime(obj, Tms)                 %设置相干积分时间
         adjust_coherentTime(obj, policy)           %调整相干积分时间

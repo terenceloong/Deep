@@ -1,8 +1,8 @@
 %% 测试单天线导航滤波器(使用数据)
 
 %% 配置参数
-psi0 = 191; %初始航向,deg
-arm = [0.32,0,0]*1; %杆臂,IMU指向天线
+psi0 = 35.3; %初始航向,deg
+arm = [-0.1,0,0]*1; %杆臂,IMU指向天线
 gyro0 = mean(imu(1:200,2:4));
 
 para.dt = 0.01; %s,根据IMU采样周期设置
@@ -52,10 +52,10 @@ for k=1:n
         sv(m,:) = nCoV.storage.satmeas{m}(k,:);
     end
     indexP = (nCoV.storage.svsel(k,:)>=1)';
-    indexV = (nCoV.storage.svsel(k,:)>=1)';
+    indexV = (nCoV.storage.svsel(k,:)==2)';
     
     % 卫星导航解算
-    satnav = satnavSolveWeighted(sv(indexP,:), NF.rp);
+    satnav = satnavSolveWeighted(sv(indexV,:), NF.rp);
     
     % 导航滤波
     IMU = double(nCoV.storage.imu(k,:));

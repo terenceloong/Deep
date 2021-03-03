@@ -9,7 +9,7 @@ end
 t = obj.storage.ta - obj.storage.ta(1);
 t = t + obj.Tms/1000 - t(end);
 
-%% 正常模式
+% 正常模式
 if obj.state==1
     % 画单独GPS解算位置
     if obj.GPSflag==1
@@ -46,7 +46,7 @@ if obj.state==1
     end
 end
 
-%% 深组合模式
+% 深组合模式
 if obj.state==3
     figure('Name','位置')
     for k=1:3

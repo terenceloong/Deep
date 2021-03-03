@@ -42,12 +42,12 @@ obj.result.svnumGPS = zeros(obj.ns,2,'uint8'); %第一列是强信号数量,第二列是强+弱
 obj.result.svnumBDS = zeros(obj.ns,2,'uint8');
 obj.result.svnumALL = zeros(obj.ns,2,'uint8');
 if obj.GPSflag==1
-    obj.result.svnumGPS(:,1) = sum(obj.storage.qualGPS==2,2);
-    obj.result.svnumGPS(:,2) = sum(obj.storage.qualGPS>=1,2);
+    obj.result.svnumGPS(:,1) = sum(obj.storage.svselGPS==2,2);
+    obj.result.svnumGPS(:,2) = sum(obj.storage.svselGPS>=1,2);
 end
 if obj.BDSflag==1
-    obj.result.svnumBDS(:,1) = sum(obj.storage.qualBDS==2,2);
-    obj.result.svnumBDS(:,2) = sum(obj.storage.qualBDS>=1,2);
+    obj.result.svnumBDS(:,1) = sum(obj.storage.svselBDS==2,2);
+    obj.result.svnumBDS(:,2) = sum(obj.storage.svselBDS>=1,2);
 end
 obj.result.svnumALL(:,1) = obj.result.svnumGPS(:,1) + obj.result.svnumBDS(:,1);
 obj.result.svnumALL(:,2) = obj.result.svnumGPS(:,2) + obj.result.svnumBDS(:,2);

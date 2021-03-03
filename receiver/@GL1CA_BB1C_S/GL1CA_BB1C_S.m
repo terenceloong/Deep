@@ -29,6 +29,7 @@ classdef GL1CA_BB1C_S < handle
         vel            %接收机速度,北东地
         vp             %接收机速度,ecef
         att            %姿态,deg
+        geogInfo       %地理信息
         dtpos          %定位时间间隔,ms
         tp             %下次定位的时间,[s,ms,us]
         ns             %指向当前存储行,初值是0,存储之前加1
@@ -144,6 +145,7 @@ classdef GL1CA_BB1C_S < handle
             obj.vel = [0,0,0];
             obj.vp = [0,0,0];
             obj.att = [0,0,0];
+            obj.geogInfo = geogInfo_cal(obj.pos, obj.vel);
             %----设置定位控制参数
             obj.dtpos = conf.dtpos;
             obj.tp = [obj.ta(1)+2,0,0]; %当前接收机时间的2s后
@@ -157,17 +159,18 @@ classdef GL1CA_BB1C_S < handle
             obj.storage.satnavBDS = zeros(row,8,'double');
             obj.storage.pos       = zeros(row,3,'double');
             obj.storage.vel       = zeros(row,3,'single');
-            obj.storage.att     =   NaN(row,3,'single');
-            obj.storage.imu     =   NaN(row,6,'single');
-            obj.storage.bias    =   NaN(row,6,'single');
-            obj.storage.P       =   NaN(row,17,'single');
+            obj.storage.att       =   NaN(row,3,'single');
+            obj.storage.imu       =   NaN(row,6,'single');
+            obj.storage.bias      =   NaN(row,6,'single');
+            obj.storage.P         =   NaN(row,20,'single');
+            obj.storage.motion    = zeros(row,1,'uint8'); %运动状态
+            obj.storage.others    =   NaN(row,12,'single');
             if obj.GPSflag==1
-                obj.storage.qualGPS = zeros(row,obj.GPS.chN,'uint8'); %信号质量,用于统计可见星数量
+                obj.storage.svselGPS = zeros(row,obj.GPS.chN,'uint8');
             end
             if obj.BDSflag==1
-                obj.storage.qualBDS = zeros(row,obj.BDS.chN,'uint8');
+                obj.storage.svselBDS = zeros(row,obj.BDS.chN,'uint8');
             end
-            obj.storage.motion  = zeros(row,1,'uint8'); %运动状态
         end
     end
     

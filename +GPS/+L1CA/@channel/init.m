@@ -4,7 +4,7 @@ function init(obj, acqResult, n)
 % n:已经经过了多少个采样点,用于计算采样点索引
 
 % 记录捕获信息
-log_str = sprintf('Acquired at %ds, peakRatio=%.2f', n/obj.sampleFreq, acqResult(3));
+log_str = sprintf('Acquired at %.2fs, peakRatio=%.2f', n/obj.sampleFreq, acqResult(3));
 obj.log = [obj.log; string(log_str)];
 
 % 激活通道

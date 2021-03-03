@@ -1,9 +1,7 @@
 function pos_deep(obj)
 % 深组合定位
 
-% 频率和波长
-Fca = 1575.42e6; %载波频率
-Fco = 1.023e6; %码频率
+% 波长
 Lca = 0.190293672798365; %载波波长,m (299792458/1575.42e6)
 Lco = 293.0522561094819; %码长,m (299792458/1.023e6)
 
@@ -75,15 +73,15 @@ acclos0 = rspu*fe'; %计算接收机运动引起的相对加速度
 
 % 通道修正 (伪距短,码相位超前; 伪距率小,载波频率快)
 Cdf = 1 + obj.deltaFreq; %跟踪频率到真实频率的系数
-dtr = obj.navFilter.dtr; %钟差
-dtv = obj.navFilter.dtv; %钟频差
+dtr_code = obj.navFilter.dtr * 1.023e6; %钟差对应的码相位
+dtv_carr = obj.navFilter.dtv * 1575.42e6; %钟频差对应的载波频率
 if obj.deepMode==1 %只修码相位
     for k=1:chN
         channel = obj.channels(k);
         if channel.state==3
             channel.codeDiscBuffPtr = 0;
             %----码相位修正(satmeas中的伪距是带钟差的,需要补回来,才能得到修正量)
-            dcodePhase = (rho0(k)-satmeas(k,7))/Lco + dtr*Fco; %码相位修正量
+            dcodePhase = (rho0(k)-satmeas(k,7))/Lco + dtr_code; %码相位修正量
             channel.remCodePhase = channel.remCodePhase - dcodePhase;
             %----接收机运动引起的载波频率变化率
             channel.carrAccR = -acclos0(k)/Lca / Cdf;
@@ -95,10 +93,10 @@ elseif obj.deepMode==2 %修码相位和载波驱动频率
         if channel.state==3
             channel.codeDiscBuffPtr = 0;
             %----码相位修正(satmeas中的伪距是带钟差的,需要补回来,才能得到修正量)
-            dcodePhase = (rho0(k)-satmeas(k,7))/Lco + dtr*Fco; %码相位修正量
+            dcodePhase = (rho0(k)-satmeas(k,7))/Lco + dtr_code; %码相位修正量
             channel.remCodePhase = channel.remCodePhase - dcodePhase;
             %----载波驱动频率修正(satmeas中的伪距率是带钟频差的,需要补回来,才能得到修正量)
-            dcarrFreq = (rhodot0(k)-satmeas(k,8))/Lca + dtv*Fca; %相对估计频率的修正量
+            dcarrFreq = (rhodot0(k)-satmeas(k,8))/Lca + dtv_carr; %相对估计频率的修正量
             channel.carrNco = channel.carrFreq - dcarrFreq/Cdf;
             %----接收机运动引起的载波频率变化率
             channel.carrAccR = -acclos0(k)/Lca / Cdf;

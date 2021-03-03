@@ -15,10 +15,9 @@ for k=1:obj.GPS.chN
         n1 = channel.trackDataTail;
         n2 = channel.trackDataHead;
         if n2>n1
-            channel.track(obj.buffI(n1:n2), obj.buffQ(n1:n2), obj.deltaFreq);
+            channel.track(obj.buffI(n1:n2), obj.buffQ(n1:n2));
         else
-            channel.track([obj.buffI(n1:end),obj.buffI(1:n2)], ...
-                          [obj.buffQ(n1:end),obj.buffQ(1:n2)], obj.deltaFreq);
+            channel.track([obj.buffI(n1:end),obj.buffI(1:n2)], [obj.buffQ(n1:end),obj.buffQ(1:n2)]);
         end
         %----解析导航电文
         ionoflag = channel.parse;

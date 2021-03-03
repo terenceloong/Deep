@@ -13,8 +13,8 @@ end
 
 % 卫星导航解算
 satmeas = [satmeasGPS; satmeasBDS];
-sv = satmeas(~isnan(satmeas(:,1)),:); %选星
-satnav = satnavSolve(sv, obj.rp);
+svIndex = ~isnan(satmeas(:,1)); %选星
+satnav = satnavSolve(satmeas(svIndex,:), obj.rp);
 dtr = satnav(13); %接收机钟差,s
 
 % 更新接收机位置速度
@@ -23,6 +23,7 @@ if ~isnan(satnav(1))
     obj.rp  = satnav(4:6);
     obj.vel = satnav(7:9);
     obj.vp  = satnav(10:12);
+    obj.geogInfo = geogInfo_cal(obj.pos, obj.vel);
 end
 
 % 接收机时钟初始化
@@ -34,6 +35,7 @@ if ~isnan(dtr)
         obj.tp(2) = ceil(obj.ta(2)/obj.dtpos) * obj.dtpos;
         obj.tp = timeCarry(obj.tp);
     else %钟差小于0.1ms,初始化结束
+%         obj.deltaFreq = obj.deltaFreq + satnav(14); %修钟频差
         obj.state = 1;
     end
 end

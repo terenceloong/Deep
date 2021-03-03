@@ -9,7 +9,7 @@ if obj.GPSflag==1
             if channel.state==2
                 channel.state = 3;
                 channel.codeMode = 2; %更换码环
-                channel.markCurrStorage;
+                channel.codeDiscBuffPtr = 0; %清码鉴相器输出缓存
             end
         end
     elseif obj.deepMode==2
@@ -19,7 +19,7 @@ if obj.GPSflag==1
                 channel.state = 3;
                 channel.codeMode = 2; %更换码环
                 channel.carrMode = 3; %更换载波环
-                channel.markCurrStorage;
+                channel.codeDiscBuffPtr = 0; %清码鉴相器输出缓存
             end
         end
     end
@@ -33,7 +33,7 @@ if obj.BDSflag==1
             if channel.state==2
                 channel.state = 3;
                 channel.codeMode = 2; %更换码环
-                channel.markCurrStorage;
+                channel.codeDiscBuffPtr = 0; %清码鉴相器输出缓存
             end
         end
 	elseif obj.deepMode==2
@@ -43,7 +43,7 @@ if obj.BDSflag==1
                 channel.state = 3;
                 channel.codeMode = 2; %更换码环
                 channel.carrMode = 3; %更换载波环
-                channel.markCurrStorage;
+                channel.codeDiscBuffPtr = 0; %清码鉴相器输出缓存
             end
         end
     end

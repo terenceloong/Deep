@@ -9,7 +9,6 @@ end
 t = obj.storage.ta - obj.storage.ta(1);
 t = t + obj.Tms/1000 - t(end);
 
-%% 深组合模式
 if obj.state==3
     figure('Name','加计零偏')
     for k=1:3

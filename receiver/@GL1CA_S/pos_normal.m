@@ -12,7 +12,7 @@ satmeas = obj.get_satmeas;
 
 % 高度角引起的误差
 [~, ele] = aziele_xyz(satmeas(:,1:3), obj.pos); %卫星高度角
-eleError = 5*(1-1./(1+exp(-((ele-30)/5))));
+eleError = 5*(1-1./(1+exp(-((ele-30)/5)))); %S函数(Sigmoid函数) 1/(1+e^-x)
 
 % 卫星导航解算(加权)
 chN = obj.chN;
@@ -56,7 +56,7 @@ obj.storage.ta(m) = obj.tp * [1;1e-3;1e-6]; %定位时间,s
 obj.storage.df(m) = obj.deltaFreq;
 obj.storage.satmeas(:,:,m) = sv; %satmeas;
 obj.storage.satnav(m,:) = satnav([1,2,3,7,8,9,13,14]);
-obj.storage.svsel(m,:) = svIndex;
+obj.storage.svsel(m,:) = svIndex + svIndex;
 obj.storage.pos(m,:) = obj.pos;
 obj.storage.vel(m,:) = obj.vel;
 

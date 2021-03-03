@@ -114,7 +114,6 @@ d_E = n/(1-e*cos_E);
 d_phi = sqrt(1-e^2)*d_E/(1-e*cos_E);
 d_r = a*e*sin_E*d_E + 2*(Crs*cos_2phi-Crc*sin_2phi)*d_phi;
 d_u = d_phi + 2*(Cus*cos_2phi-Cuc*sin_2phi)*d_phi;
-d_Omega = Omega_dot-w;
 d_i = i_dot + 2*(Cis*cos_2phi-Cic*sin_2phi)*d_phi;
 d_xp = d_r*cos_u - r*sin_u*d_u;
 d_yp = d_r*sin_u + r*cos_u*d_u;

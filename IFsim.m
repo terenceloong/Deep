@@ -56,9 +56,10 @@ end
 
 %% 轨迹插值函数
 t = (0:step:runTime)'; %时间序列
-P1 = griddedInterpolant(t,traj(:,1),'pchip');
-P2 = griddedInterpolant(t,traj(:,2),'pchip');
-P3 = griddedInterpolant(t,traj(:,3),'pchip');
+n = length(t);
+P1 = griddedInterpolant(t,traj(1:n,1),'pchip');
+P2 = griddedInterpolant(t,traj(1:n,2),'pchip');
+P3 = griddedInterpolant(t,traj(1:n,3),'pchip');
 
 %% 仿真时间
 startTime_utc = startTime - [0,0,0,zone,0,0]; %仿真开始的UTC时间

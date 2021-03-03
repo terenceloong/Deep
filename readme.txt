@@ -235,3 +235,6 @@ G(GPS),R(GLONASS),E(Galileo),C(BDS),J(QZSS),I(IRNSS),参见RINEX 3.03
 <===Version 4.4===>2021.2.22
 1.添加11维导航滤波器
 2.深组合模式可以不修时钟
+
+<===Version 5.0===>2021.3.3
+1.改完北斗的程序

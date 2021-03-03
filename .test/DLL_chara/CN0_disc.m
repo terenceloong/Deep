@@ -29,6 +29,9 @@ for m=1:T_N %遍历积分时间
         SE = abs(A*(1-d)+noiseE); %超前路幅值
         SL = abs(A*(1-d)+noiseL); %滞后路幅值
         e = (1-d) * (SE-SL) ./ (SE+SL);
+%         SE = abs(A*(1-1.5*d)+noiseE); %超前路幅值
+%         SL = abs(A*(1-1.5*d)+noiseL); %滞后路幅值
+%         e = (11/30) * (SE-SL) ./ (SE+SL) / 2;
         result(w,m) = std(e);
     end
 end
