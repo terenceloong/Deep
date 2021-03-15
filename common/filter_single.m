@@ -24,6 +24,7 @@ classdef filter_single < handle
         wdot       %角加速度值,rad/s^2
         motion     %运动状态检测
         accJump    %加速度突变检测(应对仿真时可能出现的加速度突变的情况)
+        windupFlag %发条效应校正标志
     end
     
     methods
@@ -69,6 +70,7 @@ classdef filter_single < handle
             obj.wdot = [0,0,0];
             obj.motion = motionDetector_gyro_vel(para.gyro0, obj.T, 0.8);
             obj.accJump = accJumpDetector(obj.T);
+            obj.windupFlag = para.windupFlag;
         end
         
         %% 运行函数
@@ -187,7 +189,7 @@ classdef filter_single < handle
                 H((n1+1):end,11) = -cm(indexV);
                 %----修正钟差钟频差
                 rho = rho - obj.dtr*c;
-                rhodot = rhodot - obj.dtv*c;
+                rhodot = rhodot - obj.dtv*c - obj.windupFlag*imu(3)*0.030286178664972; %299792458/1575.42e6/(2*pi)
                 %----对测量的伪距伪距率进行杆臂修正-------------------------%
                 rho = rho - HB*Cbn*obj.arm'; %如果天线放在惯导位置应该测得的伪距
                 vab = cross(wb1,obj.arm); %杆臂引起的速度

@@ -1,71 +1,72 @@
-%% GPS L1 C/Aå•å¤©çº¿æ·±ç»„åˆ
+%% GPS L1 C/Aµ¥ÌìÏßÉî×éºÏ
 
 %%
 clear
 clc
-fclose('all'); %å…³é—­ä¹‹å‰æ‰“å¼€çš„æ‰€æœ‰æ–‡ä»¶
+fclose('all'); %¹Ø±ÕÖ®Ç°´ò¿ªµÄËùÓĞÎÄ¼ş
 
-Ts = 120; %æ€»å¤„ç†æ—¶é—´,s
-To = 0; %åç§»æ—¶é—´,s
+Ts = 180; %×Ü´¦ÀíÊ±¼ä,s
+To = 0; %Æ«ÒÆÊ±¼ä,s
 svList = [];
-p0 = [45.730952, 126.624970, 212]; %å¤§è‡´çš„åˆå§‹ä½ç½®
-psi0 = 45; %åˆå§‹èˆªå‘,deg
-arm = [0.32,0,0]*0; %æ†è‡‚,IMUæŒ‡å‘å¤©çº¿
+p0 = [45.730952, 126.624970, 212]; %´óÖÂµÄ³õÊ¼Î»ÖÃ
+% p0 = [38.0463, 114.4358, 100];
+psi0 = 191; %³õÊ¼º½Ïò,deg
+arm = [0.325,0,0]*1; %¸Ë±Û,IMUÖ¸ÏòÌìÏß
 
-%% é€‰æ‹©IMUæ•°æ®æ–‡ä»¶
-[file, path] = uigetfile('*.dat;*.txt', 'é€‰æ‹©IMUæ•°æ®æ–‡ä»¶'); %æ–‡ä»¶é€‰æ‹©å¯¹è¯æ¡†
+%% Ñ¡ÔñIMUÊı¾İÎÄ¼ş
+[file, path] = uigetfile('*.dat;*.txt', 'Ñ¡ÔñIMUÊı¾İÎÄ¼ş'); %ÎÄ¼şÑ¡Ôñ¶Ô»°¿ò
 if ~ischar(file)
     error('File error!')
 end
-imu = IMU_read([path,file]); %è¯»IMUæ•°æ®æ–‡ä»¶
-imuN = size(imu,1); %IMUæ•°æ®è¡Œæ•°
-gyro0 = mean(imu(1:200,2:4)); %è®¡ç®—åˆå§‹é™€èºé›¶å
+imu = IMU_read([path,file]); %¶ÁIMUÊı¾İÎÄ¼ş
+imuN = size(imu,1); %IMUÊı¾İĞĞÊı
+gyro0 = mean(imu(1:200,2:4)); %¼ÆËã³õÊ¼ÍÓÂİÁãÆ«
 
-%% é€‰æ‹©GNSSæ•°æ®æ–‡ä»¶
-valid_prefix = 'B210-SIM-'; %æ–‡ä»¶åæœ‰æ•ˆå‰ç¼€
-[file, path] = uigetfile('*.dat', 'é€‰æ‹©GNSSæ•°æ®æ–‡ä»¶'); %æ–‡ä»¶é€‰æ‹©å¯¹è¯æ¡†
+%% Ñ¡ÔñGNSSÊı¾İÎÄ¼ş
+valid_prefix = 'B210-SIM-'; %ÎÄ¼şÃûÓĞĞ§Ç°×º
+[file, path] = uigetfile('*.dat', 'Ñ¡ÔñGNSSÊı¾İÎÄ¼ş'); %ÎÄ¼şÑ¡Ôñ¶Ô»°¿ò
 if ~ischar(file) || ~contains(valid_prefix, strtok(file,'_'))
     error('File error!')
 end
-data_file = [path, file]; %æ•°æ®æ–‡ä»¶å®Œæ•´è·¯å¾„,pathæœ€åå¸¦\
+data_file = [path, file]; %Êı¾İÎÄ¼şÍêÕûÂ·¾¶,path×îºó´ø\
 
-%% ä¸»æœºå‚æ•°
-% æ ¹æ®å®é™…æƒ…å†µä¿®æ”¹.
-msToProcess = Ts*1000; %å¤„ç†æ€»æ—¶é—´
-sampleOffset = To*4e6; %æŠ›å¼ƒå‰å¤šå°‘ä¸ªé‡‡æ ·ç‚¹
-sampleFreq = 4e6; %æ¥æ”¶æœºé‡‡æ ·é¢‘ç‡
-blockSize = sampleFreq*0.001; %ä¸€ä¸ªç¼“å­˜å—(1ms)çš„é‡‡æ ·ç‚¹æ•°
+%% Ö÷»ú²ÎÊı
+% ¸ù¾İÊµ¼ÊÇé¿öĞŞ¸Ä.
+msToProcess = Ts*1000; %´¦Àí×ÜÊ±¼ä
+sampleOffset = To*4e6; %Å×ÆúÇ°¶àÉÙ¸ö²ÉÑùµã
+sampleFreq = 4e6; %½ÓÊÕ»ú²ÉÑùÆµÂÊ
+blockSize = sampleFreq*0.001; %Ò»¸ö»º´æ¿é(1ms)µÄ²ÉÑùµãÊı
 
-%% è·å–æ¥æ”¶æœºåˆå§‹æ—¶é—´
-tf = sscanf(data_file((end-22):(end-8)), '%4d%02d%02d_%02d%02d%02d')'; %æ•°æ®æ–‡ä»¶å¼€å§‹æ—¶é—´(æ—¥æœŸæ—¶é—´å‘é‡)
-tg = UTC2GPS(tf, 8); %UTCæ—¶é—´è½¬åŒ–ä¸ºGPSæ—¶é—´
-ta = [tg(2),0,0] + sample2dt(sampleOffset, sampleFreq); %æ¥æ”¶æœºåˆå§‹æ—¶é—´,[s,ms,us]
-ta = timeCarry(round(ta,2)); %è¿›ä½,å¾®ç§’ä¿ç•™2ä½å°æ•°
+%% »ñÈ¡½ÓÊÕ»ú³õÊ¼Ê±¼ä
+tf = sscanf(data_file((end-22):(end-8)), '%4d%02d%02d_%02d%02d%02d')'; %Êı¾İÎÄ¼ş¿ªÊ¼Ê±¼ä(ÈÕÆÚÊ±¼äÏòÁ¿)
+tg = UTC2GPS(tf, 8); %UTCÊ±¼ä×ª»¯ÎªGPSÊ±¼ä
+ta = [tg(2),0,0] + sample2dt(sampleOffset, sampleFreq); %½ÓÊÕ»ú³õÊ¼Ê±¼ä,[s,ms,us]
+ta = timeCarry(round(ta,2)); %½øÎ»,Î¢Ãë±£Áô2Î»Ğ¡Êı
 
-%% è·å–å†ä¹¦
-% éœ€æŒ‡å®šå†ä¹¦å­˜å‚¨çš„æ–‡ä»¶å¤¹.
-almanac_file = GPS.almanac.download('~temp\almanac', tg); %ä¸‹è½½å†ä¹¦
-almanac = GPS.almanac.read(almanac_file); %è¯»å†ä¹¦
+%% »ñÈ¡ÀúÊé
+% ĞèÖ¸¶¨ÀúÊé´æ´¢µÄÎÄ¼ş¼Ğ.
+almanac_file = GPS.almanac.download('~temp\almanac', tg); %ÏÂÔØÀúÊé
+almanac = GPS.almanac.read(almanac_file); %¶ÁÀúÊé
 
-%% æ¥æ”¶æœºé…ç½®
-% æ ¹æ®å®é™…é…ç½®ä¿®æ”¹.
-receiver_conf.Tms = msToProcess; %æ¥æ”¶æœºæ€»è¿è¡Œæ—¶é—´,ms
-receiver_conf.sampleFreq = sampleFreq; %é‡‡æ ·é¢‘ç‡,Hz
-receiver_conf.blockSize = blockSize; %ä¸€ä¸ªç¼“å­˜å—(1ms)çš„é‡‡æ ·ç‚¹æ•°
-receiver_conf.blockNum = 50; %ç¼“å­˜å—çš„æ•°é‡
-receiver_conf.week = tg(1); %å½“å‰GPSå‘¨æ•°
-receiver_conf.ta = ta; %æ¥æ”¶æœºåˆå§‹æ—¶é—´,[s,ms,us]
-receiver_conf.p0 = p0; %åˆå§‹ä½ç½®,çº¬ç»é«˜
-receiver_conf.almanac = almanac; %å†ä¹¦
-receiver_conf.eleMask = 10; %é«˜åº¦è§’é˜ˆå€¼
-receiver_conf.svList = svList; %è·Ÿè¸ªå«æ˜Ÿåˆ—è¡¨
-receiver_conf.acqTime = 2; %æ•è·æ‰€ç”¨çš„æ•°æ®é•¿åº¦,ms
-receiver_conf.acqThreshold = 1.4; %æ•è·é˜ˆå€¼,æœ€é«˜å³°ä¸ç¬¬äºŒå¤§å³°çš„æ¯”å€¼
-receiver_conf.acqFreqMax = 5e3; %æœ€å¤§æœç´¢é¢‘ç‡,Hz
-receiver_conf.dtpos = 10; %å®šä½æ—¶é—´é—´éš”,ms
+%% ½ÓÊÕ»úÅäÖÃ
+% ¸ù¾İÊµ¼ÊÅäÖÃĞŞ¸Ä.
+receiver_conf.Tms = msToProcess; %½ÓÊÕ»ú×ÜÔËĞĞÊ±¼ä,ms
+receiver_conf.sampleFreq = sampleFreq; %²ÉÑùÆµÂÊ,Hz
+receiver_conf.blockSize = blockSize; %Ò»¸ö»º´æ¿é(1ms)µÄ²ÉÑùµãÊı
+receiver_conf.blockNum = 50; %»º´æ¿éµÄÊıÁ¿
+receiver_conf.week = tg(1); %µ±Ç°GPSÖÜÊı
+receiver_conf.ta = ta; %½ÓÊÕ»ú³õÊ¼Ê±¼ä,[s,ms,us]
+receiver_conf.p0 = p0; %³õÊ¼Î»ÖÃ,Î³¾­¸ß
+receiver_conf.almanac = almanac; %ÀúÊé
+receiver_conf.eleMask = 10; %¸ß¶È½ÇãĞÖµ
+receiver_conf.svList = svList; %¸ú×ÙÎÀĞÇÁĞ±í
+receiver_conf.acqTime = 2; %²¶»ñËùÓÃµÄÊı¾İ³¤¶È,ms
+receiver_conf.acqThreshold = 1.4; %²¶»ñãĞÖµ,×î¸ß·åÓëµÚ¶ş´ó·åµÄ±ÈÖµ
+receiver_conf.acqFreqMax = 5e3; %×î´óËÑË÷ÆµÂÊ,Hz
+receiver_conf.dtpos = 10; %¶¨Î»Ê±¼ä¼ä¸ô,ms
 
-%% å¯¼èˆªæ»¤æ³¢å™¨å‚æ•°
-para.dt = 0.01; %s,æ ¹æ®IMUé‡‡æ ·å‘¨æœŸè®¾ç½®
+%% µ¼º½ÂË²¨Æ÷²ÎÊı
+para.dt = 0.01; %s,¸ù¾İIMU²ÉÑùÖÜÆÚÉèÖÃ
 para.p0 = [0,0,0];
 para.v0 = [0,0,0];
 para.a0 = [psi0,0,0]; %deg
@@ -79,68 +80,73 @@ para.P0_acc = 2e-3; %g
 para.Q_gyro = 0.2; %deg/s
 para.Q_acc = 2e-3; %g
 para.Q_dtv = 0.01e-9; %1/s
-para.Q_dg = 0.01; %deg/s/s
+para.Q_dg = 0.01*0.1; %deg/s/s
 para.Q_da = 0.1e-3; %g/s
 para.sigma_gyro = 0.03; %deg/s
 para.arm = arm; %m
 para.gyro0 = gyro0; %deg/s
-% æœ€å¼€å§‹çš„å‚æ•°:0.15, 2, 0.01, 0.1
+if strcmp(file(1:3),'SIM')
+    para.windupFlag = 0;
+else
+    para.windupFlag = 1;
+end
+% ×î¿ªÊ¼µÄ²ÎÊı:0.15, 2, 0.01, 0.1
 
-% 11ç»´æ»¤æ³¢å™¨ç”¨çš„
+% 11Î¬ÂË²¨Æ÷ÓÃµÄ
 % para.Q_gyro = 1.0; %deg/s
 % para.Q_acc = 2e-2; %g
 
-%% åˆ›å»ºæ¥æ”¶æœºå¯¹è±¡
+%% ´´½¨½ÓÊÕ»ú¶ÔÏó
 nCoV = GL1CA_S(receiver_conf);
 
-%% é¢„ç½®æ˜Ÿå†
-% å¯é€‰æ“ä½œ,å¯ä»¥æå‰è¿›è¡Œå®šä½.
-% éœ€æŒ‡å®šæ˜Ÿå†å­˜å‚¨çš„æ–‡ä»¶å¤¹.
-% æ˜Ÿå†æ–‡ä»¶å¯ä»¥ä¸å­˜åœ¨,è°ƒç”¨æ—¶ä¼šè‡ªåŠ¨åˆ›å»º.
-% æ³¨é‡Šæ‰è¿™æ®µæ—¶åŒæ—¶è¦æ³¨é‡Šæ‰åé¢çš„ä¿å­˜æ˜Ÿå†.
-ephemeris_file = ['~temp\ephemeris\',data_file((end-22):(end-8)),'.mat']; %æ–‡ä»¶å
+%% Ô¤ÖÃĞÇÀú
+% ¿ÉÑ¡²Ù×÷,¿ÉÒÔÌáÇ°½øĞĞ¶¨Î».
+% ĞèÖ¸¶¨ĞÇÀú´æ´¢µÄÎÄ¼ş¼Ğ.
+% ĞÇÀúÎÄ¼ş¿ÉÒÔ²»´æÔÚ,µ÷ÓÃÊ±»á×Ô¶¯´´½¨.
+% ×¢ÊÍµôÕâ¶ÎÊ±Í¬Ê±Òª×¢ÊÍµôºóÃæµÄ±£´æĞÇÀú.
+ephemeris_file = ['~temp\ephemeris\',data_file((end-22):(end-8)),'.mat']; %ÎÄ¼şÃû
 nCoV.set_ephemeris(ephemeris_file);
 
-%% æ‰“å¼€æ–‡ä»¶,åˆ›å»ºè¿›åº¦æ¡
+%% ´ò¿ªÎÄ¼ş,´´½¨½ø¶ÈÌõ
 fileID = fopen(data_file, 'r');
-fseek(fileID, round(sampleOffset*4), 'bof'); %ä¸å–æ•´å¯èƒ½å‡ºç°æ–‡ä»¶æŒ‡é’ˆç§»ä¸è¿‡å»
-if int64(ftell(fileID))~=int64(sampleOffset*4) %æ£€æŸ¥æ–‡ä»¶æŒ‡é’ˆæ˜¯å¦ç§»è¿‡å»äº†
+fseek(fileID, round(sampleOffset*4), 'bof'); %²»È¡Õû¿ÉÄÜ³öÏÖÎÄ¼şÖ¸ÕëÒÆ²»¹ıÈ¥
+if int64(ftell(fileID))~=int64(sampleOffset*4) %¼ì²éÎÄ¼şÖ¸ÕëÊÇ·ñÒÆ¹ıÈ¥ÁË
     error('Sample offset error!')
 end
-waitbar_str = ['s/',num2str(msToProcess/1000),'s']; %è¿›åº¦æ¡ä¸­ä¸å˜çš„å­—ç¬¦ä¸²
+waitbar_str = ['s/',num2str(msToProcess/1000),'s']; %½ø¶ÈÌõÖĞ²»±äµÄ×Ö·û´®
 f = waitbar(0, ['0',waitbar_str]);
 
-%% æ¥æ”¶æœºè¿è¡Œ
+%% ½ÓÊÕ»úÔËĞĞ
 tic
 for t=1:msToProcess
-    if mod(t,1000)==0 %1sæ­¥è¿›
-        waitbar(t/msToProcess, f, [sprintf('%d',t/1000),waitbar_str]); %æ›´æ–°è¿›åº¦æ¡
+    if mod(t,1000)==0 %1s²½½ø
+        waitbar(t/msToProcess, f, [sprintf('%d',t/1000),waitbar_str]); %¸üĞÂ½ø¶ÈÌõ
     end
-    data = fread(fileID, [2,blockSize], 'int16'); %ä»æ–‡ä»¶è¯»æ•°æ®
-    nCoV.run(data); %æ¥æ”¶æœºå¤„ç†æ•°æ®
+    data = fread(fileID, [2,blockSize], 'int16'); %´ÓÎÄ¼ş¶ÁÊı¾İ
+    nCoV.run(data); %½ÓÊÕ»ú´¦ÀíÊı¾İ
     %---------------------------------------------------------------------%
-    if nCoV.state==3 %æ·±ç»„åˆæ—¶,è¿›è¡Œä¸€æ¬¡å®šä½åä¸ºå…¶è®¾ç½®ä¸‹æ¬¡å®šä½æ—¶é—´å’ŒIMUæ•°æ®
-        if isnan(nCoV.tp(1)) %å®šä½åtpä¼šå˜æˆNaN
-            ki = ki+1; %IMUç´¢å¼•åŠ 1
-            if ki>imuN %IMUæ•°æ®è¶…èŒƒå›´
+    if nCoV.state==3 %Éî×éºÏÊ±,½øĞĞÒ»´Î¶¨Î»ºóÎªÆäÉèÖÃÏÂ´Î¶¨Î»Ê±¼äºÍIMUÊı¾İ
+        if isnan(nCoV.tp(1)) %¶¨Î»ºótp»á±ä³ÉNaN
+            ki = ki+1; %IMUË÷Òı¼Ó1
+            if ki>imuN %IMUÊı¾İ³¬·¶Î§
                 break
             end
-            nCoV.imu_input(imu(ki,1), imu(ki,2:7)); %è¾“å…¥IMUæ•°æ®
+            nCoV.imu_input(imu(ki,1), imu(ki,2:7)); %ÊäÈëIMUÊı¾İ
         end
-    elseif nCoV.state==1 %å½“æ¥æ”¶æœºåˆå§‹åŒ–å®Œæˆåè¿›å…¥æ·±ç»„åˆ
-        ki = find(imu(:,1)>nCoV.ta*[1;1e-3;1e-6], 1); %IMUç´¢å¼•
+    elseif nCoV.state==1 %µ±½ÓÊÕ»ú³õÊ¼»¯Íê³Éºó½øÈëÉî×éºÏ
+        ki = find(imu(:,1)>nCoV.ta*[1;1e-3;1e-6], 1); %IMUË÷Òı
         if isempty(ki) || (imu(ki,1)-nCoV.ta(1))>1
             error('Data mismatch!')
         end
-        nCoV.imu_input(imu(ki,1), imu(ki,2:7)); %è¾“å…¥IMUæ•°æ®
+        nCoV.imu_input(imu(ki,1), imu(ki,2:7)); %ÊäÈëIMUÊı¾İ
         para.p0 = nCoV.pos;
-        nCoV.navFilter = filter_single(para); %åˆå§‹åŒ–å¯¼èˆªæ»¤æ³¢å™¨
+        nCoV.navFilter = filter_single(para); %³õÊ¼»¯µ¼º½ÂË²¨Æ÷
 %         nCoV.navFilter = filter_single_11(para);
 %         nCoV.navFilter = filter_single_arm(para);
 %         nCoV.navFilter = filter_single_delay(para);
-        nCoV.deepMode = 2; %è®¾ç½®æ·±ç»„åˆæ¨¡å¼
-        nCoV.channel_deep; %é€šé“åˆ‡æ¢æ·±ç»„åˆè·Ÿè¸ªç¯è·¯
-        nCoV.state = 3; %æ¥æ”¶æœºè¿›å…¥æ·±ç»„åˆ
+        nCoV.deepMode = 2; %ÉèÖÃÉî×éºÏÄ£Ê½
+        nCoV.channel_deep; %Í¨µÀÇĞ»»Éî×éºÏ¸ú×Ù»·Â·
+        nCoV.state = 3; %½ÓÊÕ»ú½øÈëÉî×éºÏ
     end
     %---------------------------------------------------------------------%
 end
@@ -148,19 +154,19 @@ nCoV.clean_storage;
 nCoV.get_result;
 toc
 
-%% å…³é—­æ–‡ä»¶,å…³é—­è¿›åº¦æ¡
+%% ¹Ø±ÕÎÄ¼ş,¹Ø±Õ½ø¶ÈÌõ
 fclose(fileID);
 close(f);
 
-%% ä¿å­˜æ˜Ÿå†
-% ä¸å‰é¢çš„é¢„ç½®æ˜Ÿå†å¯¹åº”.
+%% ±£´æĞÇÀú
+% ÓëÇ°ÃæµÄÔ¤ÖÃĞÇÀú¶ÔÓ¦.
 nCoV.save_ephemeris(ephemeris_file);
 
-%% æ¸…é™¤å˜é‡
+%% Çå³ı±äÁ¿
 clearvars -except data_file receiver_conf nCoV tf p0 imu
 
-%% ç”»äº¤äº’æ˜Ÿåº§å›¾
+%% »­½»»¥ĞÇ×ùÍ¼
 nCoV.interact_constellation;
 
-%% ä¿å­˜ç»“æœ
+%% ±£´æ½á¹û
 save('~temp\result\result.mat')

@@ -18,7 +18,7 @@ azi = zeros(svN,n); %每一列为一个时间点
 ele = zeros(svN,n);
 ts = t(2); %周内秒数
 for k=1:n
-    rs = rs_almanac(almanac(:,6:end), ts);
+    rs = rs_almanac(almanac(:,5:end), t);
     [azi(:,k), ele(:,k)] = aziele_xyz(rs, p);
     ts = ts+120; %更新时间
 end

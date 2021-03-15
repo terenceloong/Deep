@@ -71,7 +71,7 @@ classdef GL1CA_BB1C_S < handle
                 % 使用历书计算所有卫星的方位角高度角
                 if ~isempty(obj.GPS.almanac)
                     index = find(obj.GPS.almanac(:,2)==0); %获取健康卫星的行号
-                    rs = rs_almanac(obj.GPS.almanac(index,6:end), obj.ta(1)); %卫星ecef位置
+                    rs = rs_almanac(obj.GPS.almanac(index,5:end), [obj.GPSweek,obj.ta(1)]); %卫星ecef位置
                     [azi, ele] = aziele_xyz(rs, conf.p0);
                     obj.GPS.aziele = zeros(length(index),3); %[PRN,azi,ele]
                     obj.GPS.aziele(:,1) = obj.GPS.almanac(index,1);
@@ -109,7 +109,7 @@ classdef GL1CA_BB1C_S < handle
                 % 使用历书计算所有卫星的方位角高度角
                 if ~isempty(obj.BDS.almanac)
                     index = find(obj.BDS.almanac(:,2)==0); %获取健康卫星的行号
-                    rs = rs_almanac(obj.BDS.almanac(index,6:end), obj.ta(1)-14); %卫星ecef位置
+                    rs = rs_almanac(obj.BDS.almanac(index,5:end), [obj.BDSweek,obj.ta(1)-14]); %卫星ecef位置
                     [azi, ele] = aziele_xyz(rs, conf.p0);
                     obj.BDS.aziele = zeros(length(index),3); %[PRN,azi,ele]
                     obj.BDS.aziele(:,1) = obj.BDS.almanac(index,1);

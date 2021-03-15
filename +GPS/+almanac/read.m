@@ -35,9 +35,9 @@ fclose(fileID);
 almanac = zeros(32,13);
 almanac(:,1)  = 1:32;        %ID
 almanac(:,2)  = temp(:,1);   %health
-almanac(:,3)  = temp(:,12);  %week
-almanac(:,4)  = temp(:,10);  %af0,s
-almanac(:,5)  = temp(:,11);  %af1,s/s
+almanac(:,3)  = temp(:,10);  %af0,s
+almanac(:,4)  = temp(:,11);  %af1,s/s
+almanac(:,5)  = temp(:,12);  %week
 almanac(:,6)  = temp(:,3);   %toe,s
 almanac(:,7)  = temp(:,6);   %sqa,sqrt(m)
 almanac(:,8)  = temp(:,2);   %e

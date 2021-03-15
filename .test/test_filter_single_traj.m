@@ -79,6 +79,7 @@ para.Q_da = 0.1e-3; %g/s
 para.sigma_gyro = 0.03; %deg/s
 para.arm = arm; %m
 para.gyro0 = gyro0; %deg/s
+para.windupFlag = 0;
 NF = filter_single(para);
 
 %% Êä³ö½á¹û

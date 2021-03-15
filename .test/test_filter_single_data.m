@@ -1,8 +1,8 @@
 %% 测试单天线导航滤波器(使用数据)
 
 %% 配置参数
-psi0 = 35.3; %初始航向,deg
-arm = [-0.1,0,0]*1; %杆臂,IMU指向天线
+psi0 = 191; %初始航向,deg
+arm = [0.325,0,0]*1; %杆臂,IMU指向天线
 gyro0 = mean(imu(1:200,2:4));
 
 para.dt = 0.01; %s,根据IMU采样周期设置
@@ -19,11 +19,12 @@ para.P0_acc = 2e-3; %g
 para.Q_gyro = 0.2; %deg/s
 para.Q_acc = 2e-3; %g
 para.Q_dtv = 0.01e-9; %1/s
-para.Q_dg = 0.01; %deg/s/s
+para.Q_dg = 0.01*0.1; %deg/s/s
 para.Q_da = 0.1e-3; %g/s
 para.sigma_gyro = 0.03; %deg/s
 para.arm = arm; %m
 para.gyro0 = gyro0; %deg/s
+para.windupFlag = 1;
 NF = filter_single(para);
 
 % para.Q_gyro = 1.0; %deg/s

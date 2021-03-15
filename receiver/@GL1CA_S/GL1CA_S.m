@@ -64,7 +64,7 @@ classdef GL1CA_S < handle
             %----使用历书计算所有卫星方位角高度角
             if ~isempty(obj.almanac) %如果没有历书,aziele为空
                 index = find(obj.almanac(:,2)==0); %获取健康卫星的行号
-                rs = rs_almanac(obj.almanac(index,6:end), obj.ta(1)); %卫星ecef位置
+                rs = rs_almanac(obj.almanac(index,5:end), [obj.week,obj.ta(1)]); %卫星ecef位置
                 [azi, ele] = aziele_xyz(rs, conf.p0);
                 obj.aziele = zeros(length(index),3); %[PRN,azi,ele]
                 obj.aziele(:,1) = obj.almanac(index,1);

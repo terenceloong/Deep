@@ -238,3 +238,7 @@ G(GPS),R(GLONASS),E(Galileo),C(BDS),J(QZSS),I(IRNSS),参见RINEX 3.03
 
 <===Version 5.0===>2021.3.3
 1.改完北斗的程序
+
+<===Version 5.1===>2021.3.15
+1.添加简单的相位缠绕校正
+2.使用历书计算卫星位置增加周数

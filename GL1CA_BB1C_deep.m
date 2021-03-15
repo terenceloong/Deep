@@ -12,8 +12,9 @@ BDSflag = 1;
 GPSlist = [];
 BDSlist = [];
 p0 = [45.730952, 126.624970, 212]; %大致的初始位置
+% p0 = [38.0463, 114.4358, 100];
 psi0 = 191; %初始航向,deg
-arm = [0.32,0,0]; %杆臂,IMU指向天线
+arm = [0.325,0,0]; %杆臂,IMU指向天线
 
 %% 选择IMU数据文件
 [file, path] = uigetfile('*.dat;*.txt', '选择IMU数据文件'); %文件选择对话框
@@ -106,11 +107,16 @@ para.P0_acc = 2e-3; %g
 para.Q_gyro = 0.2; %deg/s
 para.Q_acc = 2e-3; %g
 para.Q_dtv = 0.01e-9; %1/s
-para.Q_dg = 0.01; %deg/s/s
+para.Q_dg = 0.01*0.1; %deg/s/s
 para.Q_da = 0.1e-3; %g/s
 para.sigma_gyro = 0.03; %deg/s
 para.arm = arm; %m
 para.gyro0 = gyro0; %deg/s
+if strcmp(file(1:3),'SIM')
+    para.windupFlag = 0;
+else
+    para.windupFlag = 1;
+end
 
 %% 创建接收机对象
 nCoV = GL1CA_BB1C_S(receiver_conf);

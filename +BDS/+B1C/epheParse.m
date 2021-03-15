@@ -18,9 +18,12 @@ subFrame3_table = table([3,6,9,12,15,18,21,24,27,30,33],:); %从表格中提取子帧3的
 subFrame3 = reshape(subFrame3_table',1,528); %排成一行,解交织后的子帧3
 
 % CRC校验
-det = crc.detector([1 1 0 0 0 0 1 1 0 0 1 0 0 1 1 0 0 1 1 1 1 1 0 1 1]); %校验器
-[~, error2] = detect(det, subFrame2(1:600)'); %子帧2,输入数据列向量
-[~, error3] = detect(det, subFrame3(1:264)'); %子帧3
+% det = crc.detector([1 1 0 0 0 0 1 1 0 0 1 0 0 1 1 0 0 1 1 1 1 1 0 1 1]); %校验器
+% [~, error2] = detect(det, subFrame2(1:600)'); %子帧2,输入数据列向量
+% [~, error3] = detect(det, subFrame3(1:264)'); %子帧3
+crcdetector = comm.CRCDetector([1 1 0 0 0 0 1 1 0 0 1 0 0 1 1 0 0 1 1 1 1 1 0 1 1]);
+[~, error2] = crcdetector(subFrame2(1:600)');
+[~, error3] = crcdetector(subFrame3(1:264)');
 if error2~=0 || error3~=0 %校验失败
     ephe = [];
     sf3 = [];

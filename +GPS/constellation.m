@@ -12,7 +12,7 @@ filename = GPS.almanac.download(filepath, t); %获取历书
 almanac = GPS.almanac.read(filename); %读历书文件
 
 % 使用历书计算所有卫星方位角高度角
-rs = rs_almanac(almanac(:,6:end), t(2));
+rs = rs_almanac(almanac(:,5:end), t);
 [azi, ele] = aziele_xyz(rs, p);
 
 % 获取高度角大于0的卫星
