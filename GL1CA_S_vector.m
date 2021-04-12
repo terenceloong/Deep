@@ -1,26 +1,14 @@
-%% GPS L1 C/A单天线深组合
+%% GPS L1 C/A单天线矢量跟踪
 
 %%
 clear
 clc
 fclose('all'); %关闭之前打开的所有文件
 
-Ts = 180; %总处理时间,s
+Ts = 60; %总处理时间,s
 To = 0; %偏移时间,s
 svList = [];
 p0 = [45.730952, 126.624970, 212]; %大致的初始位置
-% p0 = [38.0463, 114.4358, 100];
-psi0 = 191; %初始航向,deg
-arm = [0.325,0,0]*1; %杆臂,IMU指向天线
-
-%% 选择IMU数据文件
-[file, path] = uigetfile('*.dat;*.txt', '选择IMU数据文件'); %文件选择对话框
-if ~ischar(file)
-    error('File error!')
-end
-imu = IMU_read([path,file]); %读IMU数据文件
-imuN = size(imu,1); %IMU数据行数
-gyro0 = mean(imu(1:200,2:4)); %计算初始陀螺零偏
 
 %% 选择GNSS数据文件
 valid_prefix = 'B210-SIM-'; %文件名有效前缀
@@ -63,38 +51,22 @@ receiver_conf.svList = svList; %跟踪卫星列表
 receiver_conf.acqTime = 2; %捕获所用的数据长度,ms
 receiver_conf.acqThreshold = 1.4; %捕获阈值,最高峰与第二大峰的比值
 receiver_conf.acqFreqMax = 5e3; %最大搜索频率,Hz
-receiver_conf.dtpos = 10; %定位时间间隔,ms
+receiver_conf.dtpos = 50; %定位时间间隔,ms
 
 %% 导航滤波器参数
-para.dt = 0.01; %s,根据IMU采样周期设置
+para.dt = receiver_conf.dtpos / 1000;
 para.p0 = [0,0,0];
 para.v0 = [0,0,0];
-para.a0 = [psi0,0,0]; %deg
-para.P0_att = 1; %deg
+para.P0_pos = 5; %m
 para.P0_vel = 1; %m/s
-para.P0_pos = 15; %m
-para.P0_dtr = 5e-8; %s
+para.P0_acc = 1; %m/s^2
+para.P0_dtr = 2e-8; %s
 para.P0_dtv = 3e-9; %s/s
-para.P0_gyro = 0.2; %deg/s
-para.P0_acc = 2e-3; %g
-para.Q_gyro = 0.2; %deg/s
-para.Q_acc = 2e-3; %g
-para.Q_dtv = 0.01e-9; %1/s
-para.Q_dg = 0.01*0.1; %deg/s/s
-para.Q_da = 0.1e-3; %g/s
-para.sigma_gyro = 0.03; %deg/s
-para.arm = arm; %m
-para.gyro0 = gyro0; %deg/s
-if strcmp(file(1:3),'SIM')
-    para.windupFlag = 0;
-else
-    para.windupFlag = 1;
-end
-% 最开始的参数:0.15, 2, 0.01, 0.1
-
-% 11维滤波器用的
-% para.Q_gyro = 1.0; %deg/s
-% para.Q_acc = 2e-2; %g
+para.Q_pos = 0;
+para.Q_vel = 0;
+para.Q_acc = 100;
+para.Q_dtr = 0;
+para.Q_dtv = 1e-9;
 
 %% 创建接收机对象
 nCoV = GL1CA_S(receiver_conf);
@@ -125,28 +97,12 @@ for t=1:msToProcess
     data = fread(fileID, [2,blockSize], 'int16'); %从文件读数据
     nCoV.run(data); %接收机处理数据
     %---------------------------------------------------------------------%
-    if nCoV.state==3 %深组合时,进行一次定位后为其设置下次定位时间和IMU数据
-        if isnan(nCoV.tp(1)) %定位后tp会变成NaN
-            ki = ki+1; %IMU索引加1
-            if ki>imuN %IMU数据超范围
-                break
-            end
-            nCoV.imu_input(imu(ki,1), imu(ki,2:7)); %输入IMU数据
-        end
-    elseif nCoV.state==1 %当接收机初始化完成后进入深组合
-        ki = find(imu(:,1)>nCoV.ta*[1;1e-3;1e-6], 1); %IMU索引
-        if isempty(ki) || (imu(ki,1)-nCoV.ta(1))>1
-            error('Data mismatch!')
-        end
-        nCoV.imu_input(imu(ki,1), imu(ki,2:7)); %输入IMU数据
+    if nCoV.state==1 %当接收机初始化完成后进入矢量跟踪
         para.p0 = nCoV.pos;
-        nCoV.navFilter = filter_single(para); %初始化导航滤波器
-%         nCoV.navFilter = filter_single_11(para);
-%         nCoV.navFilter = filter_single_arm(para);
-%         nCoV.navFilter = filter_single_delay(para);
-        nCoV.vectorMode = 2; %设置矢量跟踪模式
+        nCoV.navFilter = filter_sat(para); %初始化导航滤波器
+        nCoV.vectorMode = 3; %设置矢量跟踪模式
         nCoV.channel_vector; %通道切换矢量跟踪环路
-        nCoV.state = 3; %接收机进入深组合
+        nCoV.state = 4; %接收机进入矢量跟踪
     end
     %---------------------------------------------------------------------%
 end
@@ -163,7 +119,7 @@ close(f);
 nCoV.save_ephemeris(ephemeris_file);
 
 %% 清除变量
-clearvars -except data_file receiver_conf nCoV tf p0 imu
+clearvars -except data_file receiver_conf nCoV tf p0
 
 %% 画交互星座图
 nCoV.interact_constellation;

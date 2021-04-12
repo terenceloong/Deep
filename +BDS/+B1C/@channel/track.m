@@ -118,8 +118,8 @@ if obj.coherentCnt==obj.coherentN
     switch obj.carrMode
         case 2 %锁相环
             order2PLL(carrError);
-        case 3 %深组合锁相环
-            deepPLL(carrError);
+        case 3 %矢量二阶锁相环
+            vectorPLL2(carrError);
     end
     
     % 码跟踪
@@ -173,7 +173,7 @@ if obj.bitSyncFlag==1 %完成比特同步
         else
             obj.lossCnt = 0;
         end
-        %----长时间失锁关闭通道(深组合时不关)
+        %----长时间失锁关闭通道(矢量跟踪时不关)
         if obj.lossCnt>5 && obj.state~=3
             obj.state = 0;
             obj.ns = obj.ns + 1; %数据存储跳一个,相当于加一个间断点
@@ -199,15 +199,15 @@ obj.storage.CN0(n) = obj.CN0;
         obj.remCarrPhase = obj.remCarrPhase + obj.PLL2(1)*carrError*obj.coherentTime;
     end
 
-    %% 深组合锁相环
-    function deepPLL(carrError)
+    %% 矢量二阶锁相环
+    function vectorPLL2(carrError)
         % PLL2 = [K1, K2, Bn]
         % 估计频率靠二阶环路估计,驱动频率靠外部更新
         dt = obj.coherentTime; %时间间隔
-        df = obj.carrNco - obj.carrFreq;
-        dp = -carrError - df*dt;
-        obj.remCarrPhase = obj.remCarrPhase - df*dt - obj.PLL2(1)*dt*dp; %alpha=K1*dt
-        obj.carrFreq = obj.carrFreq - obj.PLL2(2)*dp; %beta=K2
+        df = obj.carrFreq - obj.carrNco;
+        dp = carrError - df*dt;
+        obj.remCarrPhase = obj.remCarrPhase + df*dt + obj.PLL2(1)*dt*dp; %alpha=K1*dt
+        obj.carrFreq = obj.carrFreq + obj.PLL2(2)*dp; %beta=K2
         if obj.CN0<37 %不是强信号不对载波频率进行估计,弱信号转为强信号相当于重启锁相环
             obj.carrFreq = obj.carrNco;
         end

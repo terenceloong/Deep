@@ -23,7 +23,7 @@ if policy==1
     return
 end
 
-% 策略2,只在深组合时调整
+% 策略2,只在矢量跟踪时调整
 if policy==2
     if obj.state==3
         if obj.CN0<37

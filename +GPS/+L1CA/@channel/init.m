@@ -24,6 +24,7 @@ obj.dataIndex = obj.trackDataTail + n;
 % 初始化本地信号发生器
 obj.carrAccS = 0;
 obj.carrAccR = 0;
+obj.carrAccE = 0;
 obj.carrNco = acqResult(2);
 obj.codeNco = 1.023e6 + obj.carrNco/1540;
 obj.remCarrPhase = 0;
@@ -44,6 +45,10 @@ obj.FLLp = [K, cnt];
 % 初始化PLL2
 [K1, K2] = order2LoopCoefD(25, 0.707, 0.001);
 obj.PLL2 = [K1, K2, 25];
+
+% 初始化PLL3
+[K1, K2, K3] = order3LoopCoefD(20, 0.001);
+obj.PLL3 = [K1, K2, K3, 20];
 
 % 初始化DLL2
 [K1, K2] = order2LoopCoefD(2, 0.707, 0.001);

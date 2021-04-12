@@ -1,6 +1,6 @@
 classdef channel < handle
 % GPS L1 C/A信号跟踪通道
-% state:通道状态, 0-未激活, 1-已激活但没有星历, 2-可以进行伪距伪距率测量, 3-深组合
+% state:通道状态, 0-未激活, 1-已激活但没有星历, 2-可以进行伪距伪距率测量, 3-矢量跟踪
 
     properties
         Tms             %总运行时间,ms,用来确定画图的横坐标
@@ -24,6 +24,7 @@ classdef channel < handle
         dataIndex       %跟踪开始点在文件中的位置
         carrAccS        %卫星运动引起的载波频率变化率
         carrAccR        %接收机运动引起的载波频率变化率
+        carrAccE        %导航滤波器估计的接收机运动引起的载波频率变化率
         carrNco         %载波发生器驱动频率
         codeNco         %码发生器驱动频率
         remCarrPhase    %跟踪开始点的载波相位
@@ -35,10 +36,11 @@ classdef channel < handle
         Q0              %上次Q_P积分值
         FLLp            %频率牵引锁频环
         PLL2            %二阶锁相环
+        PLL3            %三阶锁相环
         DLL2            %二阶延迟锁定环
         carrMode        %载波跟踪模式
         codeMode        %码跟踪模式
-        codeDiscBuff    %码鉴相器输出缓存(深组合时用到)
+        codeDiscBuff    %码鉴相器输出缓存(矢量跟踪时用到)
         codeDiscBuffPtr %码鉴相器输出缓存指针
         varCoef         %噪声方差计算系数,[伪距,伪距率,码鉴相器]
         varValue        %噪声方差值

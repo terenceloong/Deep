@@ -1,7 +1,6 @@
 classdef GL1CA_S < handle
 % GPS L1 C/A单天线接收机
-% state:接收机状态, 0-初始化, 1-正常, 2-紧组合, 3-深组合
-% deepMode:深组合模式, 1-码环矢量跟踪, 2-码环载波环都矢量跟踪
+% state:接收机状态, 0-初始化, 1-正常, 2-紧组合, 3-深组合, 4-纯矢量跟踪
     
     properties
         Tms            %接收机总运行时间,ms
@@ -35,7 +34,7 @@ classdef GL1CA_S < handle
         tp             %下次定位的时间,[s,ms,us]
         imu            %IMU数据
         navFilter      %导航滤波器
-        deepMode       %深组合模式
+        vectorMode     %矢量跟踪模式
         ns             %指向当前存储行,初值是0,存储之前加1
         storage        %存储接收机输出
         result         %接收机运行结果
@@ -122,6 +121,10 @@ classdef GL1CA_S < handle
             obj.storage.P       =   NaN(row,20,'single');
             obj.storage.motion  = zeros(row,1,'uint8'); %运动状态
             obj.storage.others  =   NaN(row,12,'single');
+            obj.storage.innP    =   NaN(row,obj.chN,'single'); %新息(innovation)
+            obj.storage.innV    =   NaN(row,obj.chN,'single');
+            obj.storage.resP    =   NaN(row,obj.chN,'single'); %残差(residual)
+            obj.storage.resV    =   NaN(row,obj.chN,'single');
         end
     end
     
@@ -133,7 +136,7 @@ classdef GL1CA_S < handle
         interact_constellation(obj)   %画交互星座图
         get_result(obj)               %获取接收机运行结果
         imu_input(obj, tp, imu)       %IMU数据输入
-        channel_deep(obj)             %通道切换深组合跟踪环路
+        channel_vector(obj)           %通道切换矢量跟踪环路
         
         print_all_log(obj)            %打印所有通道日志
         plot_all_trackResult(obj)     %显示所有通道跟踪结果
@@ -164,6 +167,7 @@ classdef GL1CA_S < handle
         pos_normal(obj)            %正常定位
         pos_tight(obj)             %紧组合定位
         pos_deep(obj)              %深组合定位
+        pos_vector(obj)            %纯矢量跟踪定位
     end
     
 end %end classdef

@@ -35,7 +35,7 @@ end
 
     %% 等待锁相环稳定
     function waitPLLstable
-        if obj.carrMode~=2 %非锁相环模式跳过
+        if obj.carrMode~=2 && obj.carrMode~=4 %非锁相环模式跳过
             obj.trackCnt = 0;
             return
         end

@@ -48,7 +48,7 @@ for n=0:10229
     code(n+1) = W(mod(n+p-1,N)+1);
 end
 
-% 显示头24个码片和尾24个码片（八进制）
+% 显示头24个码片和尾24个码片(八进制)
 % first = code(1:24)==-1; %01数组
 % first = dec2bin(first)'; %二进制字符串
 % first = bin2dec(first); %十进制数

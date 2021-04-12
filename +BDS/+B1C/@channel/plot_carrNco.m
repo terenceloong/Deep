@@ -4,7 +4,7 @@ function plot_carrNco(obj)
 PRN_str = ['BDS ',sprintf('%d',obj.PRN)];
 figure('Name',PRN_str)
 t = obj.storage.dataIndex/obj.sampleFreq;
-if obj.state==3 %深组合时估计的载波频率作为背景
+if obj.state==3 %矢量跟踪时估计的载波频率作为背景
     plot(t, obj.storage.carrFreq)
     hold on
     plot(t, obj.storage.carrNco)

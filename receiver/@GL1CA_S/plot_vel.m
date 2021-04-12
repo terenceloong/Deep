@@ -20,7 +20,7 @@ for k=1:3
 end
 
 % ÂË²¨½á¹û
-if obj.state==2 || obj.state==3
+if obj.state==2 || obj.state==3 || obj.state==4
     for k=1:3
         subplot(3,1,k)
         plot(t, obj.storage.vel(:,k), 'LineWidth',0.5)

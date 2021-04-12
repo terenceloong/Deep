@@ -106,8 +106,12 @@ if obj.coherentCnt==obj.coherentN
             freqPull(freqError);
         case 2 %锁相环
             order2PLL(carrError);
-        case 3 %深组合锁相环
-            deepPLL(carrError);
+        case 3 %矢量二阶锁相环
+            vectorPLL2(carrError);
+        case 4 %三阶锁相环
+            order3PLL(carrError);
+        case 5 %矢量三阶锁相环
+            vectorPLL3(carrError);
     end
     
     % 码跟踪
@@ -154,7 +158,7 @@ if obj.bitSyncFlag==1 %完成比特同步
         else
             obj.lossCnt = 0;
         end
-        %----长时间失锁关闭通道(深组合时不关)
+        %----长时间失锁关闭通道(矢量跟踪时不关)
         if obj.lossCnt>5 && obj.state~=3
             obj.state = 0;
             obj.ns = obj.ns + 1; %数据存储跳一个,相当于加一个间断点
@@ -197,18 +201,54 @@ obj.storage.CN0(n) = obj.CN0;
         obj.remCarrPhase = obj.remCarrPhase + obj.PLL2(1)*carrError*obj.coherentTime;
     end
 
-    %% 深组合锁相环
-    function deepPLL(carrError)
+    %% 矢量二阶锁相环
+    function vectorPLL2(carrError)
         % PLL2 = [K1, K2, Bn]
         % 估计频率靠二阶环路估计,驱动频率靠外部更新
         % 参见程序track_sim.m
         dt = obj.coherentTime; %时间间隔
-        df = obj.carrNco - obj.carrFreq;
-        dp = -carrError - df*dt;
-        obj.remCarrPhase = obj.remCarrPhase - df*dt - obj.PLL2(1)*dt*dp; %alpha=K1*dt
-        obj.carrFreq = obj.carrFreq - obj.PLL2(2)*dp; %beta=K2
+        %------------------------------------------------------------------
+%         df = obj.carrNco - obj.carrFreq;
+%         dp = -carrError - df*dt;
+%         obj.remCarrPhase = obj.remCarrPhase - df*dt - obj.PLL2(1)*dt*dp; %alpha=K1*dt
+%         obj.carrFreq = obj.carrFreq - obj.PLL2(2)*dp; %beta=K2
+        %------------------------------------------------------------------
+        df = obj.carrFreq - obj.carrNco; %驱动频率较估计频率慢多少
+        dp = carrError - df*dt; %把驱动频率慢引起的相位差刨出去
+        obj.remCarrPhase = obj.remCarrPhase + df*dt + obj.PLL2(1)*dt*dp; %alpha=K1*dt,把驱动频率慢引起的相位差补偿回来
+        obj.carrFreq = obj.carrFreq + obj.PLL2(2)*dp; %beta=K2
+        %------------------------------------------------------------------
         if obj.CN0<37
             obj.carrFreq = obj.carrNco;
+        end
+    end
+
+    %% 三阶锁相环
+    function order3PLL(carrError)
+        % PLL3 = [K1, K2, K3, Bn]
+        obj.carrAccR = obj.carrAccR + obj.PLL3(3)*carrError; %估计的载波加速度
+        obj.carrFreq = obj.carrFreq + obj.PLL3(2)*carrError;
+        %----调频调相
+%         obj.carrNco = obj.carrFreq + obj.PLL3(1)*carrError;
+        %----直接调相
+        obj.carrNco = obj.carrFreq;
+        obj.remCarrPhase = obj.remCarrPhase + obj.PLL3(1)*carrError*obj.coherentTime;
+    end
+
+    %% 矢量三阶锁相环
+    function vectorPLL3(carrError)
+        % PLL3 = [K1, K2, K3, Bn]
+        dt = obj.coherentTime; %时间间隔
+        df = obj.carrFreq - obj.carrNco;
+        dp = carrError - df*dt;
+        obj.remCarrPhase = obj.remCarrPhase + df*dt + obj.PLL3(1)*dt*dp;
+        obj.carrFreq = obj.carrFreq + obj.PLL3(2)*dp;
+        obj.carrAccR = obj.carrAccR + obj.PLL3(3)*dp;
+        if obj.CN0<37
+            obj.carrFreq = obj.carrNco;
+            obj.carrAccR = obj.carrAccE;
+        else %强信号时,NCO驱动频率与估计频率保持同步
+            obj.carrNco = obj.carrNco + obj.PLL3(2)*dp;
         end
     end
 

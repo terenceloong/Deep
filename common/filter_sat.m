@@ -44,13 +44,18 @@ classdef filter_sat < handle
         end
         
         %% 运行函数
-        function run(obj, sv, indexP, indexV)
+        function [innP, innV] = run(obj, sv, indexP, indexV)
             % indexP,indexV索引都是逻辑值
+            n = length(indexP);
+            innP = NaN(1,n); %伪距新息(伪距的Z)
+            innV = NaN(1,n); %伪距率新息(伪距率的Z)
             %----提取卫星测量(每行一颗卫星)
             rs = sv(:,1:3);     %卫星ecef位置
             vs = sv(:,4:6);     %卫星ecef速度
             rho = sv(:,7);      %测量的伪距
             rhodot = sv(:,8);   %测量的伪距率
+            R_rho = sv(:,9);    %伪距噪声方差
+            R_rhodot= sv(:,10); %伪距率噪声方差
             %----换简短的变量名
             r2d = 180/pi;
             c = 299792458;
@@ -105,14 +110,30 @@ classdef filter_sat < handle
                 %---------------------------------------------------------%
                 Z = [rho0(indexP) - rho(indexP); ...
                      rhodot0(indexV) - rhodot(indexV).*cm(indexV)]; %计算值减测量值
-                R = diag([ones(n1,1)*9; ones(n2,1)*0.0015]);
+                R = diag([R_rho(indexP);R_rhodot(indexV)]);
+                %----输出新息
+                innP(indexP) = Z(1:n1);
+                innV(indexV) = Z(n1+1:n1+n2);
                 %----滤波
                 K = P1*H' / (H*P1*H'+R);
                 X = K*Z;
-                P1 = (eye(11)-K*H)*P1;
+                P2 = (eye(11)-K*H)*P1;
+                %----残差校验(删残差大的行)
+                Z0 = Z - H*X; %残差
+                Z0_rhodot = Z0(n1+1:end); %伪距率残差
+                ie = n1 + find(abs(Z0_rhodot)>0.6)'; %残差大的索引
+                if ~isempty(ie) %删除残差大的量测,重新滤波
+                    Z(ie) = [];
+                    H(ie,:) = [];
+                    R(ie,:) = [];
+                    R(:,ie) = [];
+                    K = P1*H' / (H*P1*H'+R);
+                    X = K*Z;
+                    P2 = (eye(11)-K*H)*P1;
+                end
             end
             %----更新P阵
-            obj.P = (P1+P1')/2;
+            obj.P = (P2+P2')/2;
             %----导航修正
             lat = lat - X(1)*r2d; %deg
             lon = lon - X(2)*r2d; %deg

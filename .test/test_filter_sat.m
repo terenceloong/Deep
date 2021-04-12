@@ -84,6 +84,8 @@ for k=1:n
     sv = sv_real;
     sv(:,7) = sv(:,7) + randn(svN,1)*sigma_rho + dtr*c;
     sv(:,8) = sv(:,8) + randn(svN,1)*sigma_rhodot + dtv*c;
+    sv(:,9) = sigma_rho^2;
+    sv(:,10) = sigma_rhodot^2;
     
     % Œ¿–«µº∫ΩΩ‚À„
     satnav = satnavSolve(sv, rp);

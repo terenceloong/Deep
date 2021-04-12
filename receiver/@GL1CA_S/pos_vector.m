@@ -1,5 +1,5 @@
-function pos_deep(obj)
-% 深组合定位
+function pos_vector(obj)
+% 纯矢量跟踪定位
 
 % 波长
 Lca = 0.190293672798365; %载波波长,m (299792458/1575.42e6)
@@ -40,66 +40,41 @@ satnav = satnavSolveWeighted(sv(svIndex,:), obj.rp);
 % 导航滤波
 indexP = CN0>=33; %使用伪距的索引
 indexV = CN0>=37; %使用伪距率的索引(更改阈值时,载波跟踪处的阈值也要改)
-obj.navFilter.run(obj.imu, sv, indexP, indexV);
+[innP, innV] = obj.navFilter.run(sv, indexP, indexV);
 
 % 计算ecef系下加速度
-Cnb = quat2dcm(obj.navFilter.quat);
 Cen = dcmecef2ned(obj.navFilter.pos(1), obj.navFilter.pos(2));
-fb = obj.imu(4:6) - obj.navFilter.bias(4:6); %惯导加速度,m/s^2
-wb = obj.imu(1:3) - obj.navFilter.bias(1:3); %角速度,rad/s
-wdot = obj.navFilter.wdot; %角加速度,rad/s^2
-arm = obj.navFilter.arm; %体系下杆臂矢量
-fbt = cross(wdot,arm); %切向加速度,m/s^2
-fbn = cross(wb,cross(wb,arm)); %法向加速度,m/s^2
-fh = cross(2*obj.geogInfo.wien+obj.geogInfo.wenn, obj.vel); %有害加速度
-fn = (fb+fbt+fbn)*Cnb + [0,0,obj.geogInfo.g] - fh; %地理系下加速度(刨除有害加速度)
+fn = obj.navFilter.acc; %地理系下加速度
 fe = fn*Cen; %ecef系下加速度
 
-% 计算ecef系下杆臂位置速度
-r_arm = arm*Cnb*Cen;
-v_arm = cross(wb,arm)*Cnb*Cen;
-
-% 惯导位置速度做杆臂修正后得到天线位置速度
-obj.rp = obj.navFilter.rp + r_arm;
-obj.vp = obj.navFilter.vp + v_arm;
-obj.att = obj.navFilter.att;
-obj.pos = ecef2lla(obj.rp);
-obj.vel = obj.vp*Cen';
+% 更新接收机位置速度
+obj.pos = obj.navFilter.pos;
+obj.vel = obj.navFilter.vel;
+obj.rp = obj.navFilter.rp;
+obj.vp = obj.navFilter.vp;
 obj.geogInfo = geogInfo_cal(obj.pos, obj.vel);
 
 [rho0, rhodot0, rspu] = rho_rhodot_cal_ecef(satmeas(:,1:3), satmeas(:,4:6), ...
                         obj.rp, obj.vp); %理论相对距离和相对速度
 acclos0 = rspu*fe'; %计算接收机运动引起的相对加速度
 
-% 通道修正 (伪距短,码相位超前; 伪距率小,载波频率快)
+% 通道修正
 Cdf = 1 + obj.deltaFreq; %跟踪频率到真实频率的系数
 dtr_code = obj.navFilter.dtr * 1.023e6; %钟差对应的码相位
 dtv_carr = obj.navFilter.dtv * 1575.42e6; %钟频差对应的载波频率
-if obj.vectorMode==1 %只修码相位
+if obj.vectorMode==3 %修码相位和载波驱动频率
     for k=1:chN
         channel = obj.channels(k);
         if channel.state==3
             channel.codeDiscBuffPtr = 0;
-            %----码相位修正(satmeas中的伪距是带钟差的,需要补回来,才能得到修正量)
+            %----码相位修正
             dcodePhase = (rho0(k)-satmeas(k,7))/Lco + dtr_code; %码相位修正量
             channel.remCodePhase = channel.remCodePhase - dcodePhase;
-            %----接收机运动引起的载波频率变化率
-            channel.carrAccR = -acclos0(k)/Lca / Cdf;
-        end
-    end
-elseif obj.vectorMode==2 %修码相位和载波驱动频率
-    for k=1:chN
-        channel = obj.channels(k);
-        if channel.state==3
-            channel.codeDiscBuffPtr = 0;
-            %----码相位修正(satmeas中的伪距是带钟差的,需要补回来,才能得到修正量)
-            dcodePhase = (rho0(k)-satmeas(k,7))/Lco + dtr_code; %码相位修正量
-            channel.remCodePhase = channel.remCodePhase - dcodePhase;
-            %----载波驱动频率修正(satmeas中的伪距率是带钟频差的,需要补回来,才能得到修正量)
+            %----载波驱动频率修正
             dcarrFreq = (rhodot0(k)-satmeas(k,8))/Lca + dtv_carr; %相对估计频率的修正量
             channel.carrNco = channel.carrFreq - dcarrFreq/Cdf;
             %----接收机运动引起的载波频率变化率
-            channel.carrAccR = -acclos0(k)/Lca / Cdf;
+            channel.carrAccE = -acclos0(k)/Lca / Cdf; %设置载波加速度估计值,不是载波加速度驱动值carrAccR
         end
     end
 else
@@ -110,10 +85,10 @@ end
 obj.channel_vector;
 
 % 接收机时钟修正
-% obj.deltaFreq = obj.deltaFreq + obj.navFilter.dtv;
-% obj.navFilter.dtv = 0;
-% obj.ta = obj.ta - sec2smu(obj.navFilter.dtr);
-% obj.navFilter.dtr = 0;
+obj.deltaFreq = obj.deltaFreq + obj.navFilter.dtv;
+obj.navFilter.dtv = 0;
+obj.ta = obj.ta - sec2smu(obj.navFilter.dtr);
+obj.navFilter.dtr = 0;
 
 % 数据存储
 obj.ns = obj.ns+1; %指向当前存储行
@@ -125,23 +100,18 @@ obj.storage.satnav(m,:) = satnav([1,2,3,7,8,9,13,14]);
 obj.storage.svsel(m,:) = indexP + indexV;
 obj.storage.pos(m,:) = obj.pos;
 obj.storage.vel(m,:) = obj.vel;
-obj.storage.att(m,:) = obj.att;
-obj.storage.imu(m,:) = obj.imu;
-obj.storage.bias(m,:) = obj.navFilter.bias;
 P = obj.navFilter.P;
 obj.storage.P(m,1:size(P,1)) = sqrt(diag(P));
-Cnb = quat2dcm(obj.navFilter.quat);
-P_angle = var_phi2angle(P(1:3,1:3), Cnb);
-obj.storage.P(m,1:3) = sqrt(diag(P_angle));
-obj.storage.motion(m) = obj.navFilter.motion.state;
-obj.storage.others(m,1:3) = obj.navFilter.arm;
-obj.storage.others(m,4:6) = obj.navFilter.wdot;
-% obj.storage.others(m,7) = obj.navFilter.delay;
 obj.storage.others(m,8) = obj.navFilter.dtr;
 obj.storage.others(m,9) = obj.navFilter.dtv;
 obj.storage.others(m,10:12) = fn;
+obj.storage.innP(m,:) = innP;
+obj.storage.innV(m,:) = innV;
+c = 299792458;
+obj.storage.resP(m,:) = rho0 - sv(:,7) + obj.navFilter.dtr*c;
+obj.storage.resV(m,:) = rhodot0 - sv(:,8) + obj.navFilter.dtv*c;
 
 % 更新下次定位时间
-obj.tp(1) = NaN;
+obj.tp = timeCarry(obj.tp + [0,obj.dtpos,0]);
 
 end

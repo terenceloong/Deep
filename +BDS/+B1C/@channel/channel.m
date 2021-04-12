@@ -1,6 +1,6 @@
 classdef channel < handle
 % 北斗B1C信号跟踪通道
-% state:通道状态, 0-未激活, 1-已激活但没有星历, 2-可以进行伪距伪距率测量, 3-深组合
+% state:通道状态, 0-未激活, 1-已激活但没有星历, 2-可以进行伪距伪距率测量, 3-矢量跟踪
 
     properties
         Tms             %总运行时间,ms,用来确定画图的横坐标
@@ -42,7 +42,7 @@ classdef channel < handle
         DLL2            %二阶延迟锁定环
         carrMode        %载波跟踪模式
         codeMode        %码跟踪模式
-        codeDiscBuff    %码鉴相器输出缓存(深组合时用到)
+        codeDiscBuff    %码鉴相器输出缓存(矢量跟踪时用到)
         codeDiscBuffPtr %码鉴相器输出缓存指针
         varCoef         %噪声方差计算系数,[伪距,伪距率,码鉴相器]
         varValue        %噪声方差值

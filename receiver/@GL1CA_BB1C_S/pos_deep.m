@@ -117,7 +117,7 @@ if obj.GPSflag==1
     [rho0, rhodot0, rspu] = rho_rhodot_cal_ecef(satmeas(:,1:3), satmeas(:,4:6), ...
                             obj.rp, obj.vp); %理论相对距离和相对速度
     acclos0 = rspu*fe'; %计算接收机运动引起的相对加速度
-    if obj.deepMode==1 %只修码相位
+    if obj.vectorMode==1 %只修码相位
         for k=1:obj.GPS.chN
             channel = obj.GPS.channels(k);
             if channel.state==3
@@ -129,7 +129,7 @@ if obj.GPSflag==1
                 channel.carrAccR = -acclos0(k)/Lca / Cdf;
             end
         end
-    elseif obj.deepMode==2 %修码相位和载波驱动频率
+    elseif obj.vectorMode==2 %修码相位和载波驱动频率
         for k=1:obj.GPS.chN
             channel = obj.GPS.channels(k);
             if channel.state==3
@@ -151,7 +151,7 @@ if obj.BDSflag==1
     [rho0, rhodot0, rspu] = rho_rhodot_cal_ecef(satmeas(:,1:3), satmeas(:,4:6), ...
                             obj.rp, obj.vp); %理论相对距离和相对速度
     acclos0 = rspu*fe'; %计算接收机运动引起的相对加速度
-    if obj.deepMode==1 %只修码相位
+    if obj.vectorMode==1 %只修码相位
         for k=1:obj.BDS.chN
             channel = obj.BDS.channels(k);
             if channel.state==3
@@ -163,7 +163,7 @@ if obj.BDSflag==1
                 channel.carrAccR = -acclos0(k)/Lca / Cdf;
             end
         end
-    elseif obj.deepMode==2 %修码相位和载波驱动频率
+    elseif obj.vectorMode==2 %修码相位和载波驱动频率
         for k=1:obj.BDS.chN
             channel = obj.BDS.channels(k);
             if channel.state==3
@@ -181,8 +181,8 @@ if obj.BDSflag==1
     end
 end
 
-% 新跟踪的通道切换深组合跟踪环路
-obj.channel_deep;
+% 新跟踪的通道切换矢量跟踪环路
+obj.channel_vector;
 
 % 接收机时钟修正
 obj.deltaFreq = obj.deltaFreq + obj.navFilter.dtv;
