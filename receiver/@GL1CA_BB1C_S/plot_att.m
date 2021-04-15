@@ -6,8 +6,7 @@ if obj.ns==0 %没有数据直接退出
 end
 
 % 时间轴
-t = obj.storage.ta - obj.storage.ta(1);
-t = t + obj.Tms/1000 - t(end);
+t = obj.storage.ta - obj.storage.ta(end) + obj.Tms/1000;
 
 if obj.state==3
     figure('Name','姿态')

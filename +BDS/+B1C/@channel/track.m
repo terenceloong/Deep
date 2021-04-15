@@ -5,16 +5,9 @@ function track(obj, dataI, dataQ)
 
 pi2 = 2*pi;
 
-% 存储跟踪结果(本次跟踪开始时的数据)
+% 存储行号
 obj.ns = obj.ns+1; %指向当前存储行
 n = obj.ns;
-obj.storage.dataIndex(n)    = obj.dataIndex;
-obj.storage.remCodePhase(n) = obj.remCodePhase;
-obj.storage.codeFreq(n)     = obj.codeFreq;
-obj.storage.remCarrPhase(n) = obj.remCarrPhase;
-obj.storage.carrFreq(n)     = obj.carrFreq;
-obj.storage.carrNco(n)      = obj.carrNco;
-obj.storage.carrAcc(n)      = obj.carrAccS + obj.carrAccR;
 
 % 指向下次更新的开始点
 obj.dataIndex = obj.dataIndex + obj.trackBlockSize;
@@ -183,9 +176,16 @@ if obj.bitSyncFlag==1 %完成比特同步
     end %end 跟踪完一个比特
 end
 
-% 存储跟踪结果(本次跟踪产生的数据)
+% 存储跟踪结果
+obj.storage.dataIndex(n) = obj.dataIndex;
+obj.storage.remCodePhase(n) = obj.remCodePhase;
+obj.storage.codeFreq(n) = obj.codeFreq;
+obj.storage.remCarrPhase(n) = obj.remCarrPhase;
+obj.storage.carrFreq(n) = obj.carrFreq;
+obj.storage.carrNco(n) = obj.carrNco;
+obj.storage.carrAcc(n) = obj.carrAccS + obj.carrAccR;
 obj.storage.I_Q(n,:) = [IP_1ms, IE_1ms, IL_1ms, QP_1ms, QE_1ms, QL_1ms, Id, IP_1ms];
-% obj.storage.I_Q(n,:) = [I_Q_1ms, Id, IP_1ms];
+% obj.storage.I_Q(n,:) = [I_Q_1ms, Id, IP_1ms]; %剥离数据的
 obj.storage.CN0(n) = obj.CN0;
 
     %% 二阶锁相环
