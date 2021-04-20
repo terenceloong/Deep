@@ -8,8 +8,8 @@ if ~strcmp(prefix,'SIM') %不是仿真数据返回
 end
 
 % 加载轨迹数据
-trajnum = name(end-1:end); %轨迹编号,两位
-load(['~temp\traj\traj0',trajnum])
+trajnum = name(21:23); %轨迹编号
+load(['~temp\traj\traj',trajnum])
 dt_traj = trajGene_conf.dt; %轨迹采样间隔
 dt_pos = nCoV.dtpos/1000; %接收机采样间隔
 m = dt_pos / dt_traj; %跳点数

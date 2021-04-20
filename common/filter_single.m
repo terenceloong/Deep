@@ -49,7 +49,7 @@ classdef filter_single < handle
             obj.T = para.dt;
             obj.P = diag([para.P0_att  *[1,1,1]*d2r, ...
                           para.P0_vel  *[1,1,1], ...
-                          para.P0_pos  *[obj.geogInfo.dlatdn,obj.geogInfo.dlonde,1], ...
+                          para.P0_pos  *[1,1,1], ...
                           para.P0_dtr  *c, ...
                           para.P0_dtv  *c, ...
                           para.P0_gyro *[1,1,1]*d2r, ...
@@ -57,7 +57,7 @@ classdef filter_single < handle
                          ])^2; %para的P0都是标准差
             obj.Q = diag([para.Q_gyro *[1,1,1]*d2r, ...
                           para.Q_acc  *[1,1,1]*g0, ...
-                          para.Q_acc  *[obj.geogInfo.dlatdn,obj.geogInfo.dlonde,1]*g0*(obj.T*1), ...
+                          para.Q_acc  *[1,1,1]*g0*(obj.T*1), ...
                           para.Q_dtv  *c*(obj.T*1), ...
                           para.Q_dtv  *c, ...
                           para.Q_dg   *[1,1,1]*d2r, ...
@@ -154,14 +154,14 @@ classdef filter_single < handle
             Cbn = Cnb';
             fn = fb1*Cnb;
             A = zeros(17);
-%             A(1:3,1:3) = [0,winn(3),-winn(2); -winn(3),0,winn(1); winn(2),-winn(1),0];
+%             A(1:3,1:3) = antisym(winn);
             A(1:3,12:14) = -Cbn;
-            A(4:6,1:3) = [0,-fn(3),fn(2); fn(3),0,-fn(1); -fn(2),fn(1),0];
-%             A(4:6,4:6) = [0,winn2(3),-winn2(2); -winn2(3),0,winn2(1); winn2(2),-winn2(1),0];
+            A(4:6,1:3) = antisym(fn);
+%             A(4:6,4:6) = antisym(winn2);
             A(4:6,15:17) = Cbn;
-            A(7,4) = obj.geogInfo.dlatdn;
-            A(8,5) = obj.geogInfo.dlonde;
-            A(9,6) = -1;
+            A(7,4) = 1;
+            A(8,5) = 1;
+            A(9,6) = 1;
             A(10,11) = 1;
             Phi = eye(17) + A*dt + (A*dt)^2/2;
             %----状态更新
@@ -177,23 +177,19 @@ classdef filter_single < handle
                 %----构造量测方程,量测量,量测噪声方差阵
                 S = -sum(rspu.*vs,2);
                 cm = 1 + S/c; %光速修正项
-                F = jacobi_lla2ecef(lat, lon, h, obj.geogInfo.Rn);
-                HA = rspu*F;
-                HB = rspu*Cen'; %各行为地理系下卫星指向接收机的单位矢量
-                Ha = HA(indexP,:); %取有效的行
-                Hb = HB(indexV,:);
+                En = rspu*Cen'; %各行为地理系下卫星指向接收机的单位矢量
                 H = zeros(n1+n2,17);
-                H(1:n1,7:9) = Ha;
+                H(1:n1,7:9) = En(indexP,:);
                 H(1:n1,10) = -ones(n1,1);
-                H((n1+1):end,4:6) = Hb;
+                H((n1+1):end,4:6) = En(indexV,:);
                 H((n1+1):end,11) = -cm(indexV);
                 %----修正钟差钟频差
                 rho = rho - obj.dtr*c;
                 rhodot = rhodot - obj.dtv*c - obj.windupFlag*imu(3)*0.030286178664972; %299792458/1575.42e6/(2*pi)
                 %----对测量的伪距伪距率进行杆臂修正-------------------------%
-                rho = rho - HB*Cbn*obj.arm'; %如果天线放在惯导位置应该测得的伪距
+                rho = rho - En*Cbn*obj.arm'; %如果天线放在惯导位置应该测得的伪距
                 vab = cross(wb1,obj.arm); %杆臂引起的速度
-                rhodot = rhodot - HB*Cbn*vab'; %如果天线放在惯导位置应该测得的伪距率
+                rhodot = rhodot - En*Cbn*vab'; %如果天线放在惯导位置应该测得的伪距率
                 %---------------------------------------------------------%
                 Z = [rho0(indexP) - rho(indexP); ...
                      rhodot0(indexV) - rhodot(indexV).*cm(indexV)]; %计算值减测量值
@@ -266,9 +262,9 @@ classdef filter_single < handle
             %----导航修正
             q = quatCorr(q, X(1:3)');
             v = v - X(4:6)';
-            lat = lat - X(7)*r2d; %deg
-            lon = lon - X(8)*r2d; %deg
-            h = h - X(9);
+            lat = lat - X(7)*obj.geogInfo.dlatdn*r2d; %deg
+            lon = lon - X(8)*obj.geogInfo.dlonde*r2d; %deg
+            h = h + X(9);
             %----更新导航参数
             obj.pos = [lat,lon,h];
             obj.vel = v;

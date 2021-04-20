@@ -139,17 +139,27 @@ end
 %% ª≠Œª÷√ ‰≥ˆ
 r2d = 180/pi;
 figure('Name','Œª÷√')
-for k=1:2
-    subplot(3,1,k)
-    plot(t, output.satnav(:,k))
-    hold on
-    grid on
-    axis manual
-    plot(t, output.filter(:,k), 'LineWidth',1)
-    plot(t, p0(k)+output.P(:,k+6)*r2d*3, 'Color','y', 'LineStyle','--')
-    plot(t, p0(k)-output.P(:,k+6)*r2d*3, 'Color','y', 'LineStyle','--')
-    set(gca, 'xlim', [0,t(end)])
-end
+
+subplot(3,1,1)
+plot(t, output.satnav(:,1))
+hold on
+grid on
+axis manual
+plot(t, output.filter(:,1), 'LineWidth',1)
+plot(t, p0(1)+output.P(:,7)*NF.geogInfo.dlatdn*r2d*3, 'Color','y', 'LineStyle','--')
+plot(t, p0(1)-output.P(:,7)*NF.geogInfo.dlatdn*r2d*3, 'Color','y', 'LineStyle','--')
+set(gca, 'xlim', [0,t(end)])
+
+subplot(3,1,2)
+plot(t, output.satnav(:,2))
+hold on
+grid on
+axis manual
+plot(t, output.filter(:,2), 'LineWidth',1)
+plot(t, p0(2)+output.P(:,8)*NF.geogInfo.dlonde*r2d*3, 'Color','y', 'LineStyle','--')
+plot(t, p0(2)-output.P(:,8)*NF.geogInfo.dlonde*r2d*3, 'Color','y', 'LineStyle','--')
+set(gca, 'xlim', [0,t(end)])
+    
 subplot(3,1,3)
 plot(t, output.satnav(:,3))
 hold on

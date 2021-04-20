@@ -1,4 +1,4 @@
-% IMU数据生成
+% IMU数据生成(只加白噪声)
 
 clearvars -except imuGene_conf imuGene_GUIflag
 clc

@@ -252,3 +252,9 @@ G(GPS),R(GLONASS),E(Galileo),C(BDS),J(QZSS),I(IRNSS),参见RINEX 3.03
 <===Version 5.3===>2021.4.15
 1.通道存跟踪结果全放在最后
 2.添加MTi惯导数据解析
+
+<===Version 5.4===>2021.4.20
+1.添加Huber滤波
+2.滤波器中经纬度误差换成北向东向位置误差
+3.使用Matlab工具箱中的IMU模型生成IMU数据
+4.添加8字型轨迹

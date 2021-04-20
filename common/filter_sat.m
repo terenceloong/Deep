@@ -29,13 +29,13 @@ classdef filter_sat < handle
             obj.dtv = 0;
             obj.geogInfo = geogInfo_cal(obj.pos, obj.vel);
             obj.T = para.dt;
-            obj.P = diag([para.P0_pos *[obj.geogInfo.dlatdn,obj.geogInfo.dlonde,1], ...
+            obj.P = diag([para.P0_pos *[1,1,1], ...
                           para.P0_vel *[1,1,1], ...
                           para.P0_acc *[1,1,1], ...
                           para.P0_dtr *c, ...
                           para.P0_dtv *c ...
                          ])^2; %para的P0都是标准差
-            obj.Q = diag([para.Q_pos *[obj.geogInfo.dlatdn,obj.geogInfo.dlonde,1], ...
+            obj.Q = diag([para.Q_pos *[1,1,1], ...
                           para.Q_vel *[1,1,1], ...
                           para.Q_acc *[1,1,1], ...
                           para.Q_dtr *c, ...
@@ -75,14 +75,17 @@ classdef filter_sat < handle
             obj.dtr = obj.dtr + obj.dtv*dt;
             %----状态方程
             A = zeros(11);
-            A(1,4) = obj.geogInfo.dlatdn;
-            A(2,5) = obj.geogInfo.dlonde;
-            A(3,6) = -1;
-            A(4:6,7:9) = eye(3);
+            A(1,4) = 1;
+            A(2,5) = 1;
+            A(3,6) = 1;
+            A(4,7) = 1;
+            A(5,8) = 1;
+            A(6,9) = 1;
             A(10,11) = 1;
             Phi = eye(11) + A*dt + (A*dt)^2/2;
             %----状态更新
             P1 = Phi*obj.P*Phi' + obj.Q;
+            P2 = P1; %用来给obj.P赋值
             X = zeros(11,1);
             %----量测维数
             n1 = sum(indexP); %伪距量测个数
@@ -94,15 +97,11 @@ classdef filter_sat < handle
                 %----构造量测方程,量测量,量测噪声方差阵
                 S = -sum(rspu.*vs,2);
                 cm = 1 + S/c; %光速修正项
-                F = jacobi_lla2ecef(lat, lon, h, obj.geogInfo.Rn);
-                HA = rspu*F;
-                HB = rspu*Cen'; %各行为地理系下卫星指向接收机的单位矢量
-                Ha = HA(indexP,:); %取有效的行
-                Hb = HB(indexV,:);
+                En = rspu*Cen'; %各行为地理系下卫星指向接收机的单位矢量
                 H = zeros(n1+n2,11);
-                H(1:n1,1:3) = Ha;
+                H(1:n1,1:3) = En(indexP,:);
                 H(1:n1,10) = -ones(n1,1);
-                H((n1+1):end,4:6) = Hb;
+                H((n1+1):end,4:6) = En(indexV,:);
                 H((n1+1):end,11) = -cm(indexV);
                 %-------------------修正钟差钟频差-------------------------%
                 rho = rho - obj.dtr*c;
@@ -117,27 +116,32 @@ classdef filter_sat < handle
                 %----滤波
                 K = P1*H' / (H*P1*H'+R);
                 X = K*Z;
-                P2 = (eye(11)-K*H)*P1;
-                %----残差校验(删残差大的行)
-                Z0 = Z - H*X; %残差
-                Z0_rhodot = Z0(n1+1:end); %伪距率残差
-                ie = n1 + find(abs(Z0_rhodot)>0.6)'; %残差大的索引
-                if ~isempty(ie) %删除残差大的量测,重新滤波
-                    Z(ie) = [];
-                    H(ie,:) = [];
-                    R(ie,:) = [];
-                    R(:,ie) = [];
-                    K = P1*H' / (H*P1*H'+R);
+%                 P2 = (eye(11)-K*H)*P1; %有Huber时不需要这行
+                %----Huber加权(残差校验)
+                P1 = (P1+P1')/2; %需要保证P为对称阵,否则开方时会出现复数
+                P_sqrt = sqrtm(P1); %P的平方根
+                R_diag = diag(R); %R的对角线元素
+                R_sqrt_diag = sqrt(R_diag); %R的对角线元素的平方根
+                gamma = 1.3; %Huber系数
+                for k=1:2 %算两次
+                    Psi_P_diag = HuberWeight(P_sqrt\X, gamma); %状态量的权值
+                    Psi_R_diag = HuberWeight((Z-H*X)./R_sqrt_diag, gamma); %量测量的权值
+                    P0 = P_sqrt * diag(1./Psi_P_diag) * P_sqrt; %加权后的P阵
+                    R0 = diag(R_diag./Psi_R_diag); %加权后的R阵
+                    K = P0*H' / (H*P0*H'+R0);
                     X = K*Z;
-                    P2 = (eye(11)-K*H)*P1;
+                    if any(imag(X))
+                        error('Complex number in the filter!')
+                    end
                 end
+                P2 = (eye(11)-K*H)*P0;
             end
             %----更新P阵
             obj.P = (P2+P2')/2;
             %----导航修正
-            lat = lat - X(1)*r2d; %deg
-            lon = lon - X(2)*r2d; %deg
-            h = h - X(3);
+            lat = lat - X(1)*obj.geogInfo.dlatdn*r2d; %deg
+            lon = lon - X(2)*obj.geogInfo.dlonde*r2d; %deg
+            h = h + X(3);
             v = v - X(4:6)';
             %----更新导航参数
             obj.pos = [lat,lon,h];
