@@ -68,8 +68,19 @@ G(:,1:3) = Eu;
 S = sum(Eu.*vs,2);
 cm = 1 + S/c; %光速修正
 G(:,4) = -cm;
-v = (G'*Wv*G)\G'*Wv*(S-V.*cm);
+% v = (G'*Wv*G)\G'*Wv*(S-V.*cm);
 % v = (G'*Wv*G)\G'*Wv*(S-V);
+%-----------------------------------------------
+Z = S - V.*cm;
+v = (G'*Wv*G)\G'*Wv*Z;
+R_diag = sv(:,10);
+R_sqrt_diag = sqrt(R_diag);
+for k=1:2
+    Psi_R_diag = HuberWeight((Z-G*v)./R_sqrt_diag, 1.3);
+    Wv = diag(Psi_R_diag./R_diag);
+    v = (G'*Wv*G)\G'*Wv*Z;
+end
+%-----------------------------------------------
 Cen = dcmecef2ned(satnav(1), satnav(2));
 satnav(7:9) = Cen*v(1:3); %地理系下速度
 satnav(10:12) = v(1:3); %ecef系下速度

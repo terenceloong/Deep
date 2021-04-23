@@ -41,7 +41,9 @@ sampleFreq = 4e6; %接收机采样频率
 blockSize = sampleFreq*0.001; %一个缓存块(1ms)的采样点数
 
 %% 获取接收机初始时间
-tf = sscanf(data_file((end-22):(end-8)), '%4d%02d%02d_%02d%02d%02d')'; %数据文件开始时间(日期时间向量)
+[~, filename] = strtok(file,'_'); %文件名去掉前缀剩下的部分
+filetime = filename(2:16); %文件时间
+tf = sscanf(filetime, '%4d%02d%02d_%02d%02d%02d')'; %数据文件开始时间(日期时间向量)
 % GPS时
 tg = UTC2GPS(tf, 8); %UTC时间转化为GPS时间,周+秒
 tag = [tg(2),0,0] + sample2dt(sampleOffset, sampleFreq); %接收机初始时间,[s,ms,us]
@@ -122,7 +124,7 @@ end
 nCoV = GL1CA_BB1C_S(receiver_conf);
 
 %% 预置星历
-ephemeris_file = ['~temp\ephemeris\',data_file((end-22):(end-8)),'.mat']; %文件名
+ephemeris_file = ['~temp\ephemeris\',filetime,'.mat']; %文件名
 nCoV.set_ephemeris(ephemeris_file);
 
 %% 打开文件,创建进度条

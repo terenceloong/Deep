@@ -38,7 +38,9 @@ sampleFreq = 4e6; %接收机采样频率
 blockSize = sampleFreq*0.001; %一个缓存块(1ms)的采样点数
 
 %% 获取接收机初始时间
-tf = sscanf(data_file((end-22):(end-8)), '%4d%02d%02d_%02d%02d%02d')'; %数据文件开始时间(日期时间向量)
+[~, filename] = strtok(file,'_'); %文件名去掉前缀剩下的部分
+filetime = filename(2:16); %文件时间
+tf = sscanf(filetime, '%4d%02d%02d_%02d%02d%02d')'; %数据文件开始时间(日期时间向量)
 tg = UTC2GPS(tf, 8); %UTC时间转化为GPS时间
 ta = [tg(2),0,0] + sample2dt(sampleOffset, sampleFreq); %接收机初始时间,[s,ms,us]
 ta = timeCarry(round(ta,2)); %进位,微秒保留2位小数
@@ -104,7 +106,7 @@ nCoV = GL1CA_S(receiver_conf);
 % 需指定星历存储的文件夹.
 % 星历文件可以不存在,调用时会自动创建.
 % 注释掉这段时同时要注释掉后面的保存星历.
-ephemeris_file = ['~temp\ephemeris\',data_file((end-22):(end-8)),'.mat']; %文件名
+ephemeris_file = ['~temp\ephemeris\',filetime,'.mat']; %文件名
 nCoV.set_ephemeris(ephemeris_file);
 
 %% 打开文件,创建进度条
@@ -141,6 +143,14 @@ for t=1:msToProcess
         nCoV.imu_input(imu(ki,1), imu(ki,2:7)); %输入IMU数据
         para.p0 = nCoV.pos;
         nCoV.navFilter = filter_single(para); %初始化导航滤波器
+        %------------------------------------------------------------------
+%         para.p0 = nCoV.pos;
+%         para.v0 = nCoV.vel;
+%         para.a0 = [atan2d(nCoV.vel(2),nCoV.vel(1)),0,0];
+%         nCoV.navFilter = filter_single(para); %初始化导航滤波器
+%         nCoV.navFilter.motion.state0 = 1;
+%         nCoV.navFilter.motion.state = 1;
+        %------------------------------------------------------------------
 %         nCoV.navFilter = filter_single_11(para);
 %         nCoV.navFilter = filter_single_arm(para);
 %         nCoV.navFilter = filter_single_delay(para);

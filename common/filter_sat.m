@@ -85,7 +85,6 @@ classdef filter_sat < handle
             Phi = eye(11) + A*dt + (A*dt)^2/2;
             %----状态更新
             P1 = Phi*obj.P*Phi' + obj.Q;
-            P2 = P1; %用来给obj.P赋值
             X = zeros(11,1);
             %----量测维数
             n1 = sum(indexP); %伪距量测个数
@@ -116,28 +115,39 @@ classdef filter_sat < handle
                 %----滤波
                 K = P1*H' / (H*P1*H'+R);
                 X = K*Z;
-%                 P2 = (eye(11)-K*H)*P1; %有Huber时不需要这行
                 %----Huber加权(残差校验)
-                P1 = (P1+P1')/2; %需要保证P为对称阵,否则开方时会出现复数
-                P_sqrt = sqrtm(P1); %P的平方根
+%                 P1 = (P1+P1')/2; %需要保证P为对称阵,否则开方时会出现复数
+%                 P_sqrt = sqrtm(P1); %P的平方根
+%                 R_diag = diag(R); %R的对角线元素
+%                 R_sqrt_diag = sqrt(R_diag); %R的对角线元素的平方根
+%                 gamma = 1.3; %Huber系数
+%                 for k=1:2 %算两次
+%                     Psi_P_diag = HuberWeight(P_sqrt\X, gamma); %状态量的权值
+%                     Psi_R_diag = HuberWeight((Z-H*X)./R_sqrt_diag, gamma); %量测量的权值
+%                     P0 = P_sqrt * diag(1./Psi_P_diag) * P_sqrt; %加权后的P阵
+%                     R0 = diag(R_diag./Psi_R_diag); %加权后的R阵
+%                     K = P0*H' / (H*P0*H'+R0);
+%                     X = K*Z;
+%                     if any(imag(X))
+%                         error('Complex number in the filter!')
+%                     end
+%                 end
+%                 P1 = P0;
+                %----Huber加权(简化)
                 R_diag = diag(R); %R的对角线元素
                 R_sqrt_diag = sqrt(R_diag); %R的对角线元素的平方根
                 gamma = 1.3; %Huber系数
                 for k=1:2 %算两次
-                    Psi_P_diag = HuberWeight(P_sqrt\X, gamma); %状态量的权值
                     Psi_R_diag = HuberWeight((Z-H*X)./R_sqrt_diag, gamma); %量测量的权值
-                    P0 = P_sqrt * diag(1./Psi_P_diag) * P_sqrt; %加权后的P阵
                     R0 = diag(R_diag./Psi_R_diag); %加权后的R阵
-                    K = P0*H' / (H*P0*H'+R0);
+                    K = P1*H' / (H*P1*H'+R0);
                     X = K*Z;
-                    if any(imag(X))
-                        error('Complex number in the filter!')
-                    end
                 end
-                P2 = (eye(11)-K*H)*P0;
+                %----计算P阵
+                P1 = (eye(11)-K*H)*P1;
             end
             %----更新P阵
-            obj.P = (P2+P2')/2;
+            obj.P = (P1+P1')/2;
             %----导航修正
             lat = lat - X(1)*obj.geogInfo.dlatdn*r2d; %deg
             lon = lon - X(2)*obj.geogInfo.dlonde*r2d; %deg

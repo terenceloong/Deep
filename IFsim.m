@@ -20,6 +20,7 @@ if ~exist('IFsim_GUIflag','var') || IFsim_GUIflag~=1
     IFsim_conf.trajName = 'traj004'; %轨迹名
     IFsim_conf.satMode = 0; %卫星模式,0-根据截至高度角自动计算,1-指定卫星列表
     IFsim_conf.svList = [3,17,19,28]; %卫星列表
+    IFsim_conf.arm = [0,0,0]; %杆臂矢量,IMU指向天线
 end
 if exist('IFsim_GUIflag','var')
     IFsim_GUIflag = 0;
@@ -39,6 +40,7 @@ p0 = IFsim_conf.p0; %静止位置
 trajName = IFsim_conf.trajName; %轨迹名
 satMode = IFsim_conf.satMode; %卫星模式,0-根据截至高度角自动计算,1-指定卫星列表
 svList = IFsim_conf.svList; %卫星列表
+arm = IFsim_conf.arm; %杆臂矢量,IMU指向天线
 
 %% 加载轨迹
 if trajMode==0
@@ -52,6 +54,11 @@ else
     if trajGene_conf.Ts<runTime %轨迹时间必须大于仿真时间
         error('runTime error!')
     end
+end
+
+%% 添加杆臂
+if any(arm)
+    traj = traj_addarm(traj, arm);
 end
 
 %% 轨迹插值函数

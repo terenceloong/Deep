@@ -24,6 +24,7 @@ n = size(nCoV.storage.ta,1);
 output.satnav = zeros(n,14);
 output.pos = zeros(n,3);
 output.vel = zeros(n,3);
+output.acc = zeros(n,3);
 output.clk = zeros(n,2);
 output.P = zeros(n,11);
 
@@ -46,6 +47,7 @@ for k=1:n
     output.satnav(k,:) = satnav;
     output.pos(k,:) = NF.pos;
     output.vel(k,:) = NF.vel;
+    output.acc(k,:) = NF.acc;
     output.clk(k,:) = [NF.dtr, NF.dtv];
     output.P(k,:) = sqrt(diag(NF.P));
 end
@@ -65,6 +67,14 @@ figure('Name','速度')
 for k=1:3
     subplot(3,1,k)
     plot(t,[output.satnav(:,k+6),output.vel(:,k)])
+    grid on
+end
+
+%% 画加速度
+figure('Name','加速度')
+for k=1:3
+    subplot(3,1,k)
+    plot(t,output.acc(:,k))
     grid on
 end
 
