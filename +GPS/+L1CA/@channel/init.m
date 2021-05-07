@@ -47,7 +47,8 @@ obj.FLLp = [K, cnt];
 obj.PLL2 = [K1, K2, 25];
 
 % 初始化PLL3
-[K1, K2, K3] = order3LoopCoefD(20, 0.001);
+% 带宽小于等于18才稳定,<Understanding GPS--Principles and Applications> P180
+[K1, K2, K3] = order3LoopCoefD(18, 0.001);
 obj.PLL3 = [K1, K2, K3, 20];
 
 % 初始化DLL2

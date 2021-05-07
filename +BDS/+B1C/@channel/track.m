@@ -109,7 +109,7 @@ if obj.coherentCnt==obj.coherentN
     
     % 载波跟踪
     switch obj.carrMode
-        case 2 %锁相环
+        case 2 %二阶锁相环
             order2PLL(carrError);
         case 3 %矢量二阶锁相环
             vectorPLL2(carrError);
@@ -117,7 +117,7 @@ if obj.coherentCnt==obj.coherentN
     
     % 码跟踪
     switch obj.codeMode
-        case 1 %延迟锁定环
+        case 1 %二阶延迟锁定环
             order2DLL(codeError);
         case 2 %码开环
             openDLL;

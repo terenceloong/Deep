@@ -99,6 +99,7 @@ classdef channel < handle
             obj.storage.carrFreq     =   NaN(row,1,'double');
             obj.storage.carrNco      =   NaN(row,1,'double');
             obj.storage.carrAcc      =   NaN(row,1,'single');
+%             obj.storage.carrAccE     =   NaN(row,1,'single');
             obj.storage.I_Q          = zeros(row,6,'int32');
             obj.storage.disc         =   NaN(row,3,'single');
             obj.storage.CN0          =   NaN(row,1,'single');

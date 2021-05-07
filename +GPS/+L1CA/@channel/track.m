@@ -97,7 +97,7 @@ if obj.coherentCnt==obj.coherentN
     switch obj.carrMode
         case 1 %频率牵引
             freqPull(freqError);
-        case 2 %锁相环
+        case 2 %二阶锁相环
             order2PLL(carrError);
         case 3 %矢量二阶锁相环
             vectorPLL2(carrError);
@@ -109,7 +109,7 @@ if obj.coherentCnt==obj.coherentN
     
     % 码跟踪
     switch obj.codeMode
-        case 1 %延迟锁定环
+        case 1 %二阶延迟锁定环
             order2DLL(codeError);
         case 2 %码开环
             openDLL;
@@ -142,7 +142,7 @@ if obj.bitSyncFlag==1 %完成比特同步
         %----计算载噪比
         obj.CN0 = obj.CNR.cal(obj.IpBuff, obj.QpBuff);
         %----调整积分时间
-        obj.adjust_coherentTime(2);
+        obj.adjust_coherentTime(1);
         %----计算噪声方差
         obj.varValue = obj.varCoef / 10^(obj.CN0/10);
         %----信号失锁计数
@@ -169,6 +169,7 @@ obj.storage.remCarrPhase(n) = obj.remCarrPhase;
 obj.storage.carrFreq(n) = obj.carrFreq;
 obj.storage.carrNco(n) = obj.carrNco;
 obj.storage.carrAcc(n) = obj.carrAccS + obj.carrAccR;
+% obj.storage.carrAccE(n) = obj.carrAccS + obj.carrAccE;
 obj.storage.I_Q(n,:) = I_Q_1ms; %1ms的I/Q数据
 obj.storage.CN0(n) = obj.CN0;
 
@@ -181,7 +182,7 @@ obj.storage.CN0(n) = obj.CN0;
         obj.FLLp(2) = obj.FLLp(2) + 1; %计数
         if obj.FLLp(2)==200
             obj.FLLp(2) = 0;
-            obj.carrMode = 2; %转到锁相环
+            obj.carrMode = 4; %转到锁相环
             log_str = sprintf('Start PLL tracking at %.8fs', obj.dataIndex/obj.sampleFreq);
             obj.log = [obj.log; string(log_str)];
         end

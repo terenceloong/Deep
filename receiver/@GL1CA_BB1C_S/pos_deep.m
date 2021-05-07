@@ -25,6 +25,7 @@ if obj.GPSflag==1
                 codeDisc(k) = sum(channel.codeDiscBuff(1:n))/n * Lco;
                 R_rho(k) = (sqrt(channel.varValue(3)/n)+eleError(k))^2;
                 R_rhodot(k) = channel.varValue(2);
+                channel.codeDiscBuffPtr = 0;
             end
         end
     end
@@ -55,6 +56,7 @@ if obj.BDSflag==1
                 codeDisc(k) = sum(channel.codeDiscBuff(1:n))/n * Lco;
                 R_rho(k) = (sqrt(channel.varValue(3)/n)+eleError(k))^2;
                 R_rhodot(k) = channel.varValue(2);
+                channel.codeDiscBuffPtr = 0;
             end
         end
     end
@@ -121,7 +123,6 @@ if obj.GPSflag==1
         for k=1:obj.GPS.chN
             channel = obj.GPS.channels(k);
             if channel.state==3
-                channel.codeDiscBuffPtr = 0;
                 %----码相位修正
                 dcodePhase = (rho0(k)-satmeas(k,7))/Lco + dtr_code; %码相位修正量
                 channel.remCodePhase = channel.remCodePhase - dcodePhase;
@@ -133,7 +134,6 @@ if obj.GPSflag==1
         for k=1:obj.GPS.chN
             channel = obj.GPS.channels(k);
             if channel.state==3
-                channel.codeDiscBuffPtr = 0;
                 %----码相位修正
                 dcodePhase = (rho0(k)-satmeas(k,7))/Lco + dtr_code; %码相位修正量
                 channel.remCodePhase = channel.remCodePhase - dcodePhase;
@@ -155,7 +155,6 @@ if obj.BDSflag==1
         for k=1:obj.BDS.chN
             channel = obj.BDS.channels(k);
             if channel.state==3
-                channel.codeDiscBuffPtr = 0;
                 %----码相位修正
                 dcodePhase = ((rho0(k)-satmeas(k,7))/Lco + dtr_code) * 2; %码相位修正量(子载波)
                 channel.remCodePhase = channel.remCodePhase - dcodePhase;
@@ -167,7 +166,6 @@ if obj.BDSflag==1
         for k=1:obj.BDS.chN
             channel = obj.BDS.channels(k);
             if channel.state==3
-                channel.codeDiscBuffPtr = 0;
                 %----码相位修正
                 dcodePhase = ((rho0(k)-satmeas(k,7))/Lco + dtr_code) * 2; %码相位修正量(子载波)
                 channel.remCodePhase = channel.remCodePhase - dcodePhase;

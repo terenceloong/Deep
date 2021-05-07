@@ -27,6 +27,7 @@ for k=1:chN
             codeDisc(k) = sum(channel.codeDiscBuff(1:n))/n * Lco;
             R_rho(k) = (sqrt(channel.varValue(3)/n)+eleError(k))^2;
             R_rhodot(k) = channel.varValue(2);
+            channel.codeDiscBuffPtr = 0;
         end
     end
 end
@@ -66,7 +67,6 @@ if obj.vectorMode==3 %修码相位和载波驱动频率
     for k=1:chN
         channel = obj.channels(k);
         if channel.state==3
-            channel.codeDiscBuffPtr = 0;
             %----码相位修正
             dcodePhase = (rho0(k)-satmeas(k,7))/Lco + dtr_code; %码相位修正量
             channel.remCodePhase = channel.remCodePhase - dcodePhase;
@@ -85,10 +85,10 @@ end
 obj.channel_vector;
 
 % 接收机时钟修正
-obj.deltaFreq = obj.deltaFreq + obj.navFilter.dtv;
-obj.navFilter.dtv = 0;
-obj.ta = obj.ta - sec2smu(obj.navFilter.dtr);
-obj.navFilter.dtr = 0;
+% obj.deltaFreq = obj.deltaFreq + obj.navFilter.dtv;
+% obj.navFilter.dtv = 0;
+% obj.ta = obj.ta - sec2smu(obj.navFilter.dtr);
+% obj.navFilter.dtr = 0;
 
 % 数据存储
 obj.ns = obj.ns+1; %指向当前存储行

@@ -264,3 +264,7 @@ G(GPS),R(GLONASS),E(Galileo),C(BDS),J(QZSS),I(IRNSS),参见RINEX 3.03
 2.加权卫星导航解算添加Huber处理
 3.卫星导航滤波器添加简化的Huber处理
 4.中频信号生成时可以添加杆臂
+
+<===Version 5.6===>2021.5.7
+1.惯导导航滤波器静态时的角速度量测考虑地球自转角速度补偿
+2.改codeDiscBuffPtr清零位置

@@ -125,13 +125,10 @@ classdef filter_single < handle
             %----姿态解算
             Cnb = quat2dcm(q); %上次的姿态阵
             Cbn = Cnb';
-%             winn = obj.geogInfo.wien + obj.geogInfo.wenn;
-%             winb = winn * Cbn;
-%             wb0 = wb0 - winb;
-%             wb1 = wb1 - winb;
-            wenb = obj.geogInfo.wenn * Cbn;
-            wb0 = wb0 - wenb; %刨除地理系旋转,没刨地球自转
-            wb1 = wb1 - wenb;
+            winn = obj.geogInfo.wien + obj.geogInfo.wenn;
+            winb = winn * Cbn;
+            wb0 = wb0 - winb;
+            wb1 = wb1 - winb;
             q = RK2(@fun_dq, q, dt, wb0, wb1);
             q = q / norm(q);
             %----速度解算
@@ -195,7 +192,7 @@ classdef filter_single < handle
                      rhodot0(indexV) - rhodot(indexV).*cm(indexV)]; %计算值减测量值
                 if obj.motion.state==0 %静止时加入角速度量测
                     H(end+(1:3),12:14) = eye(3);
-                    Z = [Z; wbd']; %使用延迟后的角速度,防止机动前几个点的角速度抖动
+                    Z = [Z; (wbd-winb)']; %使用延迟后的角速度,防止机动前几个点的角速度抖动,刨除地球自转角速度
                     R = diag([R_rho(indexP);R_rhodot(indexV);[1;1;1]*obj.Rwb]);
                 else %运动时将伪距率的量测噪声放大
                     R = diag([R_rho(indexP);R_rhodot(indexV)*1]);
