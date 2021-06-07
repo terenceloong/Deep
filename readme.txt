@@ -268,3 +268,10 @@ G(GPS),R(GLONASS),E(Galileo),C(BDS),J(QZSS),I(IRNSS),参见RINEX 3.03
 <===Version 5.6===>2021.5.7
 1.惯导导航滤波器静态时的角速度量测考虑地球自转角速度补偿
 2.改codeDiscBuffPtr清零位置
+
+<===Version 5.7===>2021.6.7
+1.添加Spirent仿真器数据处理
+2.添加博士论文仿真文件夹
+3.添加太阳位置计算
+4.添加相位缠绕效应计算
+5.覆盖dcmeci2ecef函数,因为里面用到了angle2dcm

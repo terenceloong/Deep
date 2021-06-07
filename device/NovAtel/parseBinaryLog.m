@@ -4,7 +4,7 @@ clear
 clc
 
 %% 选文件
-[file, path] = uigetfile('*.gps', '选择NovAtel log文件'); %文件选择对话框
+[file, path] = uigetfile('*.gps;*.dat;*.DAT', '选择NovAtel log文件'); %文件选择对话框
 if ~ischar(file)
     error('File error!')
 end
@@ -29,9 +29,11 @@ while 1
         if k+hl+ml+4>n+1 %保证有个完整帧
             break
         end
+        cnt = cnt + 1;
+        k = k + hl+ml+4;
+    else
+        k = k+1;
     end
-    cnt = cnt + 1;
-    k = k + hl+ml+4;
 end
 
 %% 统计消息头,P23
@@ -50,24 +52,26 @@ while 1
         if k+hl+ml+4>n+1 %保证有个完整帧
             break
         end
+        frame = stream(k:k+hl+ml+3); %一帧消息
+        %---------------------------------------------------------------------%
+        streamIndex(ih,1) = k; %帧头索引
+        streamIndex(ih,2) = k+hl+ml+3; %帧尾索引
+        Header(ih,1)  = typecast(frame(5:6),'uint16');   %msgID
+        Header(ih,2)  = frame(7);                        %msgType
+        Header(ih,3)  = frame(8);                        %portAddr
+        Header(ih,4)  = typecast(frame(9:10),'uint16');  %msgLength
+        Header(ih,5)  = typecast(frame(11:12),'uint16'); %sequence
+        Header(ih,6)  = double(frame(13))/2;             %idleTime
+        Header(ih,7)  = frame(14);                       %timeStatus
+        Header(ih,8)  = typecast(frame(15:16),'uint16'); %GPSweek
+        Header(ih,9)  = typecast(frame(17:20),'uint32'); %GPSms
+        Header(ih,10) = typecast(frame(21:24),'uint32'); %recStatus,0表示没有错误
+        ih = ih + 1;
+        %---------------------------------------------------------------------%
+        k = k + hl+ml+4;
+    else
+        k = k+1;
     end
-    frame = stream(k:k+hl+ml+3); %一帧消息
-    %---------------------------------------------------------------------%
-    streamIndex(ih,1) = k; %帧头索引
-    streamIndex(ih,2) = k+hl+ml+3; %帧尾索引
-    Header(ih,1)  = typecast(frame(5:6),'uint16');   %msgID
-    Header(ih,2)  = frame(7);                        %msgType
-    Header(ih,3)  = frame(8);                        %portAddr
-    Header(ih,4)  = typecast(frame(9:10),'uint16');  %msgLength
-    Header(ih,5)  = typecast(frame(11:12),'uint16'); %sequence
-    Header(ih,6)  = double(frame(13))/2;             %idleTime
-    Header(ih,7)  = frame(14);                       %timeStatus
-    Header(ih,8)  = typecast(frame(15:16),'uint16'); %GPSweek
-    Header(ih,9)  = typecast(frame(17:20),'uint32'); %GPSms
-    Header(ih,10) = typecast(frame(21:24),'uint32'); %recStatus,0表示没有错误
-    ih = ih + 1;
-    %---------------------------------------------------------------------%
-    k = k + hl+ml+4;
 end
 
 Header = table(Header(:,1),Header(:,2),Header(:,3),Header(:,4),Header(:,5),...
