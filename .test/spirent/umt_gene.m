@@ -1,4 +1,5 @@
 % 生成Spirent仿真器用的.umt文件
+% 先加载轨迹数据traj
 
 fclose('all');
 

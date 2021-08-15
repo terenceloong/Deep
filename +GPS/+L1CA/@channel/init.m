@@ -49,7 +49,7 @@ obj.PLL2 = [K1, K2, 25];
 % 初始化PLL3
 % 带宽小于等于18才稳定,<Understanding GPS--Principles and Applications> P180
 [K1, K2, K3] = order3LoopCoefD(18, 0.001);
-obj.PLL3 = [K1, K2, K3, 20];
+obj.PLL3 = [K1, K2, K3, 18];
 
 % 初始化DLL2
 [K1, K2] = order2LoopCoefD(2, 0.707, 0.001);

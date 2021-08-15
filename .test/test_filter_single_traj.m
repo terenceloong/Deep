@@ -25,6 +25,12 @@ m = dt / trajGene_conf.dt; %取数跳点数
 traj = traj(1:m:end,:);
 traj(1,:) = []; %删第一行
 
+%% 轨迹添加杆臂
+arm0 = [0,0,0];
+if any(arm0)
+    traj = traj_addarm(traj, arm0);
+end
+
 %% IMU数据加噪声
 n = size(traj,1);
 imu = traj(:,13:18);
@@ -62,7 +68,7 @@ end
 %% 滤波器参数
 para.dt = dt; %s
 para.p0 = traj(1,7:9);
-para.v0 = [0,0,0];
+para.v0 = traj(1,10:12);
 para.a0 = traj(1,4:6); %deg
 para.P0_att = 1; %deg
 para.P0_vel = 1; %m/s
@@ -81,6 +87,11 @@ para.arm = arm; %m
 para.gyro0 = gyro0; %deg/s
 para.windupFlag = 0;
 NF = filter_single(para);
+
+if norm(para.v0)>2
+    NF.motion.state0 = 1;
+    NF.motion.state = 1;
+end
 
 %% 输出结果
 output.satnav = zeros(n,14);
@@ -199,8 +210,8 @@ for k=1:3
     plot(t,[output.imu(:,k),output.bias(:,k)]*r2d)
     grid on
     hold on
-%     plot(t,gyroBias(k)+output.P(:,k+11)*r2d*3, 'LineStyle','--', 'Color','r')
-%     plot(t,gyroBias(k)-output.P(:,k+11)*r2d*3, 'LineStyle','--', 'Color','r')
+    plot(t,gyroBias(k)+output.P(:,k+11)*r2d*3, 'LineStyle','--', 'Color','r')
+    plot(t,gyroBias(k)-output.P(:,k+11)*r2d*3, 'LineStyle','--', 'Color','r')
     set(gca, 'ylim', [-1,1])
 end
 

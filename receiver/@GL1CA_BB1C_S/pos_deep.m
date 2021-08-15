@@ -96,7 +96,15 @@ fbt = cross(wdot,arm); %切向加速度,m/s^2
 fbn = cross(wb,cross(wb,arm)); %法向加速度,m/s^2
 fh = cross(2*obj.geogInfo.wien+obj.geogInfo.wenn, obj.vel); %有害加速度
 fn = (fb+fbt+fbn)*Cnb + [0,0,obj.geogInfo.g] - fh; %地理系下加速度(刨除有害加速度)
-fe = fn*Cen; %ecef系下加速度
+% fe = fn*Cen; %ecef系下加速度
+%----外推半步
+if isnan(obj.fn0)
+    fn1 = fn;
+else
+    fn1 = (3*fn-obj.fn0)/2;
+end
+obj.fn0 = fn;
+fe = fn1*Cen; %ecef系下加速度
 
 % 计算ecef系下杆臂位置速度
 r_arm = arm*Cnb*Cen;

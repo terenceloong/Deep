@@ -9,11 +9,11 @@ w = 2*pi*V/L;
 
 %% 水平速度
 VhFun = [];
-VhFun{1,1} = 0;          VhFun{1,2} = sqrt((3*S*w*cos(w*t))^2+(2*S*w*(cos(w*t)^2-sin(w*t)^2))^2);
+VhFun{1,1} = 0;          VhFun{1,2} = sqrt((3*S*w*cos(w*t))^2+(2*S*w*cos(2*w*t))^2);
 
 %% 速度方向
 VyFun = [];
-VyFun{1,1} = 0;          VyFun{1,2} = atan2d(2*S*w*(cos(w*t)^2-sin(w*t)^2), 3*S*w*cos(w*t));
+VyFun{1,1} = 0;          VyFun{1,2} = atan2d(2*S*w*cos(2*w*t), 3*S*w*cos(w*t));
 
 %% 天向速度
 VuFun = [];
@@ -21,7 +21,7 @@ VuFun{1,1} = 0;          VuFun{1,2} = 0.5*h*w*sin(w*t);
 
 %% 航向角
 AyFun = [];
-AyFun{1,1} = 0;          AyFun{1,2} = atan2d(2*S*w*(cos(w*t)^2-sin(w*t)^2), 3*S*w*cos(w*t));
+AyFun{1,1} = 0;          AyFun{1,2} = atan2d(2*S*w*cos(2*w*t), 3*S*w*cos(w*t));
 
 %% 俯仰角
 ApFun = [];

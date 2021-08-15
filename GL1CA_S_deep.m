@@ -142,14 +142,15 @@ for t=1:msToProcess
         end
         nCoV.imu_input(imu(ki,1), imu(ki,2:7)); %输入IMU数据
         para.p0 = nCoV.pos;
-        nCoV.navFilter = filter_single(para); %初始化导航滤波器
-        %------------------------------------------------------------------
-%         para.p0 = nCoV.pos;
-%         para.v0 = nCoV.vel;
-%         para.a0 = [atan2d(nCoV.vel(2),nCoV.vel(1)),0,0];
-%         nCoV.navFilter = filter_single(para); %初始化导航滤波器
-%         nCoV.navFilter.motion.state0 = 1;
-%         nCoV.navFilter.motion.state = 1;
+        para.v0 = nCoV.vel;
+        if norm(nCoV.vel)>2
+            para.a0 = [atan2d(nCoV.vel(2),nCoV.vel(1)),0,0];
+            nCoV.navFilter = filter_single(para); %初始化导航滤波器
+            nCoV.navFilter.motion.state0 = 1;
+            nCoV.navFilter.motion.state = 1;
+        else
+            nCoV.navFilter = filter_single(para); %初始化导航滤波器
+        end
         %------------------------------------------------------------------
 %         nCoV.navFilter = filter_single_11(para);
 %         nCoV.navFilter = filter_single_arm(para);

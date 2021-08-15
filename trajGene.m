@@ -8,6 +8,7 @@ clc
 if ~exist('trajGene_GUIflag','var') || trajGene_GUIflag~=1
     trajGene_conf.trajfile = 'traj004'; %轨迹文件
     trajGene_conf.p0 = [45.7364, 126.70775, 165]; %初始位置
+%     trajGene_conf.p0 = [45, 126, 5000];
     trajGene_conf.Ts = 120; %轨迹时间
     trajGene_conf.dt = 0.005; %轨迹步长
 end
@@ -45,6 +46,7 @@ pos_ecef = zeros(N,3); %ecef位置
 angle    = zeros(N,3); %姿态角
 acc      = zeros(N,3); %加速度
 omega    = zeros(N,3); %角速度
+accn     = zeros(N,3); %地理系加速度
 
 %% 计算每个时刻的状态
 index = ones(1,6); %时间区间索引
@@ -122,10 +124,11 @@ for k=1:N
     angle(k,:) = [r1,r2,r3]*r2d;
     acc(k,:) = fb; %m/s^2
     omega(k,:) = wibb*r2d; %deg/s
+    accn(k,:) = v_dot;
 end
 
 %% 保存轨迹
-traj = [pos_ecef, angle, pos_lla, vel_ned, omega, acc];
+traj = [pos_ecef, angle, pos_lla, vel_ned, omega, acc, accn];
 save(['~temp\traj\',trajGene_conf.trajfile,'.mat'], 'traj','trajTable','trajGene_conf');
 
 %% 清除变量

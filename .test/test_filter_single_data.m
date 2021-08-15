@@ -1,14 +1,14 @@
 %% 测试单天线导航滤波器(使用数据)
 
 %% 配置参数
-psi0 = 191; %初始航向,deg
-arm = [0.325,0,0]*1; %杆臂,IMU指向天线
+arm = [0.325,0,0]*0; %杆臂,IMU指向天线 [0.32,0.005,-0.003]
 gyro0 = mean(imu(1:200,2:4));
+% gyro0 = [0.1,0.2,0.3]; %指定陀螺仪零偏,deg/s
 
 para.dt = 0.01; %s,根据IMU采样周期设置
 para.p0 = nCoV.storage.pos(1,1:3);
-para.v0 = [0,0,0];
-para.a0 = [psi0,0,0]; %deg
+para.v0 = double(nCoV.storage.vel(1,1:3));
+para.a0 = double(nCoV.storage.att(1,1:3));
 para.P0_att = 1; %deg
 para.P0_vel = 1; %m/s
 para.P0_pos = 15; %m
@@ -24,8 +24,18 @@ para.Q_da = 0.1e-3; %g/s
 para.sigma_gyro = 0.03; %deg/s
 para.arm = arm; %m
 para.gyro0 = gyro0; %deg/s
-para.windupFlag = 1;
+[~,name,~] = fileparts(data_file);
+if strcmp(name(1:3),'SIM')
+    para.windupFlag = 0;
+else
+    para.windupFlag = 1;
+end
 NF = filter_single(para);
+
+if norm(para.v0)>2
+    NF.motion.state0 = 1;
+    NF.motion.state = 1;
+end
 
 % para.Q_gyro = 1.0; %deg/s
 % para.Q_acc = 1e-2; %g

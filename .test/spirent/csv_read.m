@@ -38,24 +38,25 @@ for k=1:n
 end
 
 %% ª≠Õº
-figure
+t = motionSim(:,1) - t0;
+figure('Name','Œª÷√')
 subplot(3,1,1)
-plot(motionSim(:,2))
+plot(t,motionSim(:,2))
 grid on
 subplot(3,1,2)
-plot(motionSim(:,3))
+plot(t,motionSim(:,3))
 grid on
 subplot(3,1,3)
-plot(motionSim(:,4))
+plot(t,motionSim(:,4))
 grid on
 
-figure
+figure('Name','ÀŸ∂»')
 subplot(3,1,1)
-plot(motionSim(:,5))
+plot(t,motionSim(:,5))
 grid on
 subplot(3,1,2)
-plot(motionSim(:,6))
+plot(t,motionSim(:,6))
 grid on
 subplot(3,1,3)
-plot(motionSim(:,7))
+plot(t,motionSim(:,7))
 grid on

@@ -28,6 +28,7 @@ classdef GL1CA_BB1C_S < handle
         vel            %接收机速度,北东地
         vp             %接收机速度,ecef
         att            %姿态,deg
+        fn0            %上次地理系下的加速度
         geogInfo       %地理信息
         dtpos          %定位时间间隔,ms
         tp             %下次定位的时间,[s,ms,us]
@@ -143,6 +144,7 @@ classdef GL1CA_BB1C_S < handle
             obj.vel = [0,0,0];
             obj.vp = [0,0,0];
             obj.att = [0,0,0];
+            obj.fn0 = NaN;
             obj.geogInfo = geogInfo_cal(obj.pos, obj.vel);
             %----设置定位控制参数
             obj.dtpos = conf.dtpos;
