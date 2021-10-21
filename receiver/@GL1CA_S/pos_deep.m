@@ -31,7 +31,7 @@ for k=1:chN
         end
     end
 end
-sv = [satmeas, R_rho, R_rhodot];
+sv = [satmeas(:,1:8), R_rho, R_rhodot];
 sv(:,7) = sv(:,7) - codeDisc; %用码鉴相器输出修正伪距,本地码超前,伪距偏短,码鉴相器为负,修正是减
 
 % 卫星导航解算
@@ -120,6 +120,7 @@ obj.channel_vector;
 % obj.deltaFreq = obj.deltaFreq + obj.navFilter.dtv;
 % obj.navFilter.dtv = 0;
 % obj.ta = obj.ta - sec2smu(obj.navFilter.dtr);
+% obj.clockError = obj.clockError + obj.navFilter.dtr;
 % obj.navFilter.dtr = 0;
 
 % 数据存储
@@ -127,7 +128,8 @@ obj.ns = obj.ns+1; %指向当前存储行
 m = obj.ns;
 obj.storage.ta(m) = obj.tp * [1;1e-3;1e-6]; %定位时间,s
 obj.storage.df(m) = obj.deltaFreq;
-obj.storage.satmeas(:,:,m) = sv;
+obj.storage.satmeas(:,1:10,m) = sv;
+obj.storage.satmeas(:,11,m) = satmeas(:,9); %载波相位
 obj.storage.satnav(m,:) = satnav([1,2,3,7,8,9,13,14]);
 obj.storage.svsel(m,:) = indexP + indexV;
 obj.storage.pos(m,:) = obj.pos;

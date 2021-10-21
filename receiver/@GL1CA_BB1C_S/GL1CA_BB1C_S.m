@@ -6,6 +6,7 @@ classdef GL1CA_BB1C_S < handle
         Tms            %接收机总运行时间,ms
         sampleFreq     %标称采样频率,Hz
         blockSize      %一个缓存块的采样点数
+        blockTime      %一个缓存块对应的接收机时间
         blockNum       %缓存块的数量
         buffI          %数据缓存,I路数据
         buffQ          %数据缓存,Q路数据
@@ -17,6 +18,7 @@ classdef GL1CA_BB1C_S < handle
         GPSweek        %GPS周数
         BDSweek        %北斗周数
         ta             %接收机时间,GPS周内秒数,[s,ms,us]
+        clockError     %累计钟差修正量(如果不修接收机时钟会产生多少钟差)
         dtBDS          %GPS时相对北斗时的时间差,[s,ms,us],tBDS=tGPS-dtBDS
         deltaFreq      %接收机时钟频率误差,无量纲,钟快为正
         tms            %接收机当前运行时间,ms,用采样点数计
@@ -46,6 +48,7 @@ classdef GL1CA_BB1C_S < handle
             obj.Tms = conf.Tms;
             obj.sampleFreq = conf.sampleFreq;
             obj.blockSize = conf.blockSize;
+            obj.blockTime = obj.blockSize / obj.sampleFreq;
             obj.blockNum = conf.blockNum;
             obj.buffI = zeros(obj.blockSize, obj.blockNum); %矩阵形式,每一列为一个块
             obj.buffQ = zeros(obj.blockSize, obj.blockNum);
@@ -59,6 +62,7 @@ classdef GL1CA_BB1C_S < handle
             obj.GPSweek = conf.GPSweek;
             obj.BDSweek = conf.BDSweek;
             obj.ta = conf.ta;
+            obj.clockError = 0;
             obj.dtBDS = [14,0,0]; %GPS时比北斗时快14s
             obj.deltaFreq = 0;
             obj.tms = 0;

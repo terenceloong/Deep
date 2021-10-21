@@ -12,9 +12,14 @@ if obj.blockPtr>obj.blockNum
 end
 obj.tms = obj.tms + 1; %当前运行时间加1ms
 
+% 钟频差系数
+Cdf = 1 + obj.deltaFreq;
+Ddf = obj.deltaFreq / Cdf;
+
 % 更新接收机时间
-dta = sample2dt(obj.blockSize, obj.sampleFreq*(1+obj.deltaFreq)); %时间增量
+dta = sample2dt(obj.blockSize, obj.sampleFreq*Cdf); %时间增量
 obj.ta = timeCarry(obj.ta + dta);
+obj.clockError = obj.clockError + obj.blockTime*Ddf; %累计钟差修正量
 
 % GPS信号捕获跟踪
 if obj.GPSflag==1

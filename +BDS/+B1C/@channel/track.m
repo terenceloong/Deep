@@ -22,6 +22,7 @@ carr_cos = cos(theta);
 carr_sin = sin(theta);
 theta_next = obj.remCarrPhase + obj.carrNco*te;
 obj.remCarrPhase = mod(theta_next, 1); %剩余载波相位,周
+obj.carrCirc = obj.carrCirc - floor(theta_next); %更新整周数,因为负载波对应伪距,所以是往下减
 
 % 本地码
 tcode = obj.remCodePhase + obj.codeNco*t + 2; %加2保证求滞后码时大于1

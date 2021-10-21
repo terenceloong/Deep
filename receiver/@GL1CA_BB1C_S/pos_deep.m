@@ -29,7 +29,7 @@ if obj.GPSflag==1
             end
         end
     end
-    svGPS = [satmeasGPS, R_rho, R_rhodot];
+    svGPS = [satmeasGPS(:,1:8), R_rho, R_rhodot];
     svGPS(:,7) = svGPS(:,7) - codeDisc; %本地码超前,伪距偏短,码鉴相器为负,修正是减
     %---------------------------------------------------------------------%
     svIndexGPS = CN0>=37; %选星
@@ -60,7 +60,7 @@ if obj.BDSflag==1
             end
         end
     end
-    svBDS = [satmeasBDS, R_rho, R_rhodot];
+    svBDS = [satmeasBDS(:,1:8), R_rho, R_rhodot];
     svBDS(:,7) = svBDS(:,7) - codeDisc; %本地码超前,伪距偏短,码鉴相器为负,修正是减
     %---------------------------------------------------------------------%
     svIndexBDS = CN0>=37; %选星
@@ -194,6 +194,7 @@ obj.channel_vector;
 obj.deltaFreq = obj.deltaFreq + obj.navFilter.dtv;
 obj.navFilter.dtv = 0;
 obj.ta = obj.ta - sec2smu(obj.navFilter.dtr);
+obj.clockError = obj.clockError + obj.navFilter.dtr;
 obj.navFilter.dtr = 0;
 
 % 数据存储

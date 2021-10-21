@@ -1,5 +1,6 @@
 classdef accJumpDetector < handle
 % 加速度突变检测
+% 加速度突变状态要维持一会,因为加速度突变后那段时间卫星信号不稳定
 
     properties
         state   %突变状态

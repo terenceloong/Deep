@@ -6,6 +6,7 @@ classdef GL1CA_S < handle
         Tms            %接收机总运行时间,ms
         sampleFreq     %标称采样频率,Hz
         blockSize      %一个缓存块的采样点数
+        blockTime      %一个缓存块对应的接收机时间
         blockNum       %缓存块的数量
         buffI          %数据缓存,I路数据
         buffQ          %数据缓存,Q路数据
@@ -14,6 +15,7 @@ classdef GL1CA_S < handle
         buffHead       %最新数据的位置,blockSize的倍数
         week           %GPS周数
         ta             %接收机时间,GPS周内秒数,[s,ms,us]
+        clockError     %累计钟差修正量(如果不修接收机时钟会产生多少钟差)
         deltaFreq      %接收机时钟频率误差,无量纲,钟快为正
         tms            %接收机当前运行时间,ms,用采样点数计
         almanac        %所有卫星的历书
@@ -48,6 +50,7 @@ classdef GL1CA_S < handle
             obj.Tms = conf.Tms;
             obj.sampleFreq = conf.sampleFreq;
             obj.blockSize = conf.blockSize;
+            obj.blockTime = obj.blockSize / obj.sampleFreq;
             obj.blockNum = conf.blockNum;
             obj.buffI = zeros(obj.blockSize, obj.blockNum); %矩阵形式,每一列为一个块
             obj.buffQ = zeros(obj.blockSize, obj.blockNum);
@@ -57,6 +60,7 @@ classdef GL1CA_S < handle
             %----设置接收机时钟
             obj.week = conf.week;
             obj.ta = conf.ta;
+            obj.clockError = 0;
             obj.deltaFreq = 0;
             obj.tms = 0;
             %----设置历书
@@ -112,7 +116,7 @@ classdef GL1CA_S < handle
             row = floor(obj.Tms/obj.dtpos); %存储空间行数
             obj.storage.ta      = zeros(row,1,'double');
             obj.storage.df      = zeros(row,1,'single');
-            obj.storage.satmeas = zeros(obj.chN,10,row,'double');
+            obj.storage.satmeas = zeros(obj.chN,12,row,'double');
             obj.storage.satnav  = zeros(row,8,'double');
             obj.storage.svsel   = zeros(row,obj.chN,'uint8');
             obj.storage.pos     = zeros(row,3,'double');
@@ -147,8 +151,10 @@ classdef GL1CA_S < handle
         plot_all_CN0(obj)
         plot_all_carrNco(obj)
         plot_all_carrAcc(obj)
+        plot_all_drho(obj)
         
         plot_sv_3d(obj)
+        plot_svnum(obj)
         plot_motionState(obj)
         [azi, ele] = cal_aziele(obj)
         cal_iono(obj)

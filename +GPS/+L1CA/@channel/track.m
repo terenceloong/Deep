@@ -21,6 +21,7 @@ carr_cos = cos(theta);
 carr_sin = sin(theta);
 theta_next = obj.remCarrPhase + obj.carrNco*te;
 obj.remCarrPhase = mod(theta_next, 1); %剩余载波相位,周
+obj.carrCirc = obj.carrCirc - floor(theta_next); %更新整周数,因为负载波对应伪距,所以是往下减
 
 % 本地码
 tcode = obj.remCodePhase + obj.codeNco*t + 2; %加2保证求滞后码时大于1
@@ -219,7 +220,7 @@ obj.storage.CN0(n) = obj.CN0;
         obj.remCarrPhase = obj.remCarrPhase + df*dt + obj.PLL2(1)*dt*dp; %alpha=K1*dt,把驱动频率慢引起的相位差补偿回来
         obj.carrFreq = obj.carrFreq + obj.PLL2(2)*dp; %beta=K2
         %------------------------------------------------------------------
-        if obj.CN0<37
+        if obj.CN0<21 %37
             obj.carrFreq = obj.carrNco;
         end
     end
@@ -245,7 +246,7 @@ obj.storage.CN0(n) = obj.CN0;
         obj.remCarrPhase = obj.remCarrPhase + df*dt + obj.PLL3(1)*dt*dp;
         obj.carrFreq = obj.carrFreq + obj.PLL3(2)*dp;
         obj.carrAccR = obj.carrAccR + obj.PLL3(3)*dp;
-        if obj.CN0<37
+        if obj.CN0<21 %37
             obj.carrFreq = obj.carrNco;
             obj.carrAccR = obj.carrAccE;
         else %强信号时,NCO驱动频率与估计频率保持同步

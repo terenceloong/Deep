@@ -31,6 +31,7 @@ obj.remCarrPhase = 0;
 obj.remCodePhase = 0;
 obj.carrFreq = obj.carrNco;
 obj.codeFreq = obj.codeNco;
+obj.carrCirc = 0;
 
 % 相干积分I/Q值
 obj.I_Q = ones(1,6); %非零值,否则鉴频器输出有错误值

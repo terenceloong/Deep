@@ -24,7 +24,7 @@ obj.result.satmeasPRN = [];
 if ~isempty(obj.storage.satmeas)
     flag = zeros(1,obj.chN); %是否有卫星测量标志
     for k=1:obj.chN
-        if sum(~isnan(obj.storage.satmeas{k}(:,1)))>0 %不全是NaN
+        if any(~isnan(obj.storage.satmeas{k}(:,1))) %不全是NaN
             flag(k) = 1;
         end
     end
@@ -36,5 +36,10 @@ if ~isempty(obj.storage.satmeas)
         obj.result.satmeasPRN{k} = sprintf('%d', obj.svList(index(k)));
     end
 end
+
+% 统计可见卫星数量
+obj.result.svnum = zeros(obj.ns,2,'uint8'); %第一列是强信号数量,第二列是强+弱信号数量
+obj.result.svnum(:,1) = sum(obj.storage.svsel==2,2);
+obj.result.svnum(:,2) = sum(obj.storage.svsel>=1,2);
 
 end

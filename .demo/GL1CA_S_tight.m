@@ -5,7 +5,7 @@ clear
 clc
 fclose('all'); %关闭之前打开的所有文件
 
-Ts = 120; %总处理时间,s
+Ts = 60; %总处理时间,s
 To = 0; %偏移时间,s
 svList = [];
 p0 = [45.730952, 126.624970, 212]; %大致的初始位置
@@ -18,6 +18,7 @@ if ~ischar(file)
     error('File error!')
 end
 imu = IMU_read([path,file]); %读IMU数据文件
+imuN = size(imu,1); %IMU数据行数
 gyro0 = mean(imu(1:200,2:4)); %计算初始陀螺零偏
 
 %% 选择GNSS数据文件
@@ -85,6 +86,11 @@ para.Q_da = 0.1e-3; %g/s
 para.sigma_gyro = 0.03; %deg/s
 para.arm = arm; %m
 para.gyro0 = gyro0; %deg/s
+if strcmp(file(1:3),'SIM')
+    para.windupFlag = 0;
+else
+    para.windupFlag = 1;
+end
 
 %% 创建接收机对象
 nCoV = GL1CA_S(receiver_conf);
@@ -118,6 +124,9 @@ for t=1:msToProcess
     if nCoV.state==2 %紧组合时,进行一次定位后为其设置下次定位时间和IMU数据
         if isnan(nCoV.tp(1)) %定位后tp会变成NaN
             ki = ki+1; %IMU索引加1
+            if ki>imuN %IMU数据超范围
+                break
+            end
             nCoV.imu_input(imu(ki,1), imu(ki,2:7)); %输入IMU数据
         end
     elseif nCoV.state==1 %当接收机初始化完成后进入紧组合
@@ -127,7 +136,15 @@ for t=1:msToProcess
         end
         nCoV.imu_input(imu(ki,1), imu(ki,2:7)); %输入IMU数据
         para.p0 = nCoV.pos;
-        nCoV.navFilter = filter_single(para); %初始化导航滤波器
+        para.v0 = nCoV.vel;
+        if norm(nCoV.vel)>2
+            para.a0 = [atan2d(nCoV.vel(2),nCoV.vel(1)),0,0];
+            nCoV.navFilter = filter_single(para); %初始化导航滤波器
+            nCoV.navFilter.motion.state0 = 1;
+            nCoV.navFilter.motion.state = 1;
+        else
+            nCoV.navFilter = filter_single(para); %初始化导航滤波器
+        end
         nCoV.state = 2; %接收机进入紧组合
     end
     %---------------------------------------------------------------------%

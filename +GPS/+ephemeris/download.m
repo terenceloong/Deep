@@ -81,7 +81,11 @@ else
 end
 
 % 解压文件
-system(['winrar x -o+ "',Zfile,'" "',filepath,'"']); %-o+选项,覆盖文件
-delete(Zfile) %删除压缩文件
+status = system(['winrar x -o+ "',Zfile,'" "',filepath,'"']); %-o+选项,覆盖文件
+if status==0 %0表示执行成功
+    delete(Zfile) %删除压缩文件
+else
+    warning('系统环境变量中没有WinRAR路径,需添加,并手动解压文件')
+end
 
 end

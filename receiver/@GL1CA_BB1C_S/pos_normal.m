@@ -19,7 +19,7 @@ if obj.GPSflag==1
             R_rhodot(k) = channel.varValue(2);
         end
     end
-    svGPS = [satmeasGPS, R_rho, R_rhodot];
+    svGPS = [satmeasGPS(:,1:8), R_rho, R_rhodot];
     %---------------------------------------------------------------------%
     svIndexGPS = CN0>=37; %选星
     satnavGPS = satnavSolveWeighted(svGPS(svIndexGPS,:), obj.rp);
@@ -41,7 +41,7 @@ if obj.BDSflag==1
             R_rhodot(k) = channel.varValue(2);
         end
     end
-    svBDS = [satmeasBDS, R_rho, R_rhodot];
+    svBDS = [satmeasBDS(:,1:8), R_rho, R_rhodot];
     %---------------------------------------------------------------------%
     svIndexBDS = CN0>=37; %选星
     satnavBDS = satnavSolveWeighted(svBDS(svIndexBDS,:), obj.rp);
@@ -72,8 +72,11 @@ end
 % 接收机时钟修正
 if ~isnan(dtr)
     T = obj.dtpos/1000; %定位时间间隔,s
-    obj.deltaFreq = obj.deltaFreq + 10*dtv*T;
-    obj.ta = obj.ta - sec2smu(10*dtr*T);
+    tv_corr = 10*dtv*T; %钟频差修正量
+    tr_corr = 10*dtr*T; %钟差修正量
+    obj.deltaFreq = obj.deltaFreq + tv_corr;
+    obj.ta = obj.ta - sec2smu(tr_corr);
+    obj.clockError = obj.clockError + tr_corr; %累计钟差修正量
 end
 
 % 数据存储

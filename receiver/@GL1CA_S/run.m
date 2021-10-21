@@ -12,9 +12,15 @@ if obj.blockPtr>obj.blockNum
 end
 obj.tms = obj.tms + 1; %当前运行时间加1ms
 
+% 钟频差系数
+Cdf = 1 + obj.deltaFreq;
+Ddf = obj.deltaFreq / Cdf;
+
 % 更新接收机时间
-dta = sample2dt(obj.blockSize, obj.sampleFreq*(1+obj.deltaFreq)); %时间增量
+dta = sample2dt(obj.blockSize, obj.sampleFreq*Cdf); %时间增量
 obj.ta = timeCarry(obj.ta + dta);
+obj.clockError = obj.clockError + obj.blockTime*Ddf; %累计钟差修正量(接收机钟减,累计值加)
+% 如果df等于0,接收机钟应该走T;当df不为0时,接收机钟走了T/(1+df),相当于接收机钟减了T*df/(1+df)
 
 % 捕获
 if mod(obj.tms,1000)==0 %1s搜索一次

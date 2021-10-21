@@ -68,7 +68,7 @@ classdef filter_single < handle
             obj.arm = para.arm;
             obj.wdotCal = omegadot_cal(obj.T, 3);
             obj.wdot = [0,0,0];
-            obj.motion = motionDetector_gyro_vel(para.gyro0, obj.T, 0.8);
+            obj.motion = motionDetector_gyro_vel(para.gyro0, obj.T, 0.8); %0.6
             obj.accJump = accJumpDetector(obj.T);
             obj.windupFlag = para.windupFlag;
         end
@@ -200,6 +200,17 @@ classdef filter_single < handle
                 %----滤波
                 K = P1*H' / (H*P1*H'+R);
                 X = K*Z;
+                %----Huber加权(简化)
+                R_diag = diag(R); %R的对角线元素
+                R_sqrt_diag = sqrt(R_diag); %R的对角线元素的平方根
+                gamma = 1.3; %Huber系数
+                for k=1:2 %算两次
+                    Psi_R_diag = HuberWeight((Z-H*X)./R_sqrt_diag, gamma); %量测量的权值
+                    R0 = diag(R_diag./Psi_R_diag); %加权后的R阵
+                    K = P1*H' / (H*P1*H'+R0);
+                    X = K*Z;
+                end
+                %----计算P阵
                 P1 = (eye(17)-K*H)*P1;
                 %----状态约束
                 Y = [];

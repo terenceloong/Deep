@@ -35,6 +35,7 @@ classdef channel < handle
         remCodePhase    %跟踪开始点的码相位
         carrFreq        %测量的载波频率
         codeFreq        %测量的码频率
+        carrCirc        %载波相位整周数,载波相位与伪距对应
         I_Q             %当前6路相干积分I/Q值
         I0              %上次I_P积分值,用于鉴频器和比特同步
         Q0              %上次Q_P积分值
