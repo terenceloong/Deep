@@ -1,6 +1,6 @@
-%% 测试卫星导航滤波器(使用数据)
+%% 测试卫星导航滤波器(使用软件接收机输出的数据)
 
-%% 配置参数
+%% 滤波器参数
 para.dt = nCoV.dtpos / 1000;
 para.p0 = nCoV.storage.pos(1,1:3);
 para.v0 = [0,0,0];
@@ -16,6 +16,7 @@ para.Q_dtr = 0;
 para.Q_dtv = 1e-9;
 NF = filter_sat(para);
 
+%% 卫星信息
 svN = nCoV.chN;
 sv = zeros(svN,10);
 n = size(nCoV.storage.ta,1);
@@ -30,21 +31,20 @@ output.P = zeros(n,11);
 
 %% 计算
 for k=1:n
-    % 卫星量测
+    %----卫星量测
     for m=1:svN
-        sv(m,:) = nCoV.storage.satmeas{m}(k,:);
+        sv(m,:) = nCoV.storage.satmeas{m}(k,1:10);
     end
     indexP = (nCoV.storage.svsel(k,:)>=1)';
     indexV = (nCoV.storage.svsel(k,:)==2)';
     
-    % 卫星导航解算
-    satnav = satnavSolveWeighted(sv(indexV,:), NF.rp);
+    %----卫星导航解算
+    output.satnav(k,:) = satnavSolveWeighted(sv(indexV,:), NF.rp);
     
-    % 导航滤波
+    %----导航滤波
     NF.run(sv, indexP, indexV);
     
-    % 存储结果
-    output.satnav(k,:) = satnav;
+    %----存储结果
     output.pos(k,:) = NF.pos;
     output.vel(k,:) = NF.vel;
     output.acc(k,:) = NF.acc;
@@ -52,9 +52,10 @@ for k=1:n
     output.P(k,:) = sqrt(diag(NF.P));
 end
 
-%% 画位置输出
+%% 画图
 t = nCoV.storage.ta - nCoV.storage.ta(1);
 t = t + nCoV.Tms/1000 - t(end);
+
 figure('Name','位置')
 for k=1:3
     subplot(3,1,k)
@@ -62,7 +63,6 @@ for k=1:3
     grid on
 end
 
-%% 画速度输出
 figure('Name','速度')
 for k=1:3
     subplot(3,1,k)
@@ -70,7 +70,6 @@ for k=1:3
     grid on
 end
 
-%% 画加速度
 figure('Name','加速度')
 for k=1:3
     subplot(3,1,k)
@@ -78,7 +77,6 @@ for k=1:3
     grid on
 end
 
-%% 画钟差钟频差
 figure('Name','钟差钟频差')
 subplot(2,1,1)
 plot(t,[output.satnav(:,13),output.clk(:,1)])

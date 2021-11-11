@@ -1,5 +1,6 @@
-classdef ins_solve < handle
-% 惯导解算
+classdef INS_GRC < handle
+% 惯性导航
+% GRC:地理系,速率式,粗糙的解算
     
     properties
         firstFlag  %首次运行标志
@@ -17,7 +18,7 @@ classdef ins_solve < handle
     
     methods
         %% 构造函数
-        function obj = ins_solve(para)
+        function obj = INS_GRC(para)
             d2r = pi/180;
             obj.firstFlag = 0;
             obj.pos = para.p0;
@@ -33,8 +34,10 @@ classdef ins_solve < handle
             obj.accJump = accJumpDetector(obj.T);
         end
         
-        %% 运行函数
-        function run(obj, imu, updateFlag)
+        %% 解算函数
+        function solve(obj, imu, flag)
+            % flag==0,更新所有导航参数
+            % flag~=0,更新部分导航参数
             %----换简短的变量名
             r2d = 180/pi;
             dt = obj.T;
@@ -62,10 +65,8 @@ classdef ins_solve < handle
             wb1 = imu(1:3);
             fb1 = imu(4:6);
             %----角增量和速度增量
-            fb = (fb0+fb1)/2;
-            wb = (wb0+wb1)/2;
-            dv = fb*dt; %速度增量
-            dtheta = wb*dt; %角度增量
+            dv = (fb0+fb1)/2*dt;
+            dtheta = (wb0+wb1)/2*dt;
             %----姿态解算
             Cnb = quat2dcm(q); %上次的姿态阵
             winn = obj.geogInfo.wien + obj.geogInfo.wenn;
@@ -76,10 +77,14 @@ classdef ins_solve < handle
                 dq = [cos(phi/2), X/phi*sin(phi/2)];
                 q = quatmultiply(q, dq);
             end
+%             wb0 = wb0 - winb;
+%             wb1 = wb1 - winb;
+%             q = RK2(@fun_dq, q, dt, wb0, wb1);
             obj.quat = q / norm(q);
             %----速度解算
             winn2 = winn + obj.geogInfo.wien;
             dvc = 0.5*cross(X,dv); %速度增量补偿量
+%             dvc = 0.5*cross(dtheta,dv); %速度增量补偿量
             obj.vel = v0 + (dv+dvc)*Cnb + ([0,0,obj.geogInfo.g]-cross(winn2,v0))*dt;
             %----位置解算
             dp = (v0+obj.vel)/2*dt; %位置增量
@@ -88,7 +93,7 @@ classdef ins_solve < handle
             obj.pos(3) = obj.pos(3) - dp(3);
             %----更新导航参数
             obj.imu0 = imu; %保存IMU数据
-            if updateFlag==1
+            if flag==0
                 obj.rp = lla2ecef(obj.pos);
                 Cen = dcmecef2ned(obj.pos(1), obj.pos(2));
                 obj.vp = obj.vel*Cen;

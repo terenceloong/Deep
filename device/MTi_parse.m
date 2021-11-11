@@ -4,13 +4,12 @@ clear
 clc
 
 %% ¶ÁÎÄ¼þ
-% [file, path] = uigetfile('C:\Users\longt\Desktop\sscom\*.DAT');
-% if ~ischar(file)
-%     error('File error!')
-% end
-% fileID = fopen([path,file]);
+[file, path] = uigetfile('C:\Users\longt\Desktop\sscom\*.DAT');
+if ~ischar(file)
+    error('File error!')
+end
+fileID = fopen([path,file]);
 
-fileID = fopen('MTi710.DAT');
 data = fread(fileID, Inf, 'uint8=>uint8');
 fclose(fileID);
 

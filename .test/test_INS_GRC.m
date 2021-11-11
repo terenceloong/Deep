@@ -18,13 +18,13 @@ para.p0 = traj(1,7:9);
 para.v0 = traj(1,10:12);
 para.a0 = traj(1,4:6);
 para.dt = dt;
-INS = ins_solve(para); %初始化
+INS = INS_GRC(para); %初始化
 
 d2r = pi/180;
 for k=1:n
     kj = m*k+1;
     imu = [traj(kj,13:15)*d2r, traj(kj,16:18)];
-    INS.run(imu, 1);
+    INS.solve(imu, 0);
 %     INS.pos(3) = traj(kj,9); %长时间运行时高度需约束,否则导航会发散
     nav(k,1) = k*dt;
     nav(k,2:4) = INS.pos;
