@@ -1,5 +1,5 @@
-classdef filter_single < INS_GRC
-% 单天线导航滤波器,位置速度都是惯导的
+classdef filter_double < INS_GRC
+% 双天线导航滤波器,位置速度都是惯导的
 % 继承于惯导类
     
     properties
@@ -15,17 +15,18 @@ classdef filter_single < INS_GRC
         wdotCal    %角加速度计算模块
         wdot       %角加速度值,rad/s^2
         windupFlag %发条效应校正标志
+        base       %基线矢量
     end
     
     methods
         %% 构造函数
-        function obj = filter_single(para)
+        function obj = filter_double(para)
             %----惯导初始化------------------
             para_ins.p0 = para.p0;
             para_ins.v0 = para.v0;
             para_ins.a0 = para.a0;
             para_ins.dt = para.dt;
-            obj@INS_GRC(para_ins); %参考help-Subclass Syntax
+            obj@INS_GRC(para_ins);
             %--------------------------------
             d2r = pi/180;
             g0 = 9.8; %重力加速度近似值
@@ -57,11 +58,12 @@ classdef filter_single < INS_GRC
             obj.wdotCal = omegadot_cal(obj.T, 3);
             obj.wdot = [0,0,0];
             obj.windupFlag = para.windupFlag;
+            obj.base = para.base;
         end
         
         %% 运行函数
-        function run(obj, imu, sv, indexP, indexV)
-            % indexP,indexV索引都是逻辑值
+        function run(obj, imu, sv, indexP, indexV, indexA)
+            % indexP,indexV,indexA索引都是逻辑值
             % flag=0,只做惯导解算和时间更新;flag=1,做量测更新
             if nargin==2
                 flag = 0;
@@ -116,13 +118,16 @@ classdef filter_single < INS_GRC
                 %----量测维数
                 n1 = sum(indexP); %伪距量测个数
                 n2 = sum(indexV); %伪距率量测个数
+                n3 = sum(indexA); %载波相位量测个数
                 %----提取卫星测量(每行一颗卫星)
                 rs = sv(:,1:3);     %卫星ecef位置
                 vs = sv(:,4:6);     %卫星ecef速度
                 rho = sv(:,7);      %测量的伪距
                 rhodot = sv(:,8);   %测量的伪距率
+                phase = sv(:,11);   %测量的载波相位,m
                 R_rho = sv(:,9);    %伪距噪声方差
                 R_rhodot= sv(:,10); %伪距率噪声方差
+                R_phase = sv(:,12);  %载波相位噪声方差,m^2
                 %----根据当前导航结果计算理论相对距离和相对速度
                 [rho0, rhodot0, rspu, Cen] = rho_rhodot_cal_geog(rs, vs, obj.pos, obj.vel);
                 %----地理系下视线矢量
@@ -150,37 +155,62 @@ classdef filter_single < INS_GRC
                     H2(:,4:6) = En(indexV,:);
                     H2(:,11) = -cm(indexV);
                     Z2 = rhodot0(indexV) - rhodot(indexV).*cm(indexV);
-                    if obj.motion.state==0 %运动时将伪距率的量测噪声放大
+                    if obj.motion.state==0 %运动时将伪距率量测噪声方差放大
                         R2 = diag(R_rhodot(indexV));
                     else
                         R2 = diag(R_rhodot(indexV)*1);
                     end
                 end
-                %----角速度量测部分
+                %----载波相位量测部分
                 H3 = []; Z3 = []; R3 = [];
+                if n3>2
+                    H3 = zeros(n3,17); %载波相位量测方程
+                    rbn = obj.base*Cnb; %地理系基线矢量
+                    E = En(indexA,:);
+                    H3(:,1:3) = E*antisym(rbn);
+                    Z3 = E*rbn' - phase(indexA);
+                    if obj.motion.state==0 %运动时将载波相位量测噪声方差放大
+                        R3 = diag(R_phase(indexA));
+                    else
+                        R3 = diag(R_phase(indexA)*1);
+                    end
+                    % 星间差分
+                    Js = [-ones(n3-1,1), eye(n3-1)];
+                    H3 = Js*H3;
+                    Z3 = Js*Z3;
+                    R3 = Js*R3*Js';
+                    % 视线矢量水平投影变换
+                    D = Js*E;
+                    Jh = [-D(2:end,3), eye(n3-2)*D(1,3)];
+                    H3 = Jh*H3;
+                    Z3 = Jh*Z3;
+                    R3 = Jh*R3*Jh';
+                end
+                %----角速度量测部分
+                H4 = []; Z4 = []; R4 = [];
                 if obj.motion.state==0 %静止时加入角速度量测
-                    H3 = zeros(3,17);
-                    H3(:,12:14) = eye(3);
-                    Z3 = (wbd-winn*Cbn)';
-                    R3 = diag([1;1;1]*obj.Rwb);
+                    H4 = zeros(3,17);
+                    H4(:,12:14) = eye(3);
+                    Z4 = (wbd-winn*Cbn)';
+                    R4 = diag([1;1;1]*obj.Rwb);
                 end
                 %----构造量测矩阵,量测量,量测噪声方差阵
-                H = [H1; H2; H3];
-                Z = [Z1; Z2; Z3];
-                R = blkdiag(R1, R2, R3);
+                H = [H1; H2; H3; H4];
+                Z = [Z1; Z2; Z3; Z4];
+                R = blkdiag(R1, R2, R3, R4);
                 %----滤波
                 K = P1*H' / (H*P1*H'+R);
                 X = K*Z;
-                %----Huber加权(简化)
-                R_diag = diag(R); %R的对角线元素
-                R_sqrt_diag = sqrt(R_diag); %R的对角线元素的平方根
-                gamma = 1.3; %Huber系数
-                for k=1:2 %算两次
-                    Psi_R_diag = HuberWeight((Z-H*X)./R_sqrt_diag, gamma); %量测量的权值
-                    R0 = diag(R_diag./Psi_R_diag); %加权后的R阵
-                    K = P1*H' / (H*P1*H'+R0);
-                    X = K*Z;
-                end
+                %----Huber加权(简化)(会影响P阵收敛值)
+%                 R_diag = diag(R); %R的对角线元素
+%                 R_sqrt_diag = sqrt(R_diag); %R的对角线元素的平方根
+%                 gamma = 1.345; %Huber系数
+%                 for k=1:2 %算两次
+%                     Psi_R_diag = HuberWeight((Z-H*X)./R_sqrt_diag, gamma); %量测量的权值
+%                     R0 = diag(R_diag./Psi_R_diag); %加权后的R阵
+%                     K = P1*H' / (H*P1*H'+R0);
+%                     X = K*Z;
+%                 end
                 %----计算P阵
                 P1 = (eye(17)-K*H)*P1;
             elseif obj.motion.state==0 %静止时加入角速度量测
@@ -196,13 +226,8 @@ classdef filter_single < INS_GRC
             %----状态约束
             if measureFlag~=0
                 Y = [];
-                if obj.motion.state==0
-                    Ysub = zeros(1,17); %静止时航向修正量约束为0
-                    Ysub(1,1) = Cnb(1,1)*Cnb(1,3);
-                    Ysub(1,2) = Cnb(1,2)*Cnb(1,3);
-                    Ysub(1,3) = -(Cnb(1,1)^2+Cnb(1,2)^2);
-                    Y = [Y; Ysub];
-                    Ysub = zeros(2,17); %静止时不估水平加速度计零偏
+                if obj.motion.state==0 %静止时不估水平加速度计零偏
+                    Ysub = zeros(2,17);
                     Ysub(1,15) = 1;
                     Ysub(2,16) = 1;
                     Y = [Y; Ysub];

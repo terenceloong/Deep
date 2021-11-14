@@ -3,29 +3,11 @@ r2d = 180/pi;
 index = ~isnan(output.satnav(:,1)); %有卫星量测的索引
 
 %% 位置
-figure('Position',screenBlock(900,540,0.5,0.5), 'Name','位置')
+figure('Name','位置误差')
 
-subplot(3,2,1)
-plot(t(index), output.satnav(index,1))
-hold on
-grid on
-plot(t, output.pos(:,1))
-
-subplot(3,2,3)
-plot(t(index), output.satnav(index,2))
-hold on
-grid on
-plot(t, output.pos(:,2))
-
-subplot(3,2,5)
-plot(t(index), output.satnav(index,3))
-hold on
-grid on
-plot(t, output.pos(:,3))
-
-subplot(3,2,2)
+subplot(3,1,1)
 y = (output.pos(:,1)-traj(:,7))/r2d/NF.geogInfo.dlatdn;
-plot(t,y, 'LineWidth',1)
+plot(t,y, 'LineWidth',2)
 hold on
 grid on
 range = max(abs(y))*1.1;
@@ -33,9 +15,9 @@ set(gca, 'YLim',[-range,range])
 plot(t, output.P(:,7)*3, 'LineStyle','--', 'Color','r')
 plot(t,-output.P(:,7)*3, 'LineStyle','--', 'Color','r')
 
-subplot(3,2,4)
+subplot(3,1,2)
 y = (output.pos(:,2)-traj(:,8))/r2d/NF.geogInfo.dlonde;
-plot(t,y, 'LineWidth',1)
+plot(t,y, 'LineWidth',2)
 hold on
 grid on
 range = max(abs(y))*1.1;
@@ -43,9 +25,9 @@ set(gca, 'YLim',[-range,range])
 plot(t, output.P(:,8)*3, 'LineStyle','--', 'Color','r')
 plot(t,-output.P(:,8)*3, 'LineStyle','--', 'Color','r')
 
-subplot(3,2,6)
+subplot(3,1,3)
 y = output.pos(:,3) - traj(:,9);
-plot(t,y, 'LineWidth',1)
+plot(t,y, 'LineWidth',2)
 hold on
 grid on
 range = max(abs(y))*1.1;
@@ -54,27 +36,9 @@ plot(t, output.P(:,9)*3, 'LineStyle','--', 'Color','r')
 plot(t,-output.P(:,9)*3, 'LineStyle','--', 'Color','r')
 
 %% 速度
-figure('Position',screenBlock(900,540,0.5,0.5), 'Name','速度')
+figure('Name','速度误差')
 
-subplot(3,2,1)
-plot(t(index), output.satnav(index,7))
-hold on
-grid on
-plot(t, output.vel(:,1))
-
-subplot(3,2,3)
-plot(t(index), output.satnav(index,8))
-hold on
-grid on
-plot(t, output.vel(:,2))
-
-subplot(3,2,5)
-plot(t(index), output.satnav(index,9))
-hold on
-grid on
-plot(t, output.vel(:,3))
-
-subplot(3,2,2)
+subplot(3,1,1)
 y = output.vel(:,1) - traj(:,10);
 plot(t,y, 'LineWidth',1)
 hold on
@@ -84,7 +48,7 @@ set(gca, 'YLim',[-range,range])
 plot(t, output.P(:,4)*3, 'LineStyle','--', 'Color','r')
 plot(t,-output.P(:,4)*3, 'LineStyle','--', 'Color','r')
 
-subplot(3,2,4)
+subplot(3,1,2)
 y = output.vel(:,2) - traj(:,11);
 plot(t,y, 'LineWidth',1)
 hold on
@@ -94,7 +58,7 @@ set(gca, 'YLim',[-range,range])
 plot(t, output.P(:,5)*3, 'LineStyle','--', 'Color','r')
 plot(t,-output.P(:,5)*3, 'LineStyle','--', 'Color','r')
 
-subplot(3,2,6)
+subplot(3,1,3)
 y = output.vel(:,3) - traj(:,12);
 plot(t,y, 'LineWidth',1)
 hold on
@@ -105,21 +69,9 @@ plot(t, output.P(:,6)*3, 'LineStyle','--', 'Color','r')
 plot(t,-output.P(:,6)*3, 'LineStyle','--', 'Color','r')
 
 %% 姿态
-figure('Position',screenBlock(900,540,0.5,0.5), 'Name','姿态')
+figure('Name','姿态误差')
 
-subplot(3,2,1)
-plot(t, attContinuous(output.att(:,1)))
-grid on
-
-subplot(3,2,3)
-plot(t, output.att(:,2))
-grid on
-
-subplot(3,2,5)
-plot(t, output.att(:,3))
-grid on
-
-subplot(3,2,2)
+subplot(3,1,1)
 y = attContinuous(output.att(:,1)-traj(:,4));
 plot(t,y, 'LineWidth',1)
 hold on
@@ -129,7 +81,7 @@ set(gca, 'YLim',[-range,range])
 plot(t, output.P(:,1)*r2d*3, 'LineStyle','--', 'Color','r')
 plot(t,-output.P(:,1)*r2d*3, 'LineStyle','--', 'Color','r')
 
-subplot(3,2,4)
+subplot(3,1,2)
 y = output.att(:,2) - traj(:,5);
 plot(t,y, 'LineWidth',1)
 hold on
@@ -139,7 +91,7 @@ set(gca, 'YLim',[-range,range])
 plot(t, output.P(:,2)*r2d*3, 'LineStyle','--', 'Color','r')
 plot(t,-output.P(:,2)*r2d*3, 'LineStyle','--', 'Color','r')
 
-subplot(3,2,6)
+subplot(3,1,3)
 y = output.att(:,3) - traj(:,6);
 plot(t,y, 'LineWidth',1)
 hold on
