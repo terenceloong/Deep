@@ -18,6 +18,7 @@ CN0 = zeros(chN,1); %载噪比
 codeDisc = zeros(chN,1); %定位间隔内码鉴相器输出的平均值,m
 R_rho = zeros(chN,1); %伪距测量噪声方差,m^2
 R_rhodot = zeros(chN,1); %伪距率测量噪声方差,(m/s)^2
+R_phase = zeros(chN,1); %载波相位测量噪声方差,(circ)^2
 for k=1:chN
     channel = obj.channels(k);
     if channel.state==3
@@ -27,6 +28,7 @@ for k=1:chN
             codeDisc(k) = sum(channel.codeDiscBuff(1:n))/n * Lco;
             R_rho(k) = (sqrt(channel.varValue(3)/n)+eleError(k))^2;
             R_rhodot(k) = channel.varValue(2);
+            R_phase(k) = channel.varValue(4);
             channel.codeDiscBuffPtr = 0;
         end
     end
@@ -35,12 +37,12 @@ sv = [satmeas(:,1:8), R_rho, R_rhodot];
 sv(:,7) = sv(:,7) - codeDisc; %用码鉴相器输出修正伪距,本地码超前,伪距偏短,码鉴相器为负,修正是减
 
 % 卫星导航解算
-svIndex = CN0>=37; %选星
+svIndex = CN0>=obj.CN0Thr.strong; %选星
 satnav = satnavSolveWeighted(sv(svIndex,:), obj.rp);
 
 % 导航滤波
-indexP = CN0>=33; %使用伪距的索引
-indexV = CN0>=37; %使用伪距率的索引(更改阈值时,载波跟踪处的阈值也要改)
+indexP = CN0>=obj.CN0Thr.middle; %使用伪距的索引
+indexV = CN0>=obj.CN0Thr.strong; %使用伪距率的索引
 obj.navFilter.run(obj.imu, sv, indexP, indexV);
 
 % 计算ecef系下加速度
@@ -130,6 +132,7 @@ obj.storage.ta(m) = obj.tp * [1;1e-3;1e-6]; %定位时间,s
 obj.storage.df(m) = obj.deltaFreq;
 obj.storage.satmeas(:,1:10,m) = sv;
 obj.storage.satmeas(:,11,m) = satmeas(:,9); %载波相位
+obj.storage.satmeas(:,12,m) = R_phase;
 obj.storage.satnav(m,:) = satnav([1,2,3,7,8,9,13,14]);
 obj.storage.svsel(m,:) = indexP + indexV;
 obj.storage.pos(m,:) = obj.pos;

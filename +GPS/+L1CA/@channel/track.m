@@ -145,9 +145,11 @@ if obj.bitSyncFlag==1 %完成比特同步
         %----调整积分时间
         obj.adjust_coherentTime(1);
         %----计算噪声方差
-        obj.varValue = obj.varCoef / 10^(obj.CN0/10);
+        CN0n = 10^(obj.CN0/10); %正常的载噪比数值
+        obj.varValue = obj.varCoef / CN0n;
+        obj.varValue(4) = obj.varValue(4) * (1+obj.varValue(5));
         %----信号失锁计数
-        if obj.CN0<18
+        if obj.CN0<obj.CN0Thr.loss %18
             obj.lossCnt = obj.lossCnt + 1;
         else
             obj.lossCnt = 0;
@@ -220,7 +222,7 @@ obj.storage.CN0(n) = obj.CN0;
         obj.remCarrPhase = obj.remCarrPhase + df*dt + obj.PLL2(1)*dt*dp; %alpha=K1*dt,把驱动频率慢引起的相位差补偿回来
         obj.carrFreq = obj.carrFreq + obj.PLL2(2)*dp; %beta=K2
         %------------------------------------------------------------------
-        if obj.CN0<21 %37
+        if obj.CN0<obj.CN0Thr.recovery
             obj.carrFreq = obj.carrNco;
         end
     end
@@ -246,7 +248,7 @@ obj.storage.CN0(n) = obj.CN0;
         obj.remCarrPhase = obj.remCarrPhase + df*dt + obj.PLL3(1)*dt*dp;
         obj.carrFreq = obj.carrFreq + obj.PLL3(2)*dp;
         obj.carrAccR = obj.carrAccR + obj.PLL3(3)*dp;
-        if obj.CN0<21 %37
+        if obj.CN0<obj.CN0Thr.recovery
             obj.carrFreq = obj.carrNco;
             obj.carrAccR = obj.carrAccE;
         else %强信号时,NCO驱动频率与估计频率保持同步

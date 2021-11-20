@@ -62,11 +62,13 @@ obj.codeDiscBuffPtr = 0;
 % 初始化噪声方差
 % 所有噪声的方差都与1/10^(CN0/10)成正比
 % 静止时是比较小的系数,动起来系数可以放大
-obj.varCoef = zeros(1,3);
+obj.varCoef = zeros(1,5);
 obj.varCoef(1) = (0.08*obj.DLL2(3)) * 9e4;
 obj.varCoef(2) = (0.32*obj.PLL2(3))^3 * 0.0363;
 obj.varCoef(3) = 9e4 / 0.072; %码鉴相器标准差是GPS C/A码的1/3
-obj.varValue = zeros(1,3);
+obj.varCoef(4) = obj.PLL2(3) * 0.253;
+obj.varCoef(5) = 500;
+obj.varValue = zeros(1,5);
 
 % 初始化伪码时间
 obj.tc0 = NaN;

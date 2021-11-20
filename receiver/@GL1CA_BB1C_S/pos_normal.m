@@ -21,7 +21,7 @@ if obj.GPSflag==1
     end
     svGPS = [satmeasGPS(:,1:8), R_rho, R_rhodot];
     %---------------------------------------------------------------------%
-    svIndexGPS = CN0>=37; %选星
+    svIndexGPS = CN0>=obj.CN0Thr.strong; %选星
     satnavGPS = satnavSolveWeighted(svGPS(svIndexGPS,:), obj.rp);
 end
 if obj.BDSflag==1
@@ -43,7 +43,7 @@ if obj.BDSflag==1
     end
     svBDS = [satmeasBDS(:,1:8), R_rho, R_rhodot];
     %---------------------------------------------------------------------%
-    svIndexBDS = CN0>=37; %选星
+    svIndexBDS = CN0>=obj.CN0Thr.strong; %选星
     satnavBDS = satnavSolveWeighted(svBDS(svIndexBDS,:), obj.rp);
 end
 

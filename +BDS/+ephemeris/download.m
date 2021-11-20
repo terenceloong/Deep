@@ -25,7 +25,8 @@ if exist(filename,'file')
 end
 
 % 下载
-ftpobj = ftp('59.252.100.32', 'tarc', 'gnsscenter'); %连接ftp服务器
+% ftpobj = ftp('59.252.100.32', 'tarc', 'gnsscenter'); %连接ftp服务器
+ftpobj = ftp('ftp2.csno-tarc.cn', 'pub', 'tarc'); %连接ftp服务器
 cd(ftpobj, ftppath); %进入文件夹
 mget(ftpobj, ftpfile, filepath); %下载文件,指定存储文件夹
 close(ftpobj); %关闭连接

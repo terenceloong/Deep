@@ -32,10 +32,10 @@ if obj.GPSflag==1
     svGPS = [satmeasGPS(:,1:8), R_rho, R_rhodot];
     svGPS(:,7) = svGPS(:,7) - codeDisc; %本地码超前,伪距偏短,码鉴相器为负,修正是减
     %---------------------------------------------------------------------%
-    svIndexGPS = CN0>=37; %选星
+    svIndexGPS = CN0>=obj.CN0Thr.strong; %选星
     satnavGPS = satnavSolveWeighted(svGPS(svIndexGPS,:), obj.rp);
-    indexP_GPS = CN0>=33; %使用伪距的索引
-    indexV_GPS = CN0>=37; %使用伪距率的索引(更改阈值时,载波跟踪处的阈值也要改)
+    indexP_GPS = CN0>=obj.CN0Thr.middle; %使用伪距的索引
+    indexV_GPS = CN0>=obj.CN0Thr.strong; %使用伪距率的索引
 end
 if obj.BDSflag==1
     satmeasBDS = obj.get_satmeasBDS; %卫星测量信息
@@ -63,10 +63,10 @@ if obj.BDSflag==1
     svBDS = [satmeasBDS(:,1:8), R_rho, R_rhodot];
     svBDS(:,7) = svBDS(:,7) - codeDisc; %本地码超前,伪距偏短,码鉴相器为负,修正是减
     %---------------------------------------------------------------------%
-    svIndexBDS = CN0>=37; %选星
+    svIndexBDS = CN0>=obj.CN0Thr.strong; %选星
     satnavBDS = satnavSolveWeighted(svBDS(svIndexBDS,:), obj.rp);
-    indexP_BDS = CN0>=33; %使用伪距的索引
-    indexV_BDS = CN0>=37; %使用伪距率的索引(更改阈值时,载波跟踪处的阈值也要改)
+    indexP_BDS = CN0>=obj.CN0Thr.middle; %使用伪距的索引
+    indexV_BDS = CN0>=obj.CN0Thr.strong; %使用伪距率的索引
 end
 
 % 卫星导航解算 & 导航滤波

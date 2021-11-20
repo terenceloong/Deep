@@ -48,6 +48,7 @@ classdef channel < handle
         varCoef         %噪声方差计算系数,[伪距,伪距率,码鉴相器]
         varValue        %噪声方差值
         tc0             %下一伪码周期的开始时间,ms
+        CN0Thr          %载噪比阈值,是一个handle类,与接收机共享
         CNR             %载噪比计算模块
         CN0             %载噪比值,10ms一更新
         lossCnt         %失锁计数器
@@ -100,6 +101,8 @@ classdef channel < handle
             obj.codeSub = BDS.B1C.codeGene_sub(obj.PRN); %行向量
             %----本地信号发生器使用的时间序列
             obj.Tseq = (0:obj.sampleFreq*0.001+4)/obj.sampleFreq; %多给几个点
+            %----载噪比阈值
+            obj.CN0Thr = conf.CN0Thr;
             %----申请星历空间
             obj.ephe = NaN(1,30);
             obj.iono = NaN(1,9);

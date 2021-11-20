@@ -19,16 +19,18 @@ chN = obj.chN;
 CN0 = zeros(chN,1); %载噪比
 R_rho = zeros(chN,1); %伪距测量噪声方差,m^2
 R_rhodot = zeros(chN,1); %伪距率测量噪声方差,(m/s)^2
+R_phase = zeros(chN,1); %载波相位测量噪声方差,(circ)^2
 for k=1:chN
     channel = obj.channels(k);
     if channel.state==2
         CN0(k) = channel.CN0;
         R_rho(k) = (sqrt(channel.varValue(1))+eleError(k))^2;
         R_rhodot(k) = channel.varValue(2);
+        R_phase(k) = channel.varValue(4);
     end
 end
 sv = [satmeas(:,1:8), R_rho, R_rhodot];
-svIndex = CN0>=37; %选星
+svIndex = CN0>=obj.CN0Thr.strong; %选星
 satnav = satnavSolveWeighted(sv(svIndex,:), obj.rp);
 dtr = satnav(13); %接收机钟差,s
 dtv = satnav(14); %接收机钟频差,s/s
@@ -59,6 +61,7 @@ obj.storage.ta(m) = obj.tp * [1;1e-3;1e-6]; %定位时间,s
 obj.storage.df(m) = obj.deltaFreq;
 obj.storage.satmeas(:,1:10,m) = sv;
 obj.storage.satmeas(:,11,m) = satmeas(:,9); %载波相位
+obj.storage.satmeas(:,12,m) = R_phase;
 obj.storage.satnav(m,:) = satnav([1,2,3,7,8,9,13,14]);
 obj.storage.svsel(m,:) = svIndex + svIndex;
 obj.storage.pos(m,:) = obj.pos;

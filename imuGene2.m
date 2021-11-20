@@ -1,39 +1,39 @@
-% IMUæ•°æ®ç”Ÿæˆ(ä½¿ç”¨Matlabå·¥å…·ç®±ä¸­çš„IMUæ¨¡å‹)
+% IMUÊı¾İÉú³É(Ê¹ÓÃMatlab¹¤¾ßÏäÖĞµÄIMUÄ£ĞÍ)
 
 clearvars -except imuGene_conf imuGene_GUIflag
 clc
 
-%% IMUæ•°æ®ç”Ÿæˆé…ç½®é¢„è®¾å€¼
-% ä½¿ç”¨GUIæ—¶å¤–éƒ¨ä¼šç”ŸæˆimuGene_conf,å¹¶å°†imuGene_GUIflagç½®1
+%% IMUÊı¾İÉú³ÉÅäÖÃÔ¤ÉèÖµ
+% Ê¹ÓÃGUIÊ±Íâ²¿»áÉú³ÉimuGene_conf,²¢½«imuGene_GUIflagÖÃ1
 if ~exist('imuGene_GUIflag','var') || imuGene_GUIflag~=1
-    imuGene_conf.startTime = [2020,7,27,11,16,14]; %æ•°æ®å¼€å§‹æ—¶é—´
-    imuGene_conf.zone = 8; %æ—¶åŒº
-    imuGene_conf.dt = 0.01; %IMUé‡‡æ ·å‘¨æœŸ,s
-    imuGene_conf.gyroBias = [0.1,0.2,0.3]*1; %é™€èºä»ªé›¶å,deg/s
-    imuGene_conf.gyroInstability = 2.5/3600; %é™€èºä»ªé›¶åç¨³å®šæ€§,deg/s
-    imuGene_conf.gyroNoise = 0.15/60; %é™€èºä»ªå™ªå£°å¯†åº¦,deg/s/sqrt(Hz)
-    imuGene_conf.accBias = [-2,2,-3]*0.01*1; %åŠ é€Ÿåº¦è®¡é›¶å,m/s^2
-    imuGene_conf.accInstability = 13e-6*10; %åŠ é€Ÿåº¦è®¡é›¶åç¨³å®šæ€§,m/s^2
-    imuGene_conf.accNoise = 0.037/60; %åŠ é€Ÿåº¦è®¡å™ªå£°å¯†åº¦,m/s^2/sqrt(Hz)
-    imuGene_conf.trajName = 'traj004'; %è½¨è¿¹å
+    imuGene_conf.startTime = [2020,7,27,11,16,14]; %Êı¾İ¿ªÊ¼Ê±¼ä
+    imuGene_conf.zone = 8; %Ê±Çø
+    imuGene_conf.dt = 0.01; %IMU²ÉÑùÖÜÆÚ,s
+    imuGene_conf.gyroBias = [0.1,0.2,0.3]*1; %ÍÓÂİÒÇÁãÆ«,deg/s
+    imuGene_conf.gyroInstability = 2.5/3600; %ÍÓÂİÒÇÁãÆ«ÎÈ¶¨ĞÔ,deg/s
+    imuGene_conf.gyroNoise = 0.15/60; %ÍÓÂİÒÇÔëÉùÃÜ¶È,deg/s/sqrt(Hz)
+    imuGene_conf.accBias = [-2,2,-3]*0.01*1; %¼ÓËÙ¶È¼ÆÁãÆ«,m/s^2
+    imuGene_conf.accInstability = 13e-6*10; %¼ÓËÙ¶È¼ÆÁãÆ«ÎÈ¶¨ĞÔ,m/s^2
+    imuGene_conf.accNoise = 0.037/60; %¼ÓËÙ¶È¼ÆÔëÉùÃÜ¶È,m/s^2/sqrt(Hz)
+    imuGene_conf.trajName = 'traj004'; %¹ì¼£Ãû
 end
 if exist('imuGene_GUIflag','var')
     imuGene_GUIflag = 0;
 end
 
-%% å‚æ•°
-startTime = imuGene_conf.startTime; %æ•°æ®å¼€å§‹æ—¶é—´
-zone = imuGene_conf.zone; %æ—¶åŒº
-dt = imuGene_conf.dt; %IMUé‡‡æ ·å‘¨æœŸ,s
-gyroBias = imuGene_conf.gyroBias; %é™€èºä»ªé›¶å,deg/s
-gyroInstability = imuGene_conf.gyroInstability; %é™€èºä»ªé›¶åç¨³å®šæ€§,deg/s
-gyroNoise = imuGene_conf.gyroNoise; %é™€èºä»ªå™ªå£°å¯†åº¦,deg/s/sqrt(Hz)
-accBias = imuGene_conf.accBias; %åŠ é€Ÿåº¦è®¡é›¶å,m/s^2
-accInstability = imuGene_conf.accInstability; %åŠ é€Ÿåº¦è®¡é›¶åç¨³å®šæ€§,m/s^2
-accNoise = imuGene_conf.accNoise; %åŠ é€Ÿåº¦è®¡å™ªå£°å¯†åº¦,m/s^2/sqrt(Hz)
-trajName = imuGene_conf.trajName; %è½¨è¿¹å
+%% ²ÎÊı
+startTime = imuGene_conf.startTime; %Êı¾İ¿ªÊ¼Ê±¼ä
+zone = imuGene_conf.zone; %Ê±Çø
+dt = imuGene_conf.dt; %IMU²ÉÑùÖÜÆÚ,s
+gyroBias = imuGene_conf.gyroBias; %ÍÓÂİÒÇÁãÆ«,deg/s
+gyroInstability = imuGene_conf.gyroInstability; %ÍÓÂİÒÇÁãÆ«ÎÈ¶¨ĞÔ,deg/s
+gyroNoise = imuGene_conf.gyroNoise; %ÍÓÂİÒÇÔëÉùÃÜ¶È,deg/s/sqrt(Hz)
+accBias = imuGene_conf.accBias; %¼ÓËÙ¶È¼ÆÁãÆ«,m/s^2
+accInstability = imuGene_conf.accInstability; %¼ÓËÙ¶È¼ÆÁãÆ«ÎÈ¶¨ĞÔ,m/s^2
+accNoise = imuGene_conf.accNoise; %¼ÓËÙ¶È¼ÆÔëÉùÃÜ¶È,m/s^2/sqrt(Hz)
+trajName = imuGene_conf.trajName; %¹ì¼£Ãû
 
-%% ç”Ÿæˆä¼ æ„Ÿå™¨å¯¹è±¡
+%% Éú³É´«¸ĞÆ÷¶ÔÏó
 paramsG = gyroparams;
 paramsG.ConstantBias = gyroBias /180*pi; %rad/s
 paramsG.BiasInstability = gyroInstability /180*pi; %rad/s
@@ -47,27 +47,27 @@ IMU_obj.SampleRate = 1/dt;
 IMU_obj.Accelerometer = paramsA;
 IMU_obj.Gyroscope = paramsG;
 
-%% åŠ è½½è½¨è¿¹
+%% ¼ÓÔØ¹ì¼£
 load(['~temp\traj\',trajName,'.mat'])
 
-%% æ£€æŸ¥é‡‡æ ·å‘¨æœŸæ˜¯å¦åŒ¹é…
+%% ¼ì²é²ÉÑùÖÜÆÚÊÇ·ñÆ¥Åä
 if mod(dt/trajGene_conf.dt,1)~=0
     error('Sample time mismatch!')
 end
 
-%% æ•°æ®å¼€å§‹æ—¶é—´
-startTime_gps = UTC2GPS(startTime, zone); %GPSæ—¶é—´
-tow = startTime_gps(2); %å‘¨å†…ç§’
+%% Êı¾İ¿ªÊ¼Ê±¼ä
+startTime_gps = UTC2GPS(startTime, zone); %GPSÊ±¼ä
+tow = startTime_gps(2); %ÖÜÄÚÃë
 
-%% æ·»åŠ è¯¯å·®
-m = dt / trajGene_conf.dt; %å–æ•°è·³ç‚¹æ•°
-n = (size(traj,1)-1)/m + 1; %IMUæ•°æ®ä¸ªæ•°
-imu = [tow+(0:n-1)'*dt, traj(1:m:end,13:18)]; %ä»è½¨è¿¹ä¸­å–è§’é€Ÿåº¦å’ŒåŠ é€Ÿåº¦
+%% Ìí¼ÓÎó²î
+m = dt / trajGene_conf.dt; %È¡ÊıÌøµãÊı
+n = (size(traj,1)-1)/m + 1; %IMUÊı¾İ¸öÊı
+imu = [tow+(0:n-1)'*dt, traj(1:m:end,13:18)]; %´Ó¹ì¼£ÖĞÈ¡½ÇËÙ¶ÈºÍ¼ÓËÙ¶È
 [imu(:,5:7), imu(:,2:4)] = IMU_obj(-imu(:,5:7), imu(:,2:4)/180*pi);
 imu(:,2:4) = imu(:,2:4) /pi*180;
 imu(:,7) = imu(:,7) - 9.81;
 
-%% ä¿å­˜æ–‡ä»¶
+%% ±£´æÎÄ¼ş
 startTime_str = sprintf('%4d%02d%02d_%02d%02d%02d', startTime);
 fileID = fopen(['~temp\data\IMU_',startTime_str,'_',trajName(end-2:end),'.txt'], 'w');
 for k=1:n
@@ -75,8 +75,8 @@ for k=1:n
 end
 fclose(fileID);
 
-%% æ¸…é™¤å˜é‡
+%% Çå³ı±äÁ¿
 clearvars -except traj imu imuGene_conf
 
-%% ç”»å›¾
+%% »­Í¼
 imuGene_plot;

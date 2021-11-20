@@ -67,6 +67,7 @@ receiver_conf.blockNum = 50; %缓存块的数量
 receiver_conf.GPSweek = tg(1); %当前GPS周数
 receiver_conf.BDSweek = tb(1); %当前北斗周数
 receiver_conf.ta = tag; %接收机初始时间,[s,ms,us],使用GPS时间作为时间基准
+receiver_conf.CN0Thr = [37,33,30,18]; %载噪比阈值
 receiver_conf.GPSflag = GPSflag; %是否启用GPS
 receiver_conf.BDSflag = BDSflag; %是否启用北斗
 %-------------------------------------------------------------------------%

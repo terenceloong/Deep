@@ -18,6 +18,7 @@ classdef GL1CA_S < handle
         clockError     %累计钟差修正量(如果不修接收机时钟会产生多少钟差)
         deltaFreq      %接收机时钟频率误差,无量纲,钟快为正
         tms            %接收机当前运行时间,ms,用采样点数计
+        CN0Thr         %载噪比阈值
         almanac        %所有卫星的历书
         aziele         %使用历书计算的卫星方位角高度角
         eleMask        %高度角阈值
@@ -63,6 +64,8 @@ classdef GL1CA_S < handle
             obj.clockError = 0;
             obj.deltaFreq = 0;
             obj.tms = 0;
+            %----设置载噪比阈值
+            obj.CN0Thr = CNR_threshold(conf.CN0Thr);
             %----设置历书
             obj.almanac = conf.almanac;
             %----使用历书计算所有卫星方位角高度角
@@ -91,6 +94,7 @@ classdef GL1CA_S < handle
             channel_config.acqTime = conf.acqTime;
             channel_config.acqThreshold = conf.acqThreshold;
             channel_config.acqFreqMax = conf.acqFreqMax;
+            channel_config.CN0Thr = obj.CN0Thr;
             %----创建通道
             obj.chN = length(obj.svList);
             obj.channels = GPS.L1CA.channel.empty; %创建类的空矩阵

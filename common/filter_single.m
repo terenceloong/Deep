@@ -153,7 +153,7 @@ classdef filter_single < INS_GRC
                     if obj.motion.state==0 %运动时将伪距率的量测噪声放大
                         R2 = diag(R_rhodot(indexV));
                     else
-                        R2 = diag(R_rhodot(indexV)*1);
+                        R2 = diag(R_rhodot(indexV)*4);
                     end
                 end
                 %----角速度量测部分

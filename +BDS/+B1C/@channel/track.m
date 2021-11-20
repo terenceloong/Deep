@@ -160,9 +160,11 @@ if obj.bitSyncFlag==1 %完成比特同步
         %----调整积分时间
         obj.adjust_coherentTime(2);
         %----计算噪声方差
-        obj.varValue = obj.varCoef / 10^(obj.CN0/10);
+        CN0n = 10^(obj.CN0/10); %正常的载噪比数值
+        obj.varValue = obj.varCoef / CN0n;
+        obj.varValue(4) = obj.varValue(4) * (1+obj.varValue(5));
         %----信号失锁计数
-        if obj.CN0<18
+        if obj.CN0<obj.CN0Thr.loss %18
             obj.lossCnt = obj.lossCnt + 1;
         else
             obj.lossCnt = 0;
@@ -209,7 +211,7 @@ obj.storage.CN0(n) = obj.CN0;
         dp = carrError - df*dt;
         obj.remCarrPhase = obj.remCarrPhase + df*dt + obj.PLL2(1)*dt*dp; %alpha=K1*dt
         obj.carrFreq = obj.carrFreq + obj.PLL2(2)*dp; %beta=K2
-        if obj.CN0<37 %不是强信号不对载波频率进行估计,弱信号转为强信号相当于重启锁相环
+        if obj.CN0<obj.CN0Thr.recovery
             obj.carrFreq = obj.carrNco;
         end
     end

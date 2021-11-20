@@ -5,13 +5,13 @@ clear
 clc
 fclose('all'); %关闭之前打开的所有文件
 
-Ts = 180; %总处理时间,s
+Ts = 600; %总处理时间,s
 To = 0; %偏移时间,s
 svList = [];
 p0 = [45.730952, 126.624970, 212]; %大致的初始位置
 % p0 = [38.0463, 114.4358, 100];
-psi0 = 191; %初始航向,deg
-arm = [0.325,0,0]*1; %杆臂,IMU指向天线
+psi0 = 38.1; %初始航向,deg,191
+arm = [-0.1,0,0]*1; %杆臂,IMU指向天线,0.32
 
 %% 选择IMU数据文件
 [file, path] = uigetfile('*.dat;*.txt', '选择IMU数据文件'); %文件选择对话框
@@ -58,13 +58,14 @@ receiver_conf.blockSize = blockSize; %一个缓存块(1ms)的采样点数
 receiver_conf.blockNum = 50; %缓存块的数量
 receiver_conf.week = tg(1); %当前GPS周数
 receiver_conf.ta = ta; %接收机初始时间,[s,ms,us]
-receiver_conf.p0 = p0; %初始位置,纬经高
+receiver_conf.CN0Thr = [37,33,30,18]; %载噪比阈值
 receiver_conf.almanac = almanac; %历书
 receiver_conf.eleMask = 10; %高度角阈值
 receiver_conf.svList = svList; %跟踪卫星列表
 receiver_conf.acqTime = 2; %捕获所用的数据长度,ms
 receiver_conf.acqThreshold = 1.4; %捕获阈值,最高峰与第二大峰的比值
 receiver_conf.acqFreqMax = 5e3; %最大搜索频率,Hz
+receiver_conf.p0 = p0; %初始位置,纬经高
 receiver_conf.dtpos = 10; %定位时间间隔,ms
 
 %% 导航滤波器参数
@@ -82,9 +83,9 @@ para.P0_acc = 2e-3; %g
 para.Q_gyro = 0.2; %deg/s
 para.Q_acc = 2e-3; %g
 para.Q_dtv = 0.01e-9; %1/s
-para.Q_dg = 0.01*0.1; %deg/s/s
+para.Q_dg = 0.01*1; %deg/s/s
 para.Q_da = 0.1e-3; %g/s
-para.sigma_gyro = 0.03; %deg/s
+para.sigma_gyro = 0.15; %deg/s
 para.arm = arm; %m
 para.gyro0 = gyro0; %deg/s
 if strcmp(file(1:3),'SIM')

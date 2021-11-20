@@ -22,6 +22,7 @@ classdef GL1CA_BB1C_S < handle
         dtBDS          %GPS时相对北斗时的时间差,[s,ms,us],tBDS=tGPS-dtBDS
         deltaFreq      %接收机时钟频率误差,无量纲,钟快为正
         tms            %接收机当前运行时间,ms,用采样点数计
+        CN0Thr         %载噪比阈值
         GPS            %GPS模块
         BDS            %BDS模块
         state          %接收机状态
@@ -66,6 +67,8 @@ classdef GL1CA_BB1C_S < handle
             obj.dtBDS = [14,0,0]; %GPS时比北斗时快14s
             obj.deltaFreq = 0;
             obj.tms = 0;
+            %----设置载噪比阈值
+            obj.CN0Thr = CNR_threshold(conf.CN0Thr);
             %----设置GPS模块
             if obj.GPSflag==1
                 obj.GPS.almanac = conf.GPS.almanac;
@@ -95,6 +98,7 @@ classdef GL1CA_BB1C_S < handle
                 channel_config.acqTime = conf.GPS.acqTime;
                 channel_config.acqThreshold = conf.GPS.acqThreshold;
                 channel_config.acqFreqMax = conf.GPS.acqFreqMax;
+                channel_config.CN0Thr = obj.CN0Thr;
                 % 创建通道
                 obj.GPS.chN = length(obj.GPS.svList);
                 obj.GPS.channels = GPS.L1CA.channel.empty;
@@ -132,6 +136,7 @@ classdef GL1CA_BB1C_S < handle
                 channel_config.Tms = obj.Tms;
                 channel_config.acqThreshold = conf.BDS.acqThreshold;
                 channel_config.acqFreqMax = conf.BDS.acqFreqMax;
+                channel_config.CN0Thr = obj.CN0Thr;
                 % 创建通道
                 obj.BDS.chN = length(obj.BDS.svList);
                 obj.BDS.channels = BDS.B1C.channel.empty;

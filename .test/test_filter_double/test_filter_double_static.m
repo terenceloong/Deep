@@ -3,7 +3,13 @@
 %%
 clear
 clc
-% rng(1)
+
+%% 随机数流
+rands_gyro   = RandStream('mt19937ar', 'Seed',100, 'NormalTransform','Ziggurat');
+rands_acc    = RandStream('mt19937ar', 'Seed',200, 'NormalTransform','Ziggurat');
+rands_rho    = RandStream('mt19937ar', 'Seed',300, 'NormalTransform','Ziggurat');
+rands_rhodot = RandStream('mt19937ar', 'Seed',400, 'NormalTransform','Ziggurat');
+rands_phase  = RandStream('mt19937ar', 'Seed',500, 'NormalTransform','Ziggurat');
 
 %% 配置参数
 T = 100; %总时间
@@ -49,10 +55,10 @@ Cnb = angle2dcm(a0(1)*d2r, a0(2)*d2r, a0(3)*d2r);
 acc = (Cnb*[0;0;-gravitywgs84(p0(3),p0(1))])'; %真实加速度,m/s^2
 imu = zeros(n,6);
 imu(:,1:3) = ones(n,1)*gyroBias*d2r + ...
-             randn(n,3)*gyroSigma*d2r; %rad/s
+             randn(rands_gyro,n,3)*gyroSigma*d2r; %rad/s
 imu(:,4:6) = ones(n,1)*acc + ...
              ones(n,1)*accBias + ...
-             randn(n,3)*accSigma; %m/s^2
+             randn(rands_acc,n,3)*accSigma; %m/s^2
 
 %% 计算卫星位置速度
 svN = size(sv_info,1); %卫星个数
@@ -127,9 +133,9 @@ for k=1:n
         dtr = dtr0 + dtv*k*dti; %当前钟差
         sv = [sv_real, ones(svN,1)*sigma_rho^2, ones(svN,1)*sigma_rhodot^2, ...
               phase, ones(svN,1)*sigma_phase^2];
-        sv(:,7) = sv(:,7) + dtr*c + randn(svN,1)*sigma_rho;
-        sv(:,8) = sv(:,8) + dtv*c + randn(svN,1)*sigma_rhodot;
-        sv(:,11) = sv(:,11) + randn(svN,1)*sigma_phase;
+        sv(:,7) = sv(:,7) + dtr*c + randn(rands_rho,svN,1)*sigma_rho;
+        sv(:,8) = sv(:,8) + dtv*c + randn(rands_rhodot,svN,1)*sigma_rhodot;
+        sv(:,11) = sv(:,11) + randn(rands_phase,svN,1)*sigma_phase;
         %------------------------------------------------------------------
         output.satnav(k,:) = satnavSolve(sv, NF.rp); %卫星导航解算
 %         x = (E'*E)\(E'*sv(:,11));

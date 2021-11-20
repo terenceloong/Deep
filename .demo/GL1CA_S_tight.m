@@ -57,13 +57,14 @@ receiver_conf.blockSize = blockSize; %一个缓存块(1ms)的采样点数
 receiver_conf.blockNum = 50; %缓存块的数量
 receiver_conf.week = tg(1); %当前GPS周数
 receiver_conf.ta = ta; %接收机初始时间,[s,ms,us]
-receiver_conf.p0 = p0; %初始位置,纬经高
+receiver_conf.CN0Thr = [37,33,30,18]; %载噪比阈值
 receiver_conf.almanac = almanac; %历书
 receiver_conf.eleMask = 10; %高度角阈值
 receiver_conf.svList = svList; %跟踪卫星列表
 receiver_conf.acqTime = 2; %捕获所用的数据长度,ms
 receiver_conf.acqThreshold = 1.4; %捕获阈值,最高峰与第二大峰的比值
 receiver_conf.acqFreqMax = 5e3; %最大搜索频率,Hz
+receiver_conf.p0 = p0; %初始位置,纬经高
 receiver_conf.dtpos = 10; %定位时间间隔,ms
 
 %% 导航滤波器参数

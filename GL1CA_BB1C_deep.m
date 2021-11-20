@@ -5,16 +5,16 @@ clear
 clc
 fclose('all'); %关闭之前打开的所有文件
 
-Ts = 180; %总处理时间,s
+Ts = 600; %总处理时间,s
 To = 0; %偏移时间,s
 GPSflag = 1;
 BDSflag = 1;
 GPSlist = [];
-BDSlist = [];
+BDSlist = [19,21,22,34,38];
 p0 = [45.730952, 126.624970, 212]; %大致的初始位置
 % p0 = [38.0463, 114.4358, 100];
-psi0 = 191; %初始航向,deg
-arm = [0.32,0,0]; %杆臂,IMU指向天线
+psi0 = 38.1; %初始航向,deg
+arm = [-0.1,0,0]; %杆臂,IMU指向天线
 
 %% 选择IMU数据文件
 [file, path] = uigetfile('*.dat;*.txt', '选择IMU数据文件'); %文件选择对话框
@@ -75,6 +75,7 @@ receiver_conf.blockNum = 50; %缓存块的数量
 receiver_conf.GPSweek = tg(1); %当前GPS周数
 receiver_conf.BDSweek = tb(1); %当前北斗周数
 receiver_conf.ta = tag; %接收机初始时间,[s,ms,us],使用GPS时间作为时间基准
+receiver_conf.CN0Thr = [37,33,30,18]; %载噪比阈值
 receiver_conf.GPSflag = GPSflag; %是否启用GPS
 receiver_conf.BDSflag = BDSflag; %是否启用北斗
 %-------------------------------------------------------------------------%
@@ -109,9 +110,9 @@ para.P0_acc = 2e-3; %g
 para.Q_gyro = 0.2; %deg/s
 para.Q_acc = 2e-3; %g
 para.Q_dtv = 0.01e-9; %1/s
-para.Q_dg = 0.01*0.1; %deg/s/s
+para.Q_dg = 0.01*1; %deg/s/s
 para.Q_da = 0.1e-3; %g/s
-para.sigma_gyro = 0.03; %deg/s
+para.sigma_gyro = 0.15; %deg/s
 para.arm = arm; %m
 para.gyro0 = gyro0; %deg/s
 if strcmp(file(1:3),'SIM')
@@ -160,6 +161,7 @@ for t=1:msToProcess
         end
         nCoV.imu_input(imu(ki,1), imu(ki,2:7)); %输入IMU数据
         para.p0 = nCoV.pos;
+        para.v0 = nCoV.vel;
         nCoV.navFilter = filter_single(para); %初始化导航滤波器
         nCoV.vectorMode = 2; %设置矢量跟踪模式
         nCoV.channel_vector; %通道切换矢量跟踪环路

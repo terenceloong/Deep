@@ -46,13 +46,7 @@ sl.Callback = @changeEleRange;
     end
 
 %% GPS部分
-if obj.GPSflag==1
-    % 如果没有历书不画图
-    if isempty(obj.GPS.almanac)
-        disp('GPS almanac doesn''t exist!')
-        return
-    end
-    
+if obj.GPSflag==1 && isfield(obj.GPS,'aziele')
     % 挑选高度角大于0的卫星
     index = obj.GPS.aziele(:,3)>0; %高度角大于0的卫星索引
     PRN = obj.GPS.aziele(index,1);
@@ -105,13 +99,7 @@ if obj.GPSflag==1
 end
 
 %% BDS部分
-if obj.BDSflag==1
-    % 如果没有历书不画图
-    if isempty(obj.BDS.almanac)
-        disp('BDS almanac doesn''t exist!')
-        return
-    end
-    
+if obj.BDSflag==1 && isfield(obj.BDS,'aziele')
     % 挑选高度角大于0的卫星
     index = obj.BDS.aziele(:,3)>0; %高度角大于0的卫星索引
     PRN = obj.BDS.aziele(index,1);

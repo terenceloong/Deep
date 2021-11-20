@@ -226,12 +226,12 @@ classdef filter_double < INS_GRC
             %----状态约束
             if measureFlag~=0
                 Y = [];
-                if obj.motion.state==0 %静止时不估水平加速度计零偏
-                    Ysub = zeros(2,17);
-                    Ysub(1,15) = 1;
-                    Ysub(2,16) = 1;
-                    Y = [Y; Ysub];
-                end
+%                 if obj.motion.state==0 %静止时不估水平加速度计零偏
+%                     Ysub = zeros(2,17);
+%                     Ysub(1,15) = 1;
+%                     Ysub(2,16) = 1;
+%                     Y = [Y; Ysub];
+%                 end
                 if ~isempty(Y)
                     X = X - P1*Y'/(Y*P1*Y')*Y*X;
                 end
