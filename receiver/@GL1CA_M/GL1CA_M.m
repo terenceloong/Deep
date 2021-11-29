@@ -1,10 +1,10 @@
-classdef GL1CA_S < handle
-% GPS L1 C/A单天线接收机
-% state:接收机状态, 0-初始化, 1-正常, 2-紧组合, 3-深组合, 4-纯矢量跟踪
+classdef GL1CA_M < handle
+% GPS L1 C/A多天线接收机
     
     properties
         Tms            %接收机总运行时间,ms
         sampleFreq     %标称采样频率,Hz
+        anN            %天线数量
         blockSize      %一个缓存块的采样点数
         blockTime      %一个缓存块对应的接收机时间
         blockNum       %缓存块的数量
@@ -45,16 +45,21 @@ classdef GL1CA_S < handle
     end
     
     methods
-        function obj = GL1CA_S(conf) %构造函数
+        function obj = GL1CA_M(conf) %构造函数
             % conf:接收机配置结构体
             %----设置主机参数
             obj.Tms = conf.Tms;
             obj.sampleFreq = conf.sampleFreq;
+            obj.anN = conf.anN;
             obj.blockSize = conf.blockSize;
             obj.blockTime = obj.blockSize / obj.sampleFreq;
             obj.blockNum = conf.blockNum;
-            obj.buffI = zeros(obj.blockSize, obj.blockNum); %矩阵形式,每一列为一个块
-            obj.buffQ = zeros(obj.blockSize, obj.blockNum);
+            obj.buffI = cell(1,obj.anN);
+            obj.buffQ = cell(1,obj.anN);
+            for m=1:obj.anN
+                obj.buffI{m} = zeros(obj.blockSize, obj.blockNum); %矩阵形式,每一列为一个块
+                obj.buffQ{m} = zeros(obj.blockSize, obj.blockNum);
+            end
             obj.buffSize = obj.blockSize * obj.blockNum;
             obj.blockPtr = 1;
             obj.buffHead = 0;
@@ -98,10 +103,12 @@ classdef GL1CA_S < handle
             %----创建通道
             obj.chN = length(obj.svList);
             obj.channels = GPS.L1CA.channel.empty; %创建类的空矩阵
-            for k=1:obj.chN
-                obj.channels(k) = GPS.L1CA.channel(obj.svList(k), channel_config);
+            for m=1:obj.anN
+                for k=1:obj.chN
+                    obj.channels(k+(m-1)*obj.chN) = GPS.L1CA.channel(obj.svList(k), channel_config);
+                end
             end
-            obj.channels = obj.channels'; %转成列向量
+            obj.channels = reshape(obj.channels, obj.chN, obj.anN); %每列是一个天线
             %----设置接收机状态
             obj.state = 0;
             obj.pos = conf.p0;
@@ -120,9 +127,10 @@ classdef GL1CA_S < handle
             row = floor(obj.Tms/obj.dtpos); %存储空间行数
             obj.storage.ta      = zeros(row,1,'double');
             obj.storage.df      = zeros(row,1,'single');
-            obj.storage.satmeas = zeros(obj.chN,12,row,'double');
+            obj.storage.satpv   = zeros(obj.chN,6,row,'double');
+            obj.storage.satmeas = zeros(obj.chN,6,row,obj.anN,'double'); %四维矩阵(行,列,层,堆)
+            obj.storage.svsel   = zeros(obj.chN,1,row,obj.anN,'uint8');
             obj.storage.satnav  = zeros(row,8,'double');
-            obj.storage.svsel   = zeros(row,obj.chN,'uint8');
             obj.storage.pos     = zeros(row,3,'double');
             obj.storage.vel     = zeros(row,3,'single');
             obj.storage.att     =   NaN(row,3,'single');
@@ -131,10 +139,6 @@ classdef GL1CA_S < handle
             obj.storage.P       =   NaN(row,20,'single');
             obj.storage.motion  = zeros(row,1,'uint8'); %运动状态
             obj.storage.others  =   NaN(row,12,'single');
-            obj.storage.innP    =   NaN(row,obj.chN,'single'); %新息(innovation)
-            obj.storage.innV    =   NaN(row,obj.chN,'single');
-            obj.storage.resP    =   NaN(row,obj.chN,'single'); %残差(residual)
-            obj.storage.resV    =   NaN(row,obj.chN,'single');
         end
     end
     
@@ -147,40 +151,14 @@ classdef GL1CA_S < handle
         get_result(obj)               %获取接收机运行结果
         imu_input(obj, tp, imu)       %IMU数据输入
         channel_vector(obj)           %通道切换矢量跟踪环路
-        
-        print_all_log(obj)            %打印所有通道日志
-        plot_all_trackResult(obj)     %显示所有通道跟踪结果
-        plot_all_I_Q(obj)
-        plot_all_I_P(obj)
-        plot_all_CN0(obj)
-        plot_all_carrNco(obj)
-        plot_all_carrAcc(obj)
-        plot_all_drho(obj)
-        
-        plot_sv_3d(obj)
-        plot_svnum(obj)
-        plot_visibility(obj)
-        plot_motionState(obj)
-        [azi, ele] = cal_aziele(obj)
-        cal_iono(obj)
-        plot_df(obj)
-        plot_pos(obj)
-        plot_vel(obj)
-        plot_att(obj)
-        plot_bias_gyro(obj)
-        plot_bias_acc(obj)
-        kml_output(obj)
     end
     
     methods (Access = private)
         acqProcess(obj)            %捕获过程
         trackProcess(obj)          %跟踪过程
-        satmeas = get_satmeas(obj) %获取卫星测量
+        [satpv, satmeas] = get_satmeas(obj) %获取卫星测量
         pos_init(obj)              %初始化定位
         pos_normal(obj)            %正常定位
-        pos_tight(obj)             %紧组合定位
-        pos_deep(obj)              %深组合定位
-        pos_vector(obj)            %纯矢量跟踪定位
     end
     
 end %end classdef

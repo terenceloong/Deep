@@ -15,7 +15,7 @@ newcolors = [   0, 0.447, 0.741;
 figure('Name','载噪比')
 colororder(newcolors) %设置颜色表
 ax = axes;
-ax.Box = 'on';
+box on
 hold on
 grid on
 

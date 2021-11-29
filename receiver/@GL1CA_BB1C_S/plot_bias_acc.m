@@ -8,7 +8,7 @@ end
 % 时间轴
 t = obj.storage.ta - obj.storage.ta(end) + obj.Tms/1000;
 
-if obj.state==3
+if obj.state==2 || obj.state==3
     figure('Name','加计零偏')
     for k=1:3
         subplot(3,1,k)

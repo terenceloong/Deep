@@ -30,7 +30,9 @@ svIndex = CN0>=obj.CN0Thr.strong; %选星
 satnav = satnavSolveWeighted(sv(svIndex,:), obj.rp);
 
 % 导航滤波
-obj.navFilter.run(obj.imu, sv, svIndex, svIndex);
+indexP = CN0>=obj.CN0Thr.middle; %使用伪距的索引
+indexV = CN0>=obj.CN0Thr.strong; %使用伪距率的索引
+obj.navFilter.run(obj.imu, sv, indexP, indexV);
 
 % 计算ecef系下杆臂位置速度
 Cnb = quat2dcm(obj.navFilter.quat);
@@ -64,7 +66,7 @@ obj.storage.satmeas(:,1:10,m) = sv;
 obj.storage.satmeas(:,11,m) = satmeas(:,9); %载波相位
 obj.storage.satmeas(:,12,m) = R_phase;
 obj.storage.satnav(m,:) = satnav([1,2,3,7,8,9,13,14]);
-obj.storage.svsel(m,:) = svIndex + svIndex;
+obj.storage.svsel(m,:) = indexP + indexV;
 obj.storage.pos(m,:) = obj.pos;
 obj.storage.vel(m,:) = obj.vel;
 obj.storage.att(m,:) = obj.att;

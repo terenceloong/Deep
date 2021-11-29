@@ -39,7 +39,9 @@ classdef channel < handle
         I_Q             %当前6路相干积分I/Q值
         I0              %上次I_P积分值,用于鉴频器和比特同步
         Q0              %上次Q_P积分值
+        FLLp            %频率牵引锁频环
         PLL2            %二阶锁相环
+        PLL3            %三阶锁相环
         DLL2            %二阶延迟锁定环
         carrMode        %载波跟踪模式
         codeMode        %码跟踪模式

@@ -1,14 +1,22 @@
-function plot_quality(obj)
+function plot_quality(obj, varargin)
 % 画信号质量
 
-PRN_str = ['GPS ',sprintf('%d',obj.PRN)];
-figure('Position', screenBlock(1000,600,0.5,0.5), 'Name',PRN_str);
+if nargin==1
+    name_str = ['GPS ',sprintf('%d',obj.PRN)];
+elseif ischar(varargin{1})
+    name_str = ['GPS ',sprintf('%d',obj.PRN),varargin{1}];
+else
+    return
+end
+
+% 新建figure
+figure('Position', screenBlock(1000,600,0.5,0.5), 'Name',name_str);
 ax1 = axes('Position',[0.06, 0.55, 0.88, 0.4]);
-hold(ax1,'on');
-grid(ax1,'on')
+set(ax1, 'Box','on', 'NextPlot','add')
+grid on
 ax2 = axes('Position',[0.06, 0.08, 0.88, 0.4]);
-hold(ax2,'on');
-grid(ax2,'on')
+set(ax2, 'Box','on', 'NextPlot','add')
+grid on
 
 t = obj.storage.dataIndex/obj.sampleFreq;
 CN0 = obj.storage.CN0; %载噪比

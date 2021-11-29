@@ -41,18 +41,27 @@ obj.I0 = 0;
 obj.Q0 = 0;
 
 % 初始化FLLp
-% 暂时不用锁频环
+K = 40 * 0.001;
+cnt = 0; %计数器
+obj.FLLp = [K, cnt];
 
 % 初始化PLL2
-[K1, K2] = order2LoopCoefD(25, 0.707, 0.001);
-obj.PLL2 = [K1, K2, 25];
+Bn = 25;
+[K1, K2] = order2LoopCoefD(Bn, 0.707, 0.001);
+obj.PLL2 = [K1, K2, Bn];
+
+% 初始化PLL3
+Bn = 18;
+[K1, K2, K3] = order3LoopCoefD(Bn, 0.001);
+obj.PLL3 = [K1, K2, K3, Bn];
 
 % 初始化DLL2
-[K1, K2] = order2LoopCoefD(2, 0.707, 0.001);
-obj.DLL2 = [K1, K2, 2];
+Bn = 2;
+[K1, K2] = order2LoopCoefD(Bn, 0.707, 0.001);
+obj.DLL2 = [K1, K2, Bn];
 
 % 初始化跟踪模式
-obj.carrMode = 2; %直接进锁相环
+obj.carrMode = 1; %如果用二阶环,可以直接进入锁相环,如果用三阶环,需要先进行频率牵引
 obj.codeMode = 1;
 
 % 初始化码鉴相器输出缓存

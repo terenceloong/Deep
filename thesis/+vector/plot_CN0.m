@@ -18,7 +18,7 @@ newcolors = [   0, 0.447, 0.741;
 figure
 colororder(newcolors) %…Ë÷√—’…´±Ì
 ax = axes;
-ax.Box = 'on';
+box on
 hold on
 grid on
 

@@ -11,10 +11,12 @@ uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'print_all_log'}, 'Text','Print a
 % uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_all_trackResult'}, 'Text','Plot all trackResult');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_all_I_Q'}, 'Text','Plot all I/Q');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_all_I_P'}, 'Text','Plot all I_P');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_all_CN0'}, 'Text','Plot all CN0');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_all_carrNco'}, 'Text','Plot all carrNco');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_all_carrAcc'}, 'Text','Plot all carrAcc');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_sv_3d'}, 'Text','Plot 3D', 'Separator','on');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_svnum'}, 'Text','Plot svnum');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_visibility'}, 'Text','Plot visibility');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_motionState'}, 'Text','Plot motionState');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_df'}, 'Text','Plot df', 'Separator','on');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_pos'}, 'Text','Plot pos', 'Separator','on');

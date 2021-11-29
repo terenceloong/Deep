@@ -110,10 +110,14 @@ if obj.coherentCnt==obj.coherentN
     
     % 载波跟踪
     switch obj.carrMode
+        case 1 %频率牵引
+            freqPull(freqError);
         case 2 %二阶锁相环
             order2PLL(carrError);
         case 3 %矢量二阶锁相环
             vectorPLL2(carrError);
+        case 4 %三阶锁相环
+            order3PLL(carrError);
     end
     
     % 码跟踪
@@ -158,7 +162,7 @@ if obj.bitSyncFlag==1 %完成比特同步
         %----计算载噪比
         obj.CN0 = obj.CNR.cal(obj.IpBuff, obj.QpBuff);
         %----调整积分时间
-        obj.adjust_coherentTime(2);
+        obj.adjust_coherentTime(1);
         %----计算噪声方差
         CN0n = 10^(obj.CN0/10); %正常的载噪比数值
         obj.varValue = obj.varCoef / CN0n;
@@ -191,6 +195,21 @@ obj.storage.I_Q(n,:) = [IP_1ms, IE_1ms, IL_1ms, QP_1ms, QE_1ms, QL_1ms, Id, IP_1
 % obj.storage.I_Q(n,:) = [I_Q_1ms, Id, IP_1ms]; %剥离数据的
 obj.storage.CN0(n) = obj.CN0;
 
+    %% 频率牵引
+	function freqPull(freqError)
+        % 运行一段时间锁频环,到时间后自动进入锁相环
+        % FLLp = [K, cnt]
+        obj.carrFreq = obj.carrFreq + obj.FLLp(1)*freqError;
+        obj.carrNco = obj.carrFreq;
+        obj.FLLp(2) = obj.FLLp(2) + 1; %计数
+        if obj.FLLp(2)==200
+            obj.FLLp(2) = 0;
+            obj.carrMode = 4; %转到锁相环
+            log_str = sprintf('Start PLL tracking at %.8fs', obj.dataIndex/obj.sampleFreq);
+            obj.log = [obj.log; string(log_str)];
+        end
+    end
+
     %% 二阶锁相环
     function order2PLL(carrError)
         % PLL2 = [K1, K2, Bn]
@@ -214,6 +233,18 @@ obj.storage.CN0(n) = obj.CN0;
         if obj.CN0<obj.CN0Thr.recovery
             obj.carrFreq = obj.carrNco;
         end
+    end
+
+    %% 三阶锁相环
+    function order3PLL(carrError)
+        % PLL3 = [K1, K2, K3, Bn]
+        obj.carrAccR = obj.carrAccR + obj.PLL3(3)*carrError; %估计的载波加速度
+        obj.carrFreq = obj.carrFreq + obj.PLL3(2)*carrError;
+        %----调频调相
+%         obj.carrNco = obj.carrFreq + obj.PLL3(1)*carrError;
+        %----直接调相
+        obj.carrNco = obj.carrFreq;
+        obj.remCarrPhase = obj.remCarrPhase + obj.PLL3(1)*carrError*obj.coherentTime;
     end
 
     %% 二阶延迟锁定环

@@ -17,8 +17,8 @@ if obj.state==1
     end
 end
 
-%% 深组合模式
-if obj.state==3
+%% 紧/深组合模式
+if obj.state==2 || obj.state==3
     kmlwriteline('~temp\kml\traj.kml', obj.storage.pos(:,1),obj.storage.pos(:,2), ...
              'Color','r', 'Width',2);
 end

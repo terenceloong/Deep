@@ -133,22 +133,27 @@ classdef filter_single < INS_GRC
                 rho = rho - obj.dtr*c;
                 rhodot = rhodot - obj.dtv*c - obj.windupFlag*wb1(3)*0.030286178664972; %299792458/1575.42e6/(2*pi)
                 %----对测量的伪距伪距率进行杆臂修正
-                Eb = En*Cbn; %各行为本体系下卫星指向接收机的单位矢量
-                rho = rho - Eb*obj.arm'; %如果天线放在惯导位置应该测得的伪距
-                vab = cross(wb1,obj.arm); %杆臂引起的速度
-                rhodot = rhodot - Eb*vab'; %如果天线放在惯导位置应该测得的伪距率
+                ran = Cbn*obj.arm'; %地理系下杆臂矢量(列向量)
+                rho = rho - En*ran; %如果天线放在惯导位置应该测得的伪距
+                van = Cbn*cross(wb1,obj.arm)'; %地理系下杆臂速度矢量(列向量)
+                rhodot = rhodot - En*van; %如果天线放在惯导位置应该测得的伪距率
                 %----伪距量测部分
+                E = En(indexP,:);
                 H1 = zeros(n1,17);
-                H1(:,7:9) = En(indexP,:);
+%                 H1(:,1:3) = E*antisym(ran); %杆臂
+                H1(:,7:9) = E;
                 H1(:,10) = -1;
                 Z1 = rho0(indexP) - rho(indexP);
                 R1 = diag(R_rho(indexP));
                 %----伪距率量测部分
                 H2 = []; Z2 = []; R2 = [];
                 if n2>0
+                    E = En(indexV,:);
                     H2 = zeros(n2,17); %伪距率量测方程
-                    H2(:,4:6) = En(indexV,:);
+%                     H2(:,1:3) = E*antisym(van); %杆臂
+                    H2(:,4:6) = E;
                     H2(:,11) = -cm(indexV);
+%                     H2(:,12:14) = -E*antisym(ran); %杆臂
                     Z2 = rhodot0(indexV) - rhodot(indexV).*cm(indexV);
                     if obj.motion.state==0 %运动时将伪距率的量测噪声放大
                         R2 = diag(R_rhodot(indexV));

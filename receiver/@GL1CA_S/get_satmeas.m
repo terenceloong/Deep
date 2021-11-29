@@ -1,6 +1,6 @@
 function satmeas = get_satmeas(obj)
 % 获取卫星测量
-% satmeas:[x,y,z,vx,vy,vz,rho,rhodot]
+% satmeas:[x,y,z,vx,vy,vz,rho,rhodot,phase]
 % 因为码在什么时间发射是已知的,所以通过精确计算定位点的码相位获得定位点所接到码的发射时间
 % --|----------------------|-------|-------------
 %   tc(trackDataTail)      tp      ta(buffHead)

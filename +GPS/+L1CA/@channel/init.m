@@ -44,17 +44,20 @@ cnt = 0; %计数器
 obj.FLLp = [K, cnt];
 
 % 初始化PLL2
-[K1, K2] = order2LoopCoefD(25, 0.707, 0.001);
-obj.PLL2 = [K1, K2, 25];
+Bn = 25;
+[K1, K2] = order2LoopCoefD(Bn, 0.707, 0.001);
+obj.PLL2 = [K1, K2, Bn];
 
 % 初始化PLL3
 % 带宽小于等于18才稳定,<Understanding GPS--Principles and Applications> P180
-[K1, K2, K3] = order3LoopCoefD(18, 0.001);
-obj.PLL3 = [K1, K2, K3, 18];
+Bn = 18;
+[K1, K2, K3] = order3LoopCoefD(Bn, 0.001);
+obj.PLL3 = [K1, K2, K3, Bn];
 
 % 初始化DLL2
-[K1, K2] = order2LoopCoefD(2, 0.707, 0.001);
-obj.DLL2 = [K1, K2, 2];
+Bn = 2;
+[K1, K2] = order2LoopCoefD(Bn, 0.707, 0.001);
+obj.DLL2 = [K1, K2, Bn];
 
 % 初始化跟踪模式
 obj.carrMode = 1;

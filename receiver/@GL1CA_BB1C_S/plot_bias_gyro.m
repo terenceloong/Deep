@@ -8,7 +8,7 @@ end
 % Ê±¼äÖá
 t = obj.storage.ta - obj.storage.ta(end) + obj.Tms/1000;
 
-if obj.state==3
+if obj.state==2 || obj.state==3
     figure('Name','ÍÓÂİÁãÆ«')
     for k=1:3
         subplot(3,1,k)

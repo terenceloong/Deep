@@ -153,7 +153,7 @@ classdef GL1CA_BB1C_S < handle
             obj.vel = [0,0,0];
             obj.vp = [0,0,0];
             obj.att = [0,0,0];
-            obj.fn0 = NaN;
+            obj.fn0 = NaN(1,3);
             obj.geogInfo = geogInfo_cal(obj.pos, obj.vel);
             %----设置定位控制参数
             obj.dtpos = conf.dtpos;
@@ -197,11 +197,13 @@ classdef GL1CA_BB1C_S < handle
         plot_all_trackResult(obj)     %显示所有通道跟踪结果
         plot_all_I_Q(obj)
         plot_all_I_P(obj)
+        plot_all_CN0(obj)
         plot_all_carrNco(obj)
         plot_all_carrAcc(obj)
         
         plot_sv_3d(obj)
         plot_svnum(obj)
+        plot_visibility(obj)
         plot_motionState(obj)
         plot_df(obj)
         plot_pos(obj)
@@ -221,7 +223,7 @@ classdef GL1CA_BB1C_S < handle
         satmeas = get_satmeas_BDS(obj) %获取BDS卫星测量
         pos_init(obj)                  %初始化定位
         pos_normal(obj)                %正常定位
-%         pos_tight(obj)                 %紧组合定位
+        pos_tight(obj)                 %紧组合定位
         pos_deep(obj)                  %深组合定位
     end
     

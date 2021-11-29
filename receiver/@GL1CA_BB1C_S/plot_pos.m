@@ -45,8 +45,8 @@ if obj.state==1
     end
 end
 
-% 深组合模式
-if obj.state==3
+% 紧/深组合模式
+if obj.state==2 || obj.state==3
     figure('Name','位置')
     for k=1:3
         subplot(3,1,k)

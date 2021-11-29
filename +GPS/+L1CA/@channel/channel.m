@@ -121,18 +121,19 @@ classdef channel < handle
         clean_storage(obj)                         %清理数据存储
         print_log(obj)                             %打印通道日志
         %----画图函数
-        plot_trackResult(obj)
-        plot_I_Q(obj)
-        plot_I_P(obj)
-        plot_I_P_flag(obj)
-        plot_codeFreq(obj)
-        plot_carrFreq(obj)
-        plot_carrNco(obj)
-        plot_carrAcc(obj)
-        plot_codeDisc(obj)
-        plot_carrDisc(obj)
-        plot_freqDisc(obj)
-        plot_quality(obj)
+        varargout = plot_trackResult(obj, varargin)
+        varargout = plot_I_Q(obj, varargin)
+        varargout = plot_I_P(obj, varargin)
+        plot_I_P_flag(obj, varargin)
+        varargout = plot_codeFreq(obj, varargin)
+        varargout = plot_carrFreq(obj, varargin)
+        plot_carrNco(obj, varargin)
+        varargout = plot_carrAcc(obj, varargin)
+        varargout = plot_codeDisc(obj, varargin)
+        varargout = plot_carrDisc(obj, varargin)
+        varargout = plot_freqDisc(obj, varargin)
+        varargout = plot_CN0(obj, varargin)
+        plot_quality(obj, varargin)
     end
     
 end %end classdef

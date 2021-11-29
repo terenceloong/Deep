@@ -32,6 +32,7 @@ uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_all_carrAcc'}, 'Text','Plot
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_all_drho'}, 'Text','Plot all drho');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_sv_3d'}, 'Text','Plot 3D', 'Separator','on');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_svnum'}, 'Text','Plot svnum');
+uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_visibility'}, 'Text','Plot visibility');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'plot_motionState'}, 'Text','Plot motionState');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'cal_aziele'}, 'Text','Cal aziele', 'Separator','on');
 uimenu(c, 'MenuSelectedFcn',{@menuCallback,obj,'cal_iono'}, 'Text','Cal iono');
