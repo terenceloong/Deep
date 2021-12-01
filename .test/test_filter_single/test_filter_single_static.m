@@ -29,9 +29,10 @@ p0 = [46, 126, 200];
 rp = lla2ecef(p0);
 a0 = [50, 0, 0]; %deg
 n = T / dti;
-traj = zeros(n,12);
-traj(:,7:9) = ones(n,1)*p0;
-traj(:,4:6) = ones(n,1)*a0;
+t = (1:n)'*dti; %IMU时间序列
+nav0 = zeros(n,6);
+nav0(:,1:3) = ones(n,1)*p0;
+nav0(:,7:9) = ones(n,1)*a0;
 
 %% 卫星位置
 % 第一列为方位角,第二列为高度角,deg
@@ -148,4 +149,5 @@ for k=1:n
 end
 
 %% 画图
+t0 = t; %画图时间轴
 plot_filter_single;

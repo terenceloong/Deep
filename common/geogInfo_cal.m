@@ -20,6 +20,7 @@ geogInfo.Rm = Rm; %子午圈半径(不含高度)
 geogInfo.Rn = Rn; %卯酉圈半径(不含高度)
 geogInfo.dlatdn = dlatdn; %纬度对北向位移的导数(含高度)
 geogInfo.dlonde = dlonde; %经度对东向位移的导数(含高度)
+geogInfo.Cn2g = diag([dlatdn/pi*180, dlonde/pi*180, -1]); %地理系位移转成经纬度的矩阵
 geogInfo.wien = wien;
 geogInfo.wenn = wenn;
 geogInfo.wiee = wiee;

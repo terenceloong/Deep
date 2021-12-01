@@ -102,7 +102,6 @@ for k=1:n
 end
 
 %% ª≠Œª÷√ ‰≥ˆ
-r2d = 180/pi;
 figure('Name','Œª÷√')
 
 subplot(3,1,1)
@@ -111,8 +110,8 @@ hold on
 grid on
 axis manual
 plot(t, output.filter(:,1), 'LineWidth',1)
-plot(t, p0(1)+output.P(:,1)*NF.geogInfo.dlatdn*r2d*3, 'Color','k', 'LineStyle','--')
-plot(t, p0(1)-output.P(:,1)*NF.geogInfo.dlatdn*r2d*3, 'Color','k', 'LineStyle','--')
+plot(t, p0(1)+output.P(:,1)*NF.geogInfo.Cn2g(1)*3, 'Color','k', 'LineStyle','--')
+plot(t, p0(1)-output.P(:,1)*NF.geogInfo.Cn2g(1)*3, 'Color','k', 'LineStyle','--')
 set(gca, 'xlim', [0,t(end)])
 
 subplot(3,1,2)
@@ -121,8 +120,8 @@ hold on
 grid on
 axis manual
 plot(t, output.filter(:,2), 'LineWidth',1)
-plot(t, p0(2)+output.P(:,2)*NF.geogInfo.dlonde*r2d*3, 'Color','k', 'LineStyle','--')
-plot(t, p0(2)-output.P(:,2)*NF.geogInfo.dlonde*r2d*3, 'Color','k', 'LineStyle','--')
+plot(t, p0(2)+output.P(:,2)*NF.geogInfo.Cn2g(5)*3, 'Color','k', 'LineStyle','--')
+plot(t, p0(2)-output.P(:,2)*NF.geogInfo.Cn2g(5)*3, 'Color','k', 'LineStyle','--')
 set(gca, 'xlim', [0,t(end)])
 
 subplot(3,1,3)

@@ -6,6 +6,7 @@ classdef INS_GRC < handle
         firstFlag  %首次运行标志
         pos        %位置,纬经高
         vel        %速度,地理系
+        acc        %加速度,地理系
         att        %姿态
         rp         %位置,ecef
         vp         %速度,ecef
@@ -39,7 +40,6 @@ classdef INS_GRC < handle
             % flag==0,更新所有导航参数
             % flag~=0,更新部分导航参数
             %----换简短的变量名
-            r2d = 180/pi;
             dt = obj.T;
             q = obj.quat;
             v0 = obj.vel;
@@ -86,11 +86,10 @@ classdef INS_GRC < handle
             dvc = 0.5*cross(X,dv); %速度增量补偿量
 %             dvc = 0.5*cross(dtheta,dv); %速度增量补偿量
             obj.vel = v0 + (dv+dvc)*Cnb + ([0,0,obj.geogInfo.g]-cross(winn2,v0))*dt;
+            obj.acc = fb1*Cnb - cross(winn2,obj.vel) + [0,0,obj.geogInfo.g];
             %----位置解算
             dp = (v0+obj.vel)/2*dt; %位置增量
-            obj.pos(1) = obj.pos(1) + dp(1)*obj.geogInfo.dlatdn*r2d; %deg
-            obj.pos(2) = obj.pos(2) + dp(2)*obj.geogInfo.dlonde*r2d; %deg
-            obj.pos(3) = obj.pos(3) - dp(3);
+            obj.pos = obj.pos + dp*obj.geogInfo.Cn2g;
             %----更新导航参数
             obj.imu0 = imu; %保存IMU数据
             if flag==0
@@ -98,7 +97,7 @@ classdef INS_GRC < handle
                 Cen = dcmecef2ned(obj.pos(1), obj.pos(2));
                 obj.vp = obj.vel*Cen;
                 [r1,r2,r3] = quat2angle(obj.quat);
-                obj.att = [r1,r2,r3]*r2d; %deg
+                obj.att = [r1,r2,r3]/pi*180; %deg
                 obj.geogInfo = geogInfo_cal(obj.pos, obj.vel); %更新地理信息
             end
         end
@@ -106,18 +105,15 @@ classdef INS_GRC < handle
         %% 导航修正
         function correct(obj, X)
             % X为行向量,[phi,dv,dp]
-            r2d = 180/pi;
             obj.quat = quatCorr(obj.quat, X(1:3));
             obj.vel = obj.vel - X(4:6);
-            obj.pos(1) = obj.pos(1) - X(7)*obj.geogInfo.dlatdn*r2d; %deg
-            obj.pos(2) = obj.pos(2) - X(8)*obj.geogInfo.dlonde*r2d; %deg
-            obj.pos(3) = obj.pos(3) + X(9);
+            obj.pos = obj.pos - X(7:9)*obj.geogInfo.Cn2g;
             % 更新导航参数
             obj.rp = lla2ecef(obj.pos);
             Cen = dcmecef2ned(obj.pos(1), obj.pos(2));
             obj.vp = obj.vel*Cen;
             [r1,r2,r3] = quat2angle(obj.quat);
-            obj.att = [r1,r2,r3]*r2d; %deg
+            obj.att = [r1,r2,r3]/pi*180; %deg
             obj.geogInfo = geogInfo_cal(obj.pos, obj.vel); %更新地理信息
         end
         

@@ -1,4 +1,4 @@
-%% 测试单天线导航滤波器(使用轨迹,用历书算卫星)
+%% 测试估计惯导延迟的单天线导航滤波器(使用轨迹,用历书算卫星)
 
 %%
 clear
@@ -12,7 +12,7 @@ rands_rhodot = RandStream('mt19937ar', 'Seed',400, 'NormalTransform','Ziggurat')
 
 %% 配置参数
 t0 = [2020,7,27,11,16,14]; %初始时间
-trajName = 'traj010'; %轨迹文件名
+trajName = 'traj103'; %轨迹文件名
 dti = 0.01; %IMU采样周期,s
 dtg = 0.01; %GPS采样周期,s
 gyroBias = [0.1, 0.2, 0.3] *1; %陀螺仪零偏,deg/s
@@ -23,6 +23,7 @@ sigma_rho = 4; %m
 sigma_rhodot = 0.02; %m/s
 dtr0 = 1e-8; %初始钟差,s
 dtv = 3e-9; %钟频差,s/s
+delay = 0.005; %惯导延迟,s
 c = 299792458;
 
 %% 加载轨迹
@@ -34,12 +35,20 @@ if any(arm0)
     traj = traj_addarm(traj, arm0);
 end
 
-%% 提取轨迹
+%% 时间序列
 Ts = trajGene_conf.Ts; %总时间
+tj = (0:trajGene_conf.dt:trajGene_conf.Ts)'; %轨迹时间序列
 n = Ts / dti; %IMU数据数量
 t = (1:n)'*dti; %IMU时间序列
-m = dti / trajGene_conf.dt; %取数跳点数
-nav0 = traj(1+(1:n)*m,[7:12,4:6]);
+td = t + delay; %延迟后的时间序列
+
+%% 轨迹插值
+nav0 = zeros(n,9); %导航真值
+nav0(:,1:3) = interp1(tj,traj(:,7:9), td, 'pchip'); %位置
+nav0(:,4:6) = interp1(tj,traj(:,10:12), td, 'pchip'); %速度
+nav0(:,7) = interp1(tj,attContinuous(traj(:,4)), td, 'pchip'); %航向角
+nav0(:,8) = interp1(tj,traj(:,5), td, 'pchip'); %俯仰角
+nav0(:,9) = interp1(tj,traj(:,6), td, 'pchip'); %滚转角
 
 %% 加载历书,画星座图
 t0g = UTC2GPS(t0, 8);
@@ -50,6 +59,7 @@ almanac(:,1:4) = [];
 % ax = GPS.constellation('~temp\almanac', t0, 8, traj(1,7:9));
 
 %% IMU数据加噪声
+m = dti / trajGene_conf.dt; %取数跳点数
 imu = traj(1+(1:n)*m,13:18);
 imu(:,1:3) = imu(:,1:3) + ones(n,1)*gyroBias + randn(rands_gyro,n,3)*gyroSigma;
 imu(:,4:6) = imu(:,4:6) + ones(n,1)*accBias + randn(rands_acc,n,3)*accSigma;
@@ -67,16 +77,18 @@ para.P0_dtr = 5e-8; %s
 para.P0_dtv = 3e-9; %s/s
 para.P0_gyro = 0.2; %deg/s
 para.P0_acc = 2e-3; %g
+para.P0_delay = 0.005; %s
 para.Q_gyro = gyroSigma; %deg/s
 para.Q_acc = accSigma/9.8; %g
 para.Q_dtv = 0.01e-9; %1/s
 para.Q_dg = 0.01; %deg/s/s
 para.Q_da = 0.1e-3; %g/s
+para.Q_delay = 1e-4; %s/s
 para.sigma_gyro = gyroSigma; %deg/s
 para.arm = arm0; %m
 para.gyro0 = gyroBias; %deg/s
 para.windupFlag = 0;
-NF = filter_single(para);
+NF = filter_single_delay(para);
 
 if norm(para.v0)>2
     NF.motion.state0 = 1;
@@ -90,7 +102,8 @@ output.vel = zeros(n,3);
 output.att = zeros(n,3);
 output.clk = zeros(n,2);
 output.bias = zeros(n,6);
-output.P = zeros(n,17);
+output.delay = zeros(n,1);
+output.P = zeros(n,18);
 output.imu = zeros(n,6);
 
 %% 计算
@@ -130,9 +143,10 @@ for k=1:n
         NF.run(imu_k);
     end
     
-    %----提取导航结果
+    %----延迟修正
     wb = imu_k(1:3) - NF.bias(1:3); %角速度,rad/s
-    [pos, vel, att] = deal(NF.pos, NF.vel, NF.att);
+    [pos, vel, att] = delayComp(NF.pos, NF.vel, NF.acc, NF.geogInfo.Cn2g, NF.delay, NF.quat, wb);
+%     [pos, vel, att] = deal(NF.pos, NF.vel, NF.att); %不修延迟
     
     %----杆臂修正
     Cnb = angle2dcm(att(1)*d2r, att(2)*d2r, att(3)*d2r);
@@ -147,6 +161,7 @@ for k=1:n
     output.att(k,:) = att;
     output.clk(k,:) = [NF.dtr, NF.dtv];
     output.bias(k,:) = NF.bias;
+    output.delay(k) = NF.delay;
     P = NF.P;
     output.P(k,:) = sqrt(diag(P));
     P_angle = var_phi2angle(P(1:3,1:3), Cnb);

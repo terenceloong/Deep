@@ -52,6 +52,7 @@ output.P = zeros(n,17);
 output.imu = zeros(n,6);
 
 %% 计算
+d2r = pi/180;
 for k=1:n
     %----卫星量测
     for m=1:svN
@@ -69,22 +70,21 @@ for k=1:n
     %----导航滤波
     NF.run(imu_k, sv, indexP, indexV);
     
-    %----杆臂修正
-    Cnb = quat2dcm(NF.quat);
-    Cen = dcmecef2ned(NF.pos(1), NF.pos(2));
-    Ceb = Cnb*Cen;
+	%----提取导航结果
     wb = imu_k(1:3) - NF.bias(1:3); %角速度,rad/s
-    r_arm = NF.arm*Ceb;
-    v_arm = cross(wb,NF.arm)*Ceb;
-    rp = NF.rp + r_arm;
-    vp = NF.vp + v_arm;
-    pos = ecef2lla(rp);
-    vel = vp*Cen';
+    [pos, vel, att] = deal(NF.pos, NF.vel, NF.att);
+    
+    %----杆臂修正
+    Cnb = angle2dcm(att(1)*d2r, att(2)*d2r, att(3)*d2r);
+    r_arm = NF.arm*Cnb;
+    v_arm = cross(wb,NF.arm)*Cnb;
+    pos = pos + r_arm*NF.geogInfo.Cn2g;
+    vel = vel + v_arm;
     
     %----存储结果
     output.pos(k,:) = pos;
     output.vel(k,:) = vel;
-    output.att(k,:) = NF.att;
+    output.att(k,:) = att;
     output.clk(k,:) = [NF.dtr, NF.dtv];
     output.bias(k,:) = NF.bias;
     P = NF.P;

@@ -106,16 +106,16 @@ end
 obj.fn0 = fn;
 fe = fn1*Cen; %ecef系下加速度
 
-% 计算ecef系下杆臂位置速度
-r_arm = arm*Cnb*Cen;
-v_arm = cross(wb,arm)*Cnb*Cen;
+% 计算地理系下杆臂位置速度
+r_arm = arm*Cnb;
+v_arm = cross(wb,arm)*Cnb;
 
 % 惯导位置速度做杆臂修正后得到天线位置速度
-obj.rp = obj.navFilter.rp + r_arm;
-obj.vp = obj.navFilter.vp + v_arm;
+obj.pos = obj.navFilter.pos + r_arm*obj.navFilter.geogInfo.Cn2g;
+obj.vel = obj.navFilter.vel + v_arm;
 obj.att = obj.navFilter.att;
-obj.pos = ecef2lla(obj.rp);
-obj.vel = obj.vp*Cen';
+obj.rp = lla2ecef(obj.pos);
+obj.vp = obj.vel*Cen;
 obj.geogInfo = geogInfo_cal(obj.pos, obj.vel);
 
 % 通道修正

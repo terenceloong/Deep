@@ -312,3 +312,7 @@ G(GPS),R(GLONASS),E(Galileo),C(BDS),J(QZSS),I(IRNSS),参见RINEX 3.03
 4.GPS+BDS接收机添加画载噪比
 5.添加GPS+BDS紧组合
 6.BDS通道添加FLL和三阶锁相环
+
+<===Version 6.1===>2021.12.1
+1.添加估计惯导延迟的导航滤波器
+2.在地理系做杆臂修正

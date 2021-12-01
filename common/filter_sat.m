@@ -57,20 +57,14 @@ classdef filter_sat < handle
             R_rho = sv(:,9);    %伪距噪声方差
             R_rhodot= sv(:,10); %伪距率噪声方差
             %----换简短的变量名
-            r2d = 180/pi;
             c = 299792458;
             dt = obj.T;
             v0 = obj.vel;
-            lat = obj.pos(1); %deg
-            lon = obj.pos(2); %deg
-            h = obj.pos(3);
             %----速度解算
             v = v0 + obj.acc*dt;
             %----位置解算
             dp = (v0+v)/2*dt; %位置增量
-            lat = lat + dp(1)*obj.geogInfo.dlatdn*r2d; %deg
-            lon = lon + dp(2)*obj.geogInfo.dlonde*r2d; %deg
-            h = h - dp(3);
+            p = obj.pos + dp*obj.geogInfo.Cn2g;
             %----更新钟差
             obj.dtr = obj.dtr + obj.dtv*dt;
             %----状态方程
@@ -92,7 +86,7 @@ classdef filter_sat < handle
             %----量测更新
             if n1>0 %有卫星量测
                 %----根据当前导航结果计算理论相对距离和相对速度
-                [rho0, rhodot0, rspu, Cen] = rho_rhodot_cal_geog(rs, vs, [lat,lon,h], v);
+                [rho0, rhodot0, rspu, Cen] = rho_rhodot_cal_geog(rs, vs, p, v);
                 %----构造量测方程,量测量,量测噪声方差阵
                 S = -sum(rspu.*vs,2);
                 cm = 1 + S/c; %光速修正项
@@ -149,17 +143,14 @@ classdef filter_sat < handle
             %----更新P阵
             obj.P = (P1+P1')/2;
             %----导航修正
-            lat = lat - X(1)*obj.geogInfo.dlatdn*r2d; %deg
-            lon = lon - X(2)*obj.geogInfo.dlonde*r2d; %deg
-            h = h + X(3);
-            v = v - X(4:6)';
+            X = X';
+            obj.pos = p - X(1:3)*obj.geogInfo.Cn2g;
+            obj.vel = v - X(4:6);
             %----更新导航参数
-            obj.pos = [lat,lon,h];
-            obj.vel = v;
             obj.rp = lla2ecef(obj.pos);
-            Cen = dcmecef2ned(lat, lon);
-            obj.vp = v*Cen;
-            obj.acc = obj.acc - X(7:9)';
+            Cen = dcmecef2ned(obj.pos(1), obj.pos(2));
+            obj.vp = obj.vel*Cen;
+            obj.acc = obj.acc - X(7:9);
             obj.dtr = obj.dtr + X(10)/c; %s
             obj.dtv = obj.dtv + X(11)/c; %s/s
             obj.geogInfo = geogInfo_cal(obj.pos, obj.vel); %更新地理信息

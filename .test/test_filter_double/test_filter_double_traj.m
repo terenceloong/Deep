@@ -30,15 +30,19 @@ c = 299792458;
 
 %% 加载轨迹
 load(['~temp\traj\',trajName,'.mat'])
-m = dti / trajGene_conf.dt; %取数跳点数
-traj = traj(1:m:end,:);
-traj(1,:) = []; %删第一行
 
 %% 轨迹添加杆臂
 arm0 = [0,0,0];
 if any(arm0)
     traj = traj_addarm(traj, arm0);
 end
+
+%% 提取轨迹
+Ts = trajGene_conf.Ts; %总时间
+n = Ts / dti; %IMU数据数量
+t = (1:n)'*dti; %IMU时间序列
+m = dti / trajGene_conf.dt; %取数跳点数
+nav0 = traj(1+(1:n)*m,[7:12,4:6]);
 
 %% 加载历书,画星座图
 t0g = UTC2GPS(t0, 8);
@@ -49,8 +53,7 @@ almanac(:,1:4) = [];
 % ax = GPS.constellation('~temp\almanac', t0, 8, traj(1,7:9));
 
 %% IMU数据加噪声
-n = size(traj,1);
-imu = traj(:,13:18);
+imu = traj(1+(1:n)*m,13:18);
 imu(:,1:3) = imu(:,1:3) + ones(n,1)*gyroBias + randn(rands_gyro,n,3)*gyroSigma;
 imu(:,4:6) = imu(:,4:6) + ones(n,1)*accBias + randn(rands_acc,n,3)*accSigma;
 imu(:,1:3) = imu(:,1:3)/180*pi; %rad/s
@@ -110,9 +113,9 @@ for k=1:n
         %----生成卫星量测---------------------------------------------------
         dtr = dtr0 + dtv*tk; %当前钟差
         tg = t0g + [0,tk]; %当前GPS时间
-        pos0 = traj(k,7:9); %当前位置
-        vel0 = traj(k,10:12); %当前速度
-        att0 = traj(k,4:6)*d2r; %当前姿态
+        pos0 = nav0(k,1:3); %当前位置
+        vel0 = nav0(k,4:6); %当前速度
+        att0 = nav0(k,7:9)*d2r; %当前姿态
         rsvs = rsvs_almanac(almanac, tg); %计算所有卫星位置速度
         [azi, ele] = aziele_xyz(rsvs(:,1:3), pos0); %计算所有卫星高度角方位角
         selIndex = find(ele>10); %所选卫星的行号
@@ -137,22 +140,21 @@ for k=1:n
         NF.run(imu_k);
     end
     
-    %----杆臂修正
-    Cnb = quat2dcm(NF.quat);
-    Cen = dcmecef2ned(NF.pos(1), NF.pos(2));
-    Ceb = Cnb*Cen;
+    %----提取导航结果
     wb = imu_k(1:3) - NF.bias(1:3); %角速度,rad/s
-    r_arm = NF.arm*Ceb;
-    v_arm = cross(wb,NF.arm)*Ceb;
-    rp = NF.rp + r_arm;
-    vp = NF.vp + v_arm;
-    pos = ecef2lla(rp);
-    vel = vp*Cen';
+    [pos, vel, att] = deal(NF.pos, NF.vel, NF.att);
+    
+    %----杆臂修正
+    Cnb = angle2dcm(att(1)*d2r, att(2)*d2r, att(3)*d2r);
+    r_arm = NF.arm*Cnb;
+    v_arm = cross(wb,NF.arm)*Cnb;
+    pos = pos + r_arm*NF.geogInfo.Cn2g;
+    vel = vel + v_arm;
     
     %----存储结果
     output.pos(k,:) = pos;
     output.vel(k,:) = vel;
-    output.att(k,:) = NF.att;
+    output.att(k,:) = att;
     output.clk(k,:) = [NF.dtr, NF.dtv];
     output.bias(k,:) = NF.bias;
     P = NF.P;
@@ -163,4 +165,5 @@ for k=1:n
 end
 
 %% 画图
+t0 = t; %画图时间轴
 plot_filter_double;

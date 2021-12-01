@@ -34,20 +34,20 @@ indexP = CN0>=obj.CN0Thr.middle; %使用伪距的索引
 indexV = CN0>=obj.CN0Thr.strong; %使用伪距率的索引
 obj.navFilter.run(obj.imu, sv, indexP, indexV);
 
-% 计算ecef系下杆臂位置速度
+% 计算地理系下杆臂位置速度
 Cnb = quat2dcm(obj.navFilter.quat);
 Cen = dcmecef2ned(obj.navFilter.pos(1), obj.navFilter.pos(2));
 arm = obj.navFilter.arm; %体系下杆臂矢量
 wb = obj.imu(1:3) - obj.navFilter.bias(1:3); %角速度,rad/s
-r_arm = arm*Cnb*Cen;
-v_arm = cross(wb,arm)*Cnb*Cen;
+r_arm = arm*Cnb;
+v_arm = cross(wb,arm)*Cnb;
 
 % 更新接收机位置速度
-obj.rp = obj.navFilter.rp + r_arm;
-obj.vp = obj.navFilter.vp + v_arm;
+obj.pos = obj.navFilter.pos + r_arm*obj.navFilter.geogInfo.Cn2g;
+obj.vel = obj.navFilter.vel + v_arm;
 obj.att = obj.navFilter.att;
-obj.pos = ecef2lla(obj.rp);
-obj.vel = obj.vp*Cen';
+obj.rp = lla2ecef(obj.pos);
+obj.vp = obj.vel*Cen;
 obj.geogInfo = geogInfo_cal(obj.pos, obj.vel);
 
 % 接收机时钟修正
