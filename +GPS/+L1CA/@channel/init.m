@@ -63,20 +63,21 @@ obj.DLL2 = [K1, K2, Bn];
 obj.carrMode = 1;
 obj.codeMode = 1;
 
-% 初始化码鉴相器输出缓存
-obj.codeDiscBuff = zeros(1,200);
-obj.codeDiscBuffPtr = 0;
+% 初始化鉴相器输出缓存
+obj.discBuff = zeros(3,200);
+obj.discBuffPtr = 0;
 
 % 初始化噪声方差
 % 所有噪声的方差都与1/10^(CN0/10)成正比
 % 静止时是比较小的系数,动起来系数可以放大
-obj.varCoef = zeros(1,5);
+obj.varCoef = zeros(1,6);
 obj.varCoef(1) = (0.264*obj.DLL2(3)) * 9e4; %DLL伪距方差,m^2
 obj.varCoef(2) = (0.32*obj.PLL2(3))^3 * 0.0363; %PLL伪距率方差,(m/s)^2
 obj.varCoef(3) = 9e4 / 0.008; %码鉴相器伪距方差,m^2
-obj.varCoef(4) = obj.PLL2(3) * 0.253; %PLL载波相位方差,circ^2, 0.253=1/(2*pi)^2
-obj.varCoef(5) = 500; %PLL载波相位方差加号后面的项, 500=1/(2*0.001)
-obj.varValue = zeros(1,5);
+obj.varCoef(4) = obj.PLL2(3) * 0.0253; %PLL载波相位方差,circ^2, 0.0253=1/(2*pi)^2
+obj.varCoef(5) = 12.67; %载波鉴相器方差,circ^2, 12.67=1/(2*0.001)/(2*pi)^2
+obj.varCoef(6) = 500; %PLL载波相位方差加号后面的项, 500=1/(2*0.001)
+obj.varValue = zeros(1,6);
 
 % 初始化伪码时间
 obj.tc0 = NaN;

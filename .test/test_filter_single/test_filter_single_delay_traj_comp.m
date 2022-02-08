@@ -1,5 +1,6 @@
-%% 测试估计惯导延迟的单天线导航滤波器(使用轨迹,用历书算卫星)
-% 量测匹配法,惯导解算始终是带延迟的
+%% 测试惯导延迟补偿的单天线导航滤波器(使用轨迹,用历书算卫星)
+% 惯导超前法,惯导解算与量测时刻匹配
+% 有两种方式:一是将IMU输出外推,另一种是在导航滤波器中将导航结果外推
 
 %%
 clear
@@ -78,18 +79,16 @@ para.P0_dtr = 5e-8; %s
 para.P0_dtv = 3e-9; %s/s
 para.P0_gyro = 0.2; %deg/s
 para.P0_acc = 2e-3; %g
-para.P0_delay = 0.005; %s
 para.Q_gyro = gyroSigma; %deg/s
 para.Q_acc = accSigma/9.8; %g
 para.Q_dtv = 0.01e-9; %1/s
 para.Q_dg = 0.01; %deg/s/s
 para.Q_da = 0.1e-3; %g/s
-para.Q_delay = 1e-4; %s/s
 para.sigma_gyro = gyroSigma; %deg/s
 para.arm = arm0; %m
 para.gyro0 = gyroBias; %deg/s
 para.windupFlag = 0;
-NF = filter_single_delay(para);
+NF = filter_single(para);
 
 if norm(para.v0)>2
     NF.motion.state0 = 1;
@@ -103,14 +102,14 @@ output.vel = zeros(n,3);
 output.att = zeros(n,3);
 output.clk = zeros(n,2);
 output.bias = zeros(n,6);
-output.delay = zeros(n,1);
-output.P = zeros(n,18);
+output.P = zeros(n,17);
 output.imu = zeros(n,6);
 
 %% 计算
 d2r = pi/180;
 M = dtg / dti; %控制GPS量测生成
 m = 0;
+imu0 = imu(1,:);
 for k=1:n
     %----IMU数据
     imu_k = imu(k,:);
@@ -139,15 +138,17 @@ for k=1:n
         %------------------------------------------------------------------
         output.satnav(k,:) = satnavSolve(sv, NF.rp); %卫星导航解算
 %         output.satnav(k,:) = satnavSolveWeighted(sv, NF.rp);
-        NF.run(imu_k, sv, true(svN,1), true(svN,1));
+        imu_w = imu_k + (imu_k-imu0)*delay/dti*1; %IMU外推
+        NF.run(imu_w, sv, true(svN,1), true(svN,1));
+        imu0 = imu_k;
     else %没有卫星量测
         NF.run(imu_k);
     end
     
-    %----延迟修正
+    %----提取导航结果
     wb = imu_k(1:3) - NF.bias(1:3); %角速度,rad/s
     [pos, vel, att] = delayComp(NF.pos, NF.vel, NF.acc, NF.geogInfo.Cn2g, NF.delay, NF.quat, wb);
-%     [pos, vel, att] = deal(NF.pos, NF.vel, NF.att); %不修延迟
+%     [pos, vel, att] = deal(NF.pos, NF.vel, NF.att);
     
     %----杆臂修正
     Cnb = angle2dcm(att(1)*d2r, att(2)*d2r, att(3)*d2r);
@@ -162,7 +163,6 @@ for k=1:n
     output.att(k,:) = att;
     output.clk(k,:) = [NF.dtr, NF.dtv];
     output.bias(k,:) = NF.bias;
-    output.delay(k) = NF.delay;
     P = NF.P;
     output.P(k,:) = sqrt(diag(P));
     P_angle = var_phi2angle(P(1:3,1:3), Cnb);

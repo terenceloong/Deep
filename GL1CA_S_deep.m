@@ -156,7 +156,7 @@ for t=1:msToProcess
 %         nCoV.navFilter = filter_single_11(para);
 %         nCoV.navFilter = filter_single_arm(para);
 %         nCoV.navFilter = filter_single_delay(para);
-        nCoV.vectorMode = 2; %设置矢量跟踪模式
+        nCoV.vectorMode = 2; %设置矢量跟踪模式 (1/2/4)
         nCoV.channel_vector; %通道切换矢量跟踪环路
         nCoV.state = 3; %接收机进入深组合
     end

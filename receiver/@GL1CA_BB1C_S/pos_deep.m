@@ -13,24 +13,24 @@ if obj.GPSflag==1
     %---------------------------------------------------------------------%
     chN = obj.GPS.chN;
     CN0 = zeros(chN,1); %载噪比
-    codeDisc = zeros(chN,1); %定位间隔内码鉴相器输出的平均值,m
+    codeDisc = zeros(chN,1); %定位间隔内码鉴相器输出的平均值,码片
     R_rho = zeros(chN,1); %伪距测量噪声方差,m^2
     R_rhodot = zeros(chN,1); %伪距率测量噪声方差,(m/s)^2
     for k=1:chN
         channel = obj.GPS.channels(k);
         if channel.state==3
-            n = channel.codeDiscBuffPtr; %码鉴相器缓存内数据个数
+            n = channel.discBuffPtr; %鉴相器缓存内数据个数
             if n>0 %定位间隔内码鉴相器有输出
                 CN0(k) = channel.CN0;
-                codeDisc(k) = sum(channel.codeDiscBuff(1:n))/n * Lco;
+                codeDisc(k) = sum(channel.discBuff(1,1:n))/n;
                 R_rho(k) = (sqrt(channel.varValue(3)/n)+eleError(k))^2;
                 R_rhodot(k) = channel.varValue(2);
-                channel.codeDiscBuffPtr = 0;
+                channel.discBuffPtr = 0;
             end
         end
     end
     svGPS = [satmeasGPS(:,1:8), R_rho, R_rhodot];
-    svGPS(:,7) = svGPS(:,7) - codeDisc; %本地码超前,伪距偏短,码鉴相器为负,修正是减
+    svGPS(:,7) = svGPS(:,7) - codeDisc*Lco; %本地码超前,伪距偏短,码鉴相器为负,修正是减
     %---------------------------------------------------------------------%
     svIndexGPS = CN0>=obj.CN0Thr.strong; %选星
     satnavGPS = satnavSolveWeighted(svGPS(svIndexGPS,:), obj.rp);
@@ -44,24 +44,24 @@ if obj.BDSflag==1
     %---------------------------------------------------------------------%
     chN = obj.BDS.chN;
     CN0 = zeros(chN,1); %载噪比
-    codeDisc = zeros(chN,1); %定位间隔内码鉴相器输出的平均值,m
+    codeDisc = zeros(chN,1); %定位间隔内码鉴相器输出的平均值,码片
     R_rho = zeros(chN,1); %伪距测量噪声方差,m^2
     R_rhodot = zeros(chN,1); %伪距率测量噪声方差,(m/s)^2
     for k=1:chN
         channel = obj.BDS.channels(k);
         if channel.state==3
-             n = channel.codeDiscBuffPtr; %码鉴相器缓存内数据个数
+            n = channel.discBuffPtr; %鉴相器缓存内数据个数
             if n>0 %定位间隔内码鉴相器有输出
                 CN0(k) = channel.CN0;
-                codeDisc(k) = sum(channel.codeDiscBuff(1:n))/n * Lco;
+                codeDisc(k) = sum(channel.discBuff(1,1:n))/n;
                 R_rho(k) = (sqrt(channel.varValue(3)/n)+eleError(k))^2;
                 R_rhodot(k) = channel.varValue(2);
-                channel.codeDiscBuffPtr = 0;
+                channel.discBuffPtr = 0;
             end
         end
     end
     svBDS = [satmeasBDS(:,1:8), R_rho, R_rhodot];
-    svBDS(:,7) = svBDS(:,7) - codeDisc; %本地码超前,伪距偏短,码鉴相器为负,修正是减
+    svBDS(:,7) = svBDS(:,7) - codeDisc*Lco; %本地码超前,伪距偏短,码鉴相器为负,修正是减
     %---------------------------------------------------------------------%
     svIndexBDS = CN0>=obj.CN0Thr.strong; %选星
     satnavBDS = satnavSolveWeighted(svBDS(svIndexBDS,:), obj.rp);

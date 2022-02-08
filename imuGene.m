@@ -3,6 +3,9 @@
 clearvars -except imuGene_conf imuGene_GUIflag
 clc
 
+rands_gyro = RandStream('mt19937ar', 'Seed',100, 'NormalTransform','Ziggurat');
+rands_acc  = RandStream('mt19937ar', 'Seed',200, 'NormalTransform','Ziggurat');
+
 %% IMU数据生成配置预设值
 % 使用GUI时外部会生成imuGene_conf,并将imuGene_GUIflag置1
 if ~exist('imuGene_GUIflag','var') || imuGene_GUIflag~=1
@@ -45,8 +48,8 @@ tow = startTime_gps(2); %周内秒
 m = dt / trajGene_conf.dt; %取数跳点数
 n = (size(traj,1)-1)/m + 1; %IMU数据个数
 imu = [tow+(0:n-1)'*dt, traj(1:m:end,13:18)]; %从轨迹中取角速度和加速度
-imu(:,2:4) = imu(:,2:4) + ones(n,1)*gyroBias + randn(n,3)*gyroSigma;
-imu(:,5:7) = imu(:,5:7) + ones(n,1)*accBias + randn(n,3)*accSigma;
+imu(:,2:4) = imu(:,2:4) + ones(n,1)*gyroBias + randn(rands_gyro,n,3)*gyroSigma;
+imu(:,5:7) = imu(:,5:7) + ones(n,1)*accBias + randn(rands_acc,n,3)*accSigma;
 % imu(:,1) = imu(:,1) + 0.003; %模拟时延
 
 %% 保存文件

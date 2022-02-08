@@ -64,20 +64,21 @@ obj.DLL2 = [K1, K2, Bn];
 obj.carrMode = 1; %如果用二阶环,可以直接进入锁相环,如果用三阶环,需要先进行频率牵引
 obj.codeMode = 1;
 
-% 初始化码鉴相器输出缓存
-obj.codeDiscBuff = zeros(1,200);
-obj.codeDiscBuffPtr = 0;
+% 初始化鉴相器输出缓存
+obj.discBuff = zeros(3,200);
+obj.discBuffPtr = 0;
 
 % 初始化噪声方差
 % 所有噪声的方差都与1/10^(CN0/10)成正比
 % 静止时是比较小的系数,动起来系数可以放大
-obj.varCoef = zeros(1,5);
+obj.varCoef = zeros(1,6);
 obj.varCoef(1) = (0.08*obj.DLL2(3)) * 9e4;
 obj.varCoef(2) = (0.32*obj.PLL2(3))^3 * 0.0363;
 obj.varCoef(3) = 9e4 / 0.072; %码鉴相器标准差是GPS C/A码的1/3
-obj.varCoef(4) = obj.PLL2(3) * 0.253;
-obj.varCoef(5) = 500;
-obj.varValue = zeros(1,5);
+obj.varCoef(4) = obj.PLL2(3) * 0.0253;
+obj.varCoef(5) = 12.67;
+obj.varCoef(6) = 500;
+obj.varValue = zeros(1,6);
 
 % 初始化伪码时间
 obj.tc0 = NaN;

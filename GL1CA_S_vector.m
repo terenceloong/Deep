@@ -103,7 +103,7 @@ for t=1:msToProcess
     if nCoV.state==1 %当接收机初始化完成后进入矢量跟踪
         para.p0 = nCoV.pos;
         nCoV.navFilter = filter_sat(para); %初始化导航滤波器
-        nCoV.vectorMode = 3; %设置矢量跟踪模式
+        nCoV.vectorMode = 3; %设置矢量跟踪模式 (3/4)
         nCoV.channel_vector; %通道切换矢量跟踪环路
         nCoV.state = 4; %接收机进入矢量跟踪
     end

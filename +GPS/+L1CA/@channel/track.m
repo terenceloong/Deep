@@ -87,11 +87,12 @@ if obj.coherentCnt==obj.coherentN
     freqError = atan(ys/yc)/obj.coherentTime / pi2; %实际频率减本地频率,单位:Hz
     
     % 存储鉴相器输出
-    obj.storage.disc(n,:) = [codeError, carrError, freqError];
-    obj.codeDiscBuffPtr = obj.codeDiscBuffPtr + 1;
-    obj.codeDiscBuff(obj.codeDiscBuffPtr) = codeError;
-    if obj.codeDiscBuffPtr==200
-        obj.codeDiscBuffPtr = 0;
+    disc = [codeError, carrError, freqError];
+    obj.storage.disc(n,:) = disc;
+    obj.discBuffPtr = obj.discBuffPtr + 1;
+    obj.discBuff(:,obj.discBuffPtr) = disc;
+    if obj.discBuffPtr==200
+        obj.discBuffPtr = 0;
     end
     
     % 载波跟踪
@@ -106,6 +107,8 @@ if obj.coherentCnt==obj.coherentN
             order3PLL(carrError);
         case 5 %矢量三阶锁相环
             vectorPLL3(carrError);
+        case 6 %载波开环
+            openPLL;
     end
     
     % 码跟踪
@@ -147,7 +150,8 @@ if obj.bitSyncFlag==1 %完成比特同步
         %----计算噪声方差
         CN0n = 10^(obj.CN0/10); %正常的载噪比数值
         obj.varValue = obj.varCoef / CN0n;
-        obj.varValue(4) = obj.varValue(4) * (1+obj.varValue(5));
+        obj.varValue(4) = obj.varValue(4) * (1+obj.varValue(6));
+        obj.varValue(5) = obj.varValue(5) * (1+obj.varValue(6));
         %----信号失锁计数
         if obj.CN0<obj.CN0Thr.loss %18
             obj.lossCnt = obj.lossCnt + 1;
@@ -254,6 +258,11 @@ obj.storage.CN0(n) = obj.CN0;
         else %强信号时,NCO驱动频率与估计频率保持同步
             obj.carrNco = obj.carrNco + obj.PLL3(2)*dp;
         end
+    end
+
+    %% 载波开环
+    function openPLL
+        % 什么也不做
     end
 
     %% 二阶延迟锁定环

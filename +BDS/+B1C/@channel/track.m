@@ -101,11 +101,12 @@ if obj.coherentCnt==obj.coherentN
     freqError = atan(ys/yc)/obj.coherentTime / pi2; %实际频率减本地频率,单位:Hz
     
     % 存储鉴相器输出
-    obj.storage.disc(n,:) = [codeError/2, carrError, freqError]; %码相位误差除以2,换算成主码相位误差
-    obj.codeDiscBuffPtr = obj.codeDiscBuffPtr + 1;
-    obj.codeDiscBuff(obj.codeDiscBuffPtr) = codeError/2; %主码相位误差
-    if obj.codeDiscBuffPtr==200
-        obj.codeDiscBuffPtr = 0;
+    disc = [codeError/2, carrError, freqError]; %码相位误差除以2,换算成主码相位误差
+    obj.storage.disc(n,:) = disc;
+    obj.discBuffPtr = obj.discBuffPtr + 1;
+    obj.discBuff(:,obj.discBuffPtr) = disc;
+    if obj.discBuffPtr==200
+        obj.discBuffPtr = 0;
     end
     
     % 载波跟踪
@@ -166,7 +167,8 @@ if obj.bitSyncFlag==1 %完成比特同步
         %----计算噪声方差
         CN0n = 10^(obj.CN0/10); %正常的载噪比数值
         obj.varValue = obj.varCoef / CN0n;
-        obj.varValue(4) = obj.varValue(4) * (1+obj.varValue(5));
+        obj.varValue(4) = obj.varValue(4) * (1+obj.varValue(6));
+        obj.varValue(5) = obj.varValue(5) * (1+obj.varValue(6));
         %----信号失锁计数
         if obj.CN0<obj.CN0Thr.loss %18
             obj.lossCnt = obj.lossCnt + 1;

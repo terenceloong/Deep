@@ -15,26 +15,52 @@ eleError = 5*(1-1./(1+exp(-((ele-30)/5))));
 % 获取通道信息
 chN = obj.chN;
 CN0 = zeros(chN,1); %载噪比
-codeDisc = zeros(chN,1); %定位间隔内码鉴相器输出的平均值,m
+codeDisc = zeros(chN,1); %定位间隔内码鉴相器输出的平均值,码片
 R_rho = zeros(chN,1); %伪距测量噪声方差,m^2
 R_rhodot = zeros(chN,1); %伪距率测量噪声方差,(m/s)^2
 R_phase = zeros(chN,1); %载波相位测量噪声方差,(circ)^2
-for k=1:chN
-    channel = obj.channels(k);
-    if channel.state==3
-        n = channel.codeDiscBuffPtr; %码鉴相器缓存内数据个数
-        if n>0 %定位间隔内码鉴相器有输出
-            CN0(k) = channel.CN0;
-            codeDisc(k) = sum(channel.codeDiscBuff(1:n))/n * Lco;
-            R_rho(k) = (sqrt(channel.varValue(3)/n)+eleError(k))^2;
-            R_rhodot(k) = channel.varValue(2);
-            R_phase(k) = channel.varValue(4);
-            channel.codeDiscBuffPtr = 0;
+if obj.vectorMode==1 || obj.vectorMode==2 %码鉴相器和锁相环
+    for k=1:chN
+        channel = obj.channels(k);
+        if channel.state==3
+            n = channel.discBuffPtr; %鉴相器缓存内数据个数
+            if n>0 %定位间隔内码鉴相器有输出
+                CN0(k) = channel.CN0;
+                codeDisc(k) = sum(channel.discBuff(1,1:n))/n;
+                R_rho(k) = (sqrt(channel.varValue(3)/n)+eleError(k))^2;
+                R_rhodot(k) = channel.varValue(2);
+                R_phase(k) = channel.varValue(4);
+                channel.discBuffPtr = 0;
+            end
         end
     end
+    sv = [satmeas(:,1:8), R_rho, R_rhodot];
+    sv(:,7) = sv(:,7) - codeDisc*Lco; %用码鉴相器输出修正伪距,本地码超前,伪距偏短,码鉴相器为负,修正是减
+elseif obj.vectorMode==4 %码鉴相器和鉴频器
+    freqDisc = zeros(chN,1); %定位间隔内的鉴频结果,Hz
+%     phaseError = zeros(chN,1); %载波相位误差,周
+    for k=1:chN
+        channel = obj.channels(k);
+        if channel.state==3
+            n = channel.discBuffPtr;
+            if n>1 %定位间隔内码鉴相器有输出,至少有两个数
+                CN0(k) = channel.CN0;
+                codeDisc(k) = sum(channel.discBuff(1,1:n))/n;
+                R_rho(k) = (sqrt(channel.varValue(3)/n)+eleError(k))^2;
+%                 [phaseError(k), freqDisc(k), R_freq] = freqError_cal(channel.discBuff(2,1:n), ...
+%                 channel.coherentTime, channel.varValue(5));
+%                 R_rhodot(k) = R_freq*Lca^2;
+                freqDisc(k) = sum(channel.discBuff(3,1:n))/n;
+                R_rhodot(k) = channel.varValue(5)*2*(Lca/channel.coherentTime/n)^2;
+                R_phase(k) = channel.varValue(4);
+                channel.discBuffPtr = 0;
+            end
+        end
+    end
+    sv = [satmeas(:,1:8), R_rho, R_rhodot];
+    sv(:,7) = sv(:,7) - codeDisc*Lco;
+    sv(:,8) = sv(:,8) - freqDisc*Lca;
 end
-sv = [satmeas(:,1:8), R_rho, R_rhodot];
-sv(:,7) = sv(:,7) - codeDisc; %用码鉴相器输出修正伪距,本地码超前,伪距偏短,码鉴相器为负,修正是减
 
 % 卫星导航解算
 svIndex = CN0>=obj.CN0Thr.strong; %选星
@@ -107,6 +133,23 @@ elseif obj.vectorMode==2 %修码相位和载波驱动频率
             %----载波驱动频率修正(satmeas中的伪距率是带钟频差的,需要补回来,才能得到修正量)
             dcarrFreq = (rhodot0(k)-satmeas(k,8))/Lca + dtv_carr; %相对估计频率的修正量
             channel.carrNco = channel.carrFreq - dcarrFreq/Cdf;
+            %----接收机运动引起的载波频率变化率
+            channel.carrAccR = -acclos0(k)/Lca / Cdf;
+        end
+    end
+elseif obj.vectorMode==4 %修码相位和载波驱动频率(载波开环)
+    for k=1:chN
+        channel = obj.channels(k);
+        if channel.state==3
+            %----码相位修正
+            dcodePhase = (rho0(k)-satmeas(k,7))/Lco + dtr_code;
+            channel.remCodePhase = channel.remCodePhase - dcodePhase;
+            %----载波驱动频率修正
+            dcarrFreq = (rhodot0(k)-satmeas(k,8))/Lca + dtv_carr;
+            channel.carrNco = channel.carrFreq - dcarrFreq/Cdf;
+            channel.carrFreq = channel.carrNco; %直接赋值
+            %----载波相位修正
+%             channel.remCarrPhase = mod(channel.remCarrPhase+phaseError(k)*0.5, 1);
             %----接收机运动引起的载波频率变化率
             channel.carrAccR = -acclos0(k)/Lca / Cdf;
         end

@@ -19,6 +19,8 @@ obj.coherentTime = Ts;
 
 % 调整码鉴相器方差计算系数
 obj.varCoef(3) = 9e4 / (0.072*Tms);
+obj.varCoef(5) = 12.67 / Tms;
+obj.varCoef(6) = 500 / Tms;
 
 % 调整二阶锁相环系数
 if obj.carrMode==2 || obj.carrMode==3

@@ -41,8 +41,8 @@ classdef channel < handle
         DLL2            %二阶延迟锁定环
         carrMode        %载波跟踪模式
         codeMode        %码跟踪模式
-        codeDiscBuff    %码鉴相器输出缓存(矢量跟踪时用到)
-        codeDiscBuffPtr %码鉴相器输出缓存指针
+        discBuff        %鉴相器输出缓存(矢量跟踪时用到)
+        discBuffPtr     %鉴相器输出缓存指针
         varCoef         %噪声方差计算系数,[伪距,伪距率,码鉴相器]
         varValue        %噪声方差值
         tc0             %下一伪码周期的开始时间,ms

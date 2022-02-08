@@ -15,6 +15,7 @@ classdef filter_single < INS_GRC
         wdotCal    %角加速度计算模块
         wdot       %角加速度值,rad/s^2
         windupFlag %发条效应校正标志
+        delay      %惯导延迟,s,预先知道的
     end
     
     methods
@@ -57,6 +58,7 @@ classdef filter_single < INS_GRC
             obj.wdotCal = omegadot_cal(obj.T, 3);
             obj.wdot = [0,0,0];
             obj.windupFlag = para.windupFlag;
+            obj.delay = 0.00;
         end
         
         %% 运行函数
@@ -124,7 +126,12 @@ classdef filter_single < INS_GRC
                 R_rho = sv(:,9);    %伪距噪声方差
                 R_rhodot= sv(:,10); %伪距率噪声方差
                 %----根据当前导航结果计算理论相对距离和相对速度
-                [rho0, rhodot0, rspu, Cen] = rho_rhodot_cal_geog(rs, vs, obj.pos, obj.vel);
+                if obj.delay==0
+                    [rho0, rhodot0, rspu, Cen] = rho_rhodot_cal_geog(rs, vs, obj.pos, obj.vel);
+                else
+                    [pos, vel] = delayComp(obj.pos, obj.vel, obj.acc, obj.geogInfo.Cn2g, obj.delay);
+                    [rho0, rhodot0, rspu, Cen] = rho_rhodot_cal_geog(rs, vs, pos, vel);
+                end
                 %----地理系下视线矢量
                 S = -sum(rspu.*vs,2);
                 cm = 1 + S/c; %光速修正项
@@ -158,7 +165,7 @@ classdef filter_single < INS_GRC
                     if obj.motion.state==0 %运动时将伪距率的量测噪声放大
                         R2 = diag(R_rhodot(indexV));
                     else
-                        R2 = diag(R_rhodot(indexV)*4);
+                        R2 = diag(R_rhodot(indexV)*1);
                     end
                 end
                 %----角速度量测部分
